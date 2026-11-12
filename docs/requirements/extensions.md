@@ -182,10 +182,28 @@ Covers:
 
 Needs: impl, utest
 
+### Configuration file
+`dsn~config-file~1`
+
+`ConfigFile` reads and changes the companion file `todo.txt-config.yml`, a YAML file with the configuration that belongs to the todo.txt file.
+The key `board-columns` maps the title of each column to its filter expression, one column per line, in the order of the board.
+Titles and expressions are read as plain, single-quoted or double-quoted scalars and written double-quoted.
+Replacing the columns keeps the other content of the file.
+
+Covers:
+
+* `req~board-defined-columns~1`
+* `adr~board-columns-by-filter~1`
+
+Needs: impl, utest
+
 ### Columns defined by filters
 `dsn~board-defined-columns~1`
 
-The setting `boardColumns` holds one column per line as `title = expression`; a line without title is titled by its expression.
+The configuration file holds the columns.
+The settings dialog edits them as text with one column per line as `title = expression`; a line without title is titled by its expression.
+A change of the columns is recorded as a change of its own.
+The controller reads the configuration file again when it looks for changes of the todo.txt file, so that columns defined on another device appear.
 `groupByColumns` distributes the visible tasks over these columns, in the order of their definition.
 A task appears in every column whose expression it matches, and a column without tasks stays on the board.
 The view options offer these columns once at least one is defined.
@@ -245,12 +263,13 @@ Needs: impl, utest
 
 A storage that implements `CompanionFiles` reads and writes files relative to the directory of the todo.txt file.
 `FileStorage` and `GitStorage` implement it; `GitStorage` commits the companion files written since the last commit together with the next change of the todo.txt file.
-The storage of a single document on Android does not implement it, so that notes and scheduled tasks are not available there.
+The storage of a single document on Android does not implement it, so that notes, scheduled tasks and board columns defined by filters are not available there.
 
 Covers:
 
 * `req~notes~1`
 * `req~scheduled-tasks~1`
+* `req~board-defined-columns~1`
 
 Needs: impl, utest
 

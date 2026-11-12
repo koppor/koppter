@@ -396,11 +396,29 @@ class AppTest {
         onNodeWithTag("open-settings").performClick()
         onNodeWithTag("settings-board-columns").performTextInput("Phone = @phone\nSoon = due:<2w\nNothing = +Nowhere")
         onNodeWithTag("settings-save").performClick()
+        assertEquals(
+            "# Configuration of koppter for the todo.txt file in this directory\n" +
+                "board-columns:\n  \"Phone\": \"@phone\"\n  \"Soon\": \"due:<2w\"\n  \"Nothing\": \"+Nowhere\"\n",
+            storage.companions["todo.txt-config.yml"],
+        )
+        assertEquals("Edit board columns", storage.changes.last())
         onNodeWithTag("group-FILTER").performClick()
 
         onNodeWithText("Phone (2)").assertExists()
         onNodeWithText("Soon (1)").assertExists()
         onNodeWithText("Nothing (0)").assertExists()
         onNodeWithText("A (1)").assertDoesNotExist()
+    }
+
+    // [utest->dsn~board-defined-columns~1]
+    @Test
+    fun columnsThatAnotherDeviceDefinedAppear() = runComposeUiTest {
+        start()
+        onNodeWithTag("board-switch").performClick()
+        storage.companions["todo.txt-config.yml"] = "board-columns:\n  Phone: \"@phone\"\n"
+        mainClock.advanceTimeBy(5_000)
+
+        onNodeWithTag("group-FILTER").performClick()
+        onNodeWithText("Phone (2)").assertExists()
     }
 }

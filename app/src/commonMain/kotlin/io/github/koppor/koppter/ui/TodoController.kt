@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import io.github.koppor.koppter.storage.CompanionFiles
+import io.github.koppor.koppter.storage.ConfigFile
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SyncState
 import io.github.koppor.koppter.storage.SyncStatus
@@ -58,8 +59,14 @@ class TodoController(
     /** The attribute whose values are the columns of the board; `null` for the columns the user defined. */
     var groupKey by mutableStateOf<GroupKey?>(GroupKey.PRIORITY)
 
-    /** The columns the user defined in the settings. */
-    val boardColumns: List<BoardColumn> get() = parseBoardColumns(settings.boardColumns)
+    /** The configuration file next to the todo.txt file; `null` if the storage keeps no files next to the todo.txt file. */
+    private var config by mutableStateOf<String?>(null)
+
+    /** The columns the user defined. */
+    val boardColumns: List<BoardColumn> get() = ConfigFile.boardColumns(config.orEmpty())
+
+    /** The columns the user defined, one per line as `title = filter expression`; `null` if the storage cannot keep them. */
+    val boardColumnsText: String? get() = config?.let { boardColumns.joinToString("\n") { "${it.title} = ${it.expression}" } }
 
     /** The state of the synchronization; `null` if the storage does not synchronize. */
     var syncStatus by mutableStateOf<SyncStatus?>(null)
@@ -111,9 +118,36 @@ class TodoController(
     val contexts: List<String> get() = file.entries.flatMap { it.task.contexts }.distinct().sorted()
     val priorities: List<Char> get() = file.entries.mapNotNull { it.task.priority }.distinct().sorted()
 
-    fun load() = guarded {
-        file = TodoFile.parse(storage.read())
-        loadedVersion = storage.version()
+    fun load() {
+        guarded {
+            file = TodoFile.parse(storage.read())
+            loadedVersion = storage.version()
+        }
+        loadConfig()
+    }
+
+    /** Reads the configuration file; a synchronization may change it while the todo.txt file stays the same. */
+    // [impl->dsn~board-defined-columns~1]
+    private fun loadConfig() {
+        config = try {
+            (storage as? CompanionFiles)?.let { it.readCompanion(ConfigFile.NAME).orEmpty() }
+        } catch (_: Exception) {
+            config
+        }
+        if (boardColumns.isEmpty() && groupKey == null) groupKey = GroupKey.PRIORITY
+    }
+
+    /** Replaces the columns the user defined by those in the text, one per line as `title = filter expression`. */
+    fun updateBoardColumns(text: String) {
+        val columns = parseBoardColumns(text)
+        if (columns == boardColumns) return
+        guarded {
+            (storage as? CompanionFiles)?.writeCompanion(ConfigFile.NAME, ConfigFile.withBoardColumns(config.orEmpty(), columns)) ?: return@guarded
+            // The storage records the files next to the todo.txt file with a change of that file.
+            storage.write(file.serialize(), "Edit board columns")
+            loadedVersion = storage.version()
+        }
+        loadConfig()
     }
 
     /** Reloads if another program changed the file. */
@@ -124,7 +158,7 @@ class TodoController(
         } catch (_: Exception) {
             return
         }
-        if (version != loadedVersion) load()
+        if (version != loadedVersion) load() else loadConfig()
         addScheduledTasks()
     }
 
@@ -216,7 +250,6 @@ class TodoController(
         if (new == settings) return
         val fileChanged = new.todoFile != settings.todoFile
         settings = new
-        if (boardColumns.isEmpty() && groupKey == null) groupKey = GroupKey.PRIORITY
         guarded { saveSettings(new) }
         if (fileChanged) {
             storage = storageFor(new)

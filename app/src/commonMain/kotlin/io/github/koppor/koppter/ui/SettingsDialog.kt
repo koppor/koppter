@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import io.github.koppor.koppter.storage.ConfigFile
 import io.github.koppor.koppter.storage.Settings
 import kotlinx.coroutines.launch
 
@@ -51,7 +52,9 @@ fun SettingsDialog(
     defaultTodoFile: String,
     chooseFile: (suspend () -> String?)?,
     git: GitSetupActions?,
-    onSave: (Settings) -> Unit,
+    /** The definitions of the board columns; `null` if the storage cannot keep them. */
+    boardColumns: String?,
+    onSave: (Settings, boardColumns: String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -59,7 +62,7 @@ fun SettingsDialog(
     var writeDates by remember { mutableStateOf(settings.writeDates) }
     var topCount by remember { mutableStateOf(settings.topCount.toString()) }
     val topCountValue = topCount.trim().toIntOrNull()?.takeIf { it > 0 }
-    var boardColumns by remember { mutableStateOf(settings.boardColumns) }
+    var columns by remember { mutableStateOf(boardColumns) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large, tonalElevation = 6.dp, modifier = Modifier.widthIn(max = 560.dp).testTag("settings-dialog")) {
@@ -95,15 +98,19 @@ fun SettingsDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag("settings-top-count"),
                 )
-                OutlinedTextField(
-                    value = boardColumns,
-                    onValueChange = { boardColumns = it },
-                    label = { Text("Board columns by filter") },
-                    supportingText = { Text("One column per line as title = filter, for example: Today = due:<=today -@waiting") },
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth().testTag("settings-board-columns"),
-                )
+                columns?.let { text ->
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { columns = it },
+                        label = { Text("Board columns by filter") },
+                        supportingText = {
+                            Text("One column per line as title = filter, for example: Today = due:<=today -@waiting. Kept in ${ConfigFile.NAME} next to the todo.txt file.")
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        minLines = 3,
+                        modifier = Modifier.fillMaxWidth().testTag("settings-board-columns"),
+                    )
+                }
                 Text(
                     "A file in a git repository is committed after every change and synchronized with the remote repository.",
                     style = MaterialTheme.typography.bodySmall,
@@ -122,8 +129,8 @@ fun SettingsDialog(
                                     todoFile = todoFile.trim(),
                                     writeDates = writeDates,
                                     topCount = topCountValue ?: settings.topCount,
-                                    boardColumns = boardColumns.trim(),
                                 ),
+                                columns?.trim(),
                             )
                         },
                         enabled = topCountValue != null,

@@ -212,8 +212,11 @@ private fun MainScreen(
             defaultTodoFile = defaultTodoFile,
             chooseFile = chooseFile,
             git = git,
-            onSave = {
-                controller.updateSettings(it)
+            boardColumns = controller.boardColumnsText,
+            onSave = { settings, boardColumns ->
+                // The columns belong to the file that was open when the dialog was opened.
+                boardColumns?.let(controller::updateBoardColumns)
+                controller.updateSettings(settings)
                 showSettings = false
             },
             onDismiss = { showSettings = false },
