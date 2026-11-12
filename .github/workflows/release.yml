@@ -1,0 +1,65 @@
+name: Daily release
+
+# Every morning: merge experimental into main and, when CHANGELOG.md has an
+# [Unreleased] section, turn it into the CalVer release of the previous day,
+# the day the changes were made.
+# [impl->adr~calver-changelog~1]
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: daily-release
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: experimental
+          fetch-depth: 0
+
+      - uses: jbangdev/setup-jbang@2b1b465a7b75f4222b81426f23a01e013aa7b95c # v0.1.1
+
+      - name: Release, merge, tag
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          repo="https://github.com/$GITHUB_REPOSITORY"
+          d=$(date -u -d yesterday +%F)
+
+          if [ -z "$(git rev-list origin/main..HEAD)" ]; then
+            echo "nothing to merge or release"; exit 0
+          fi
+
+          tag=
+          if grep -q '^## \[Unreleased\]' CHANGELOG.md && ! git rev-parse -q --verify "refs/tags/v$d" >/dev/null; then
+            previous=$(git tag --list 'v[0-9]*' --sort=-version:refname | head -n 1)
+            if [ -n "$previous" ]; then
+              link="$repo/compare/$previous...v$d"
+            else
+              link="$repo/releases/tag/v$d"
+            fi
+            sed -i -e "s/^## \[Unreleased\]\$/## [$d] - $d/" \
+                   -e "s|^\[Unreleased\]: .*\$|[$d]: $link|" CHANGELOG.md
+            jbang trust add https://github.com/nbbrd/
+            jbang heylogs@nbbrd check CHANGELOG.md
+            git commit -am "Release $d"
+            git push origin HEAD:experimental
+            tag="v$d"
+          fi
+
+          git switch main
+          git merge --no-ff --no-edit -m "Merge experimental${tag:+: release $d}" experimental
+          git push origin main
+          if [ -n "$tag" ]; then
+            git tag "$tag" main
+            git push origin "$tag"
+          fi

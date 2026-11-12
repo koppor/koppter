@@ -1,0 +1,7 @@
+[files]
+extend-exclude = ["gradlew", "gradlew.bat", "*.keystore"]
+
+[default.extend-words]
+# "mit" and "mitf" are todo.txt add-ons (most important task)
+mit = "mit"
+mitf = "mitf"

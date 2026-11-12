@@ -1,0 +1,11 @@
+config:
+  # One sentence per line; line length is not limited.
+  line-length: false
+  # Keep a Changelog repeats "Added", "Changed", ... per release.
+  no-duplicate-heading:
+    siblings_only: true
+  # An OpenFastTrace item id follows its heading without a blank line.
+  blanks-around-headings: false
+ignores:
+  - PLAN.md
+  - "**/build/**"

@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+build/
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Per-machine Android SDK location
+local.properties
+
+# JVM crash dumps
+hs_err_pid*.log
+replay_pid*.log
+
+# Working plan of the current development session; not part of the project history
+PLAN.md
+
+# codegraph's per-checkout index
+.codegraph/
