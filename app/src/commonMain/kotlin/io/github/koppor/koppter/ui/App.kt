@@ -6,6 +6,7 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -157,25 +158,33 @@ private fun MainScreen(
     val rootFocus = remember { FocusRequester() }
     val quickAddFocus = remember { FocusRequester() }
     val filterFocus = remember { FocusRequester() }
-    // Keys reach the shortcuts only through a focused element, so the screen takes the focus until one of its elements has it:
+    // Keys reach the shortcuts only through a focused element, so the screen takes the focus while none of its elements has it:
     // at the start and when the element with the focus went away with its view.
-    LaunchedEffect(controller.view) { rootFocus.requestFocus() }
+    var focused by remember { mutableStateOf(false) }
+    LaunchedEffect(controller.view) { if (!focused) rootFocus.requestFocus() }
 
     // [impl->dsn~keyboard-shortcuts~1]
     fun shortcut(event: KeyEvent): Boolean {
         if (event.type != KeyEventType.KeyDown || !(event.isCtrlPressed || event.isMetaPressed) || event.isAltPressed) return false
         val view = VIEW_KEYS.indexOf(event.key)
-        when {
-            !event.isShiftPressed && event.key == Key.N -> editing = Editing(null)
-            !event.isShiftPressed && view >= 0 -> controller.view = View.entries[view]
-            !event.isShiftPressed -> return false
-            event.key == Key.A -> quickAddFocus.requestFocus()
-            // In a narrow window, the filter panel is in the drawer and has no field to focus.
-            event.key == Key.F -> try {
+        // In a narrow window, the filter panel is in the drawer and has no field to focus.
+        fun search() {
+            // The agenda and the week show the plan, which the filter does not apply to.
+            if (controller.view == View.AGENDA || controller.view == View.WEEK) controller.view = View.LIST
+            try {
                 filterFocus.requestFocus()
             } catch (_: IllegalStateException) {
                 scope.launch { drawer.open() }
             }
+        }
+        when {
+            !event.isShiftPressed && event.key == Key.N -> editing = Editing(null)
+            // The key of OneNote for its search.
+            !event.isShiftPressed && event.key == Key.E -> search()
+            !event.isShiftPressed && view >= 0 -> controller.view = View.entries[view]
+            !event.isShiftPressed -> return false
+            event.key == Key.A -> quickAddFocus.requestFocus()
+            event.key == Key.F -> search()
             // The keys of SkedPal for its outline, today list, calendar and plan.
             event.key == Key.O -> controller.view = View.LIST
             event.key == Key.Y -> controller.view = View.AGENDA
@@ -212,7 +221,7 @@ private fun MainScreen(
         )
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize().focusRequester(rootFocus).focusable().onPreviewKeyEvent(::shortcut).testTag("main-screen")) {
+    BoxWithConstraints(Modifier.fillMaxSize().focusRequester(rootFocus).onFocusChanged { focused = it.hasFocus }.focusable().onPreviewKeyEvent(::shortcut).testTag("main-screen")) {
         val wide = maxWidth >= WIDE
         ModalNavigationDrawer(
             drawerState = drawer,

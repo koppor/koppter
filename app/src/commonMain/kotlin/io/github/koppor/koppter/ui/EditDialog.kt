@@ -53,7 +53,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import io.github.koppor.koppter.sync.TaskDates
 import io.github.koppor.koppter.todotxt.Recurrence
 import io.github.koppor.koppter.todotxt.Task
@@ -116,7 +115,10 @@ fun EditDialog(
     val keyboard = LocalKeyboard.current
     LaunchedEffect(Unit) { if (keyboard) descriptionFocus.requestFocus() }
 
-    Dialog(onDismissRequest = onDismiss) {
+    val state = listOf(description, priority, due, threshold, recurrence, duration, contextSwitcher, projects, contexts, hashtags, note)
+    val initial = remember { state }
+
+    GuardedDialog(changed = state != initial, onDismiss = onDismiss) {
         Surface(
             shape = MaterialTheme.shapes.large,
             tonalElevation = 6.dp,
@@ -124,11 +126,8 @@ fun EditDialog(
                 // [impl->dsn~keyboard-shortcuts~1]
                 .onPreviewKeyEvent {
                     val save = it.type == KeyEventType.KeyDown && it.key == Key.Enter && (it.isCtrlPressed || it.isMetaPressed)
-                    // Not left to the dialog of the platform, which closes on Esc only where it gets the key.
-                    val close = it.type == KeyEventType.KeyDown && it.key == Key.Escape
                     if (save && valid) onSave(result, if (originalNote == null) null else note)
-                    if (close) onDismiss()
-                    save || close
+                    save
                 },
         ) {
             Column(

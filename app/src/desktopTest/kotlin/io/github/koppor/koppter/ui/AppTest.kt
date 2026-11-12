@@ -481,6 +481,41 @@ class AppTest {
         onNodeWithText("Every task has a context.").assertExists()
     }
 
+    // [utest->dsn~unsaved-changes~1]
+    @Test
+    fun escAsksBeforeChangesAreLost() = runComposeUiTest {
+        start()
+        fun esc(tag: String) = onNodeWithTag(tag).performKeyInput { pressKey(Key.Escape) }
+
+        // Without a change, the dialog closes.
+        openTask("Post signs")
+        esc("edit-description")
+        onNodeWithTag("edit-dialog").assertDoesNotExist()
+
+        // With a change, the user may go back to the dialog, which still holds the change.
+        openTask("Post signs")
+        onNodeWithTag("edit-description").performTextInput("Not wanted ")
+        esc("edit-description")
+        onNodeWithTag("discard-dialog").assertExists()
+        onNodeWithTag("discard-keep").performClick()
+        onNodeWithTag("edit-description").assertTextContains("Not wanted Post signs")
+
+        esc("edit-description")
+        onNodeWithTag("discard-confirm").performClick()
+        onNodeWithTag("edit-dialog").assertDoesNotExist()
+        assertEquals(false, "Not wanted" in storage.text)
+
+        // The other dialogs ask as well; what was planned is saved and does not count as a change.
+        onNodeWithTag("open-plan").performClick()
+        onNodeWithTag("plan-barriers").performScrollTo().performTextInput("default = year")
+        esc("plan-barriers")
+        onNodeWithTag("discard-keep").performClick()
+        onNodeWithTag("plan-update").performScrollTo().performClick()
+        waitForIdle()
+        esc("plan-barriers")
+        onNodeWithTag("plan-dialog").assertDoesNotExist()
+    }
+
     // [utest->dsn~keyboard-shortcuts~1]
     @Test
     fun keysOpenANewTaskShowTheViewsAndSaveTheDialog() = runComposeUiTest {
@@ -506,12 +541,11 @@ class AppTest {
         onNodeWithTag("plan-dialog").assertExists()
         onNodeWithTag("plan-close").performScrollTo().performClick()
 
-        // Esc closes a dialog without saving.
-        ctrl(Key.N)
-        onNodeWithTag("edit-description").performTextInput("Not wanted")
-        onNodeWithTag("edit-description").performKeyInput { pressKey(Key.Escape) }
-        onNodeWithTag("edit-dialog").assertDoesNotExist()
-        assertEquals(false, "Not wanted" in storage.text)
+        // The search is reached from a view that the filter does not apply to.
+        ctrl(Key.Five)
+        ctrl(Key.E)
+        onNodeWithTag("week").assertDoesNotExist()
+        onNodeWithTag("filter-text").assertIsFocused()
 
         // A new task without the pointer: the description has the focus, Ctrl+Enter saves.
         ctrl(Key.N)

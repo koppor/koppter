@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import io.github.koppor.koppter.todotxt.iceRecurLines
 import kotlinx.datetime.LocalDate
 
@@ -43,7 +42,7 @@ fun ScheduleDialog(schedule: String, today: LocalDate, onSave: (String) -> Unit,
     var text by remember { mutableStateOf(schedule) }
     val lines = iceRecurLines(text)
 
-    Dialog(onDismissRequest = onDismiss) {
+    GuardedDialog(changed = text != schedule, onDismiss = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large, tonalElevation = 6.dp, modifier = Modifier.widthIn(max = 560.dp).testTag("schedule-dialog")) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Scheduled tasks", style = MaterialTheme.typography.titleLarge)

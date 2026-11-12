@@ -31,7 +31,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import io.github.koppor.koppter.storage.Appearance
 import io.github.koppor.koppter.storage.ColorTheme
 import io.github.koppor.koppter.storage.ConfigFile
@@ -71,7 +70,10 @@ fun SettingsDialog(
     var theme by remember { mutableStateOf(settings.theme) }
     var appearance by remember { mutableStateOf(settings.appearance) }
 
-    Dialog(onDismissRequest = onDismiss) {
+    val state = listOf(todoFile, writeDates, topCount, columns, actions, theme, appearance)
+    val initial = remember { state }
+
+    GuardedDialog(changed = state != initial, onDismiss = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large, tonalElevation = 6.dp, modifier = Modifier.widthIn(max = 560.dp).testTag("settings-dialog")) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Settings", style = MaterialTheme.typography.titleLarge)

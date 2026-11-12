@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import io.github.koppor.koppter.plan.CalendarTxt
 import io.github.koppor.koppter.storage.ConfigFile
 import kotlinx.coroutines.launch
@@ -70,7 +69,11 @@ fun PlanDialog(
         )
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    val state = listOf(timeMaps, contextMaps, barriers, addresses)
+    // Planning saves what the fields hold.
+    var saved by remember { mutableStateOf(state) }
+
+    GuardedDialog(changed = state != saved, onDismiss = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large, tonalElevation = 6.dp, modifier = Modifier.widthIn(max = 560.dp).testTag("plan-dialog")) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Plan", style = MaterialTheme.typography.titleLarge)
@@ -124,6 +127,7 @@ fun PlanDialog(
                     Button(
                         onClick = {
                             running = true
+                            saved = state
                             scope.launch {
                                 try {
                                     result = onPlan(PlanSettings(timeMaps, contextMaps, barriers), addresses)

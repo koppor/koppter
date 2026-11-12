@@ -98,6 +98,17 @@ Covers:
 
 Needs: dsn
 
+### Changes that are not saved
+`req~unsaved-changes~1`
+
+A dialog that holds changes does not close by accident: before it closes without saving, the user is asked and may return to the dialog.
+
+Covers:
+
+* `feat~task-editing~1`
+
+Needs: dsn
+
 ### Color themes
 `req~color-themes~1`
 
@@ -245,15 +256,30 @@ Needs: impl
 `dsn~keyboard-shortcuts~1`
 
 The main screen is focusable and takes the focus at the start and after a change of the view, so that keys reach it also when no element has the focus; it handles the keys before its elements do.
-With Ctrl, or the command key: N opens the dialog for a new task, and 1 to 6 show the list and the views in the order of their switches.
+With Ctrl, or the command key: N opens the dialog for a new task, E gives the focus to the text of the filter, as this key searches in OneNote, and 1 to 6 show the list and the views in the order of their switches.
+The agenda and the week, which the filter does not apply to, give way to the list when the text of the filter gets the focus.
 With Ctrl and Shift: A gives the focus to the quick add field, F to the text of the filter, L opens the plan dialog, and O, Y and C show the list, the agenda and the week, as these keys do in SkedPal.
-In the edit dialog, Ctrl and Enter save if *Save* is enabled, and Esc closes without saving.
+In the edit dialog, Ctrl and Enter save if *Save* is enabled.
 `LocalKeyboard` tells whether the device has a keyboard; with one, the description of the edit dialog and the field of the inbox get the focus when they appear.
 On Android, it is the keyboard of the configuration of the device.
 
 Covers:
 
 * `req~keyboard-shortcuts~1`
+
+Needs: impl, utest
+
+### Changes that are not saved
+`dsn~unsaved-changes~1`
+
+`GuardedDialog` is the dialog of the edit dialog, the settings, the plan dialog and the editor of the schedule.
+On Esc, on a click beside the dialog and on the back button, it closes only if the values of the fields are those the dialog started with, or those that the plan dialog saved last.
+Otherwise it asks whether to discard the changes; *Keep editing* returns to the dialog as it was.
+The buttons of a dialog that close it without saving do so without the question.
+
+Covers:
+
+* `req~unsaved-changes~1`
 
 Needs: impl, utest
 
