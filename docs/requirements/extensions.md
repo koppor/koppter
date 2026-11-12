@@ -51,6 +51,17 @@ Covers:
 
 Needs: dsn
 
+### Task of ContextSwitcher
+`req~context-switcher-link~1`
+
+A task refers to a task of ContextSwitcher, and the user switches to it from the task.
+
+Covers:
+
+* `feat~extensions~1`
+
+Needs: dsn
+
 ### Scheduled tasks
 `req~scheduled-tasks~1`
 
@@ -340,6 +351,20 @@ Covers:
 * `req~notes~1`
 * `req~scheduled-tasks~1`
 * `req~board-defined-columns~1`
+
+Needs: impl, utest
+
+### Tag for the task of ContextSwitcher
+`dsn~context-switcher-tag~1`
+
+The tag `cs:` holds the id of a task of ContextSwitcher as its links have it.
+`TaskLabels` shows the tag as a label that opens the link `contextswitcher://switch/<id>` through the platform; `App` reports a link that the platform cannot open.
+`Task.withContextSwitcherTags` replaces links of the forms `contextswitcher://task/<id>` and `contextswitcher://switch/<id>` by the tag; the quick add line and the edit dialog apply it.
+
+Covers:
+
+* `req~context-switcher-link~1`
+* `adr~context-switcher-tag~1`
 
 Needs: impl, utest
 

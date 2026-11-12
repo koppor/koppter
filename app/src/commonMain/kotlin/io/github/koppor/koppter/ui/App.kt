@@ -39,6 +39,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +52,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -86,8 +89,21 @@ fun App(
         Appearance.LIGHT -> false
         Appearance.DARK -> true
     }
+    // A link without a program that handles it, such as one of ContextSwitcher on a device without it, is reported.
+    val platform = LocalUriHandler.current
+    val uriHandler = remember(platform) {
+        object : UriHandler {
+            override fun openUri(uri: String) = try {
+                platform.openUri(uri)
+            } catch (e: Exception) {
+                controller.error = "Not opened: $uri"
+            }
+        }
+    }
     MaterialTheme(colorScheme = colorScheme(controller.settings.theme, dark)) {
-        MainScreen(controller, defaultTodoFile, chooseFile, git)
+        CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+            MainScreen(controller, defaultTodoFile, chooseFile, git)
+        }
     }
 }
 

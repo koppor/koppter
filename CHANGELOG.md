@@ -26,6 +26,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Tasks scheduled in `ice_recur.txt` next to the todo.txt file are added on their days; days on which the application was not open are caught up.
 - Editor for the schedule of `ice_recur.txt`, which shows for each entry the next day on which it adds its task and marks lines that are not understood.
 - Colors of the palettes Nord and Everforest, each light and dark; the settings choose the palette and whether the application follows the system.
+- The tag `cs:` names a task of ContextSwitcher; its label switches to that task, and a pasted link of ContextSwitcher becomes the tag.
 - *Top* switch that restricts the list to the first tasks; their number is a setting.
 - Hashtags (`#tag`) as a third kind of label next to projects and contexts: shown on the task, offered in the filter panel, the edit dialog and the filters of board columns.
 - Board view with one column per priority, project, context, hashtag or due date range.

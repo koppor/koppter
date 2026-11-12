@@ -210,4 +210,16 @@ class TaskTest {
         assertEquals("Call Mom +Home @phone due:2026-11-20", task.edit(hashtags = emptyList()).toLine())
         assertEquals(task, task.edit(hashtags = listOf("family")))
     }
+
+    // [utest->dsn~context-switcher-tag~1]
+    @Test
+    fun aLinkOfContextSwitcherBecomesATagThatGivesTheLinkToSwitch() {
+        val task = Task.parse("(B) Review contextswitcher://task/jabref/fix-npe the comments +JabRef due:2026-11-20").withContextSwitcherTags()
+
+        assertEquals("(B) Review the comments +JabRef due:2026-11-20 cs:jabref/fix-npe", task.toLine())
+        assertEquals("Review the comments", task.description)
+        assertEquals("contextswitcher://switch/jabref/fix-npe", Task.contextSwitcherLink(task.tag(Task.CONTEXT_SWITCHER)!!))
+        assertEquals(task, task.withContextSwitcherTags())
+        assertEquals(null, Task.parse("Review cs: https://example.org/x").withContextSwitcherTags().tag(Task.CONTEXT_SWITCHER))
+    }
 }

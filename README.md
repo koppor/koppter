@@ -97,6 +97,7 @@ The application understands the following extensions, which other todo.txt tools
 | `ice_recur.txt` | Schedules that add tasks on certain days | See [recurring tasks](#recurring-tasks). |
 | `note:k3f.txt` | A note for the task, kept in the file `notes/k3f.txt` | *Note* in the edit dialog; the application names the file. As in the [note add-on](https://github.com/mgarrido/todo.txt-cli/tree/note/todo.actions.d). |
 | `#urgent` | Hashtag: a third kind of label next to `+project` and `@context`, without a fixed meaning | *Add hashtag* in the edit dialog, or typed into the task. A hashtag starts with a letter: `#123` and `C#` stay words of the description ([decision 0014](docs/decisions/0014-hashtags-as-a-third-kind-of-label.md)). |
+| `cs:jabref/fix-npe` | The task of [ContextSwitcher](https://github.com/contextswitcher/contextswitcher) that holds the working context | Typed into the task, or pasted as the link that *Copy link* of ContextSwitcher gives, which becomes the tag. A click on the label switches to the task in ContextSwitcher, on a computer where it has registered its links ([decision 0016](docs/decisions/0016-tag-for-the-task-of-contextswitcher.md)). |
 | `pri:A` | The priority a completed task had | Written when a task with a priority is completed, as the format has no priority for completed tasks; reopening the task restores the priority. |
 
 The *Top* switch above the list restricts it to the first tasks, whose number is a setting.

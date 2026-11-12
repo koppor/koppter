@@ -91,6 +91,7 @@ fun EditDialog(
         .withTag(Task.DUE, due.trim())
         .withTag(Task.THRESHOLD, threshold.trim())
         .withTag(Task.RECURRENCE, recurrence.trim())
+        .withContextSwitcherTags()
         // [impl->dsn~notes~1]
         .let { if (originalNote == null) it else it.withTag(Task.NOTE, if (note.isBlank()) null else original.tag(Task.NOTE) ?: newNoteName) }
     val valid = dueValid && thresholdValid && recurrenceValid && result.body.isNotBlank()

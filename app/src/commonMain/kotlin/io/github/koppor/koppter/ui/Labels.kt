@@ -1,6 +1,7 @@
 package io.github.koppor.koppter.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,6 +10,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,6 +53,7 @@ fun Label(text: String, container: Color, content: Color, modifier: Modifier = M
 @Composable
 fun TaskLabels(task: Task, today: LocalDate) {
     val colors = MaterialTheme.colorScheme
+    val uriHandler = LocalUriHandler.current
     task.projects.forEach { ProjectLabel(it) }
     task.contexts.forEach { ContextLabel(it) }
     task.hashtags.forEach { HashtagLabel(it) }
@@ -53,6 +61,17 @@ fun TaskLabels(task: Task, today: LocalDate) {
         val overdue = key == Task.DUE && !task.completed && task.due.let { it != null && it < today }
         val dueToday = key == Task.DUE && !task.completed && task.due == today
         when {
+            // [impl->dsn~context-switcher-tag~1]
+            key == Task.CONTEXT_SWITCHER -> Label(
+                value,
+                colors.surfaceVariant,
+                colors.onSurfaceVariant,
+                Modifier.clip(RoundedCornerShape(percent = 50))
+                    .clickable(onClickLabel = "Switch to the task in ContextSwitcher", role = Role.Button) { uriHandler.openUri(Task.contextSwitcherLink(value)) }
+                    .pointerHoverIcon(PointerIcon.Hand)
+                    .testTag("label-cs"),
+                key = "$key:",
+            )
             overdue -> Label(value, colors.errorContainer, colors.onErrorContainer, key = "$key:")
             dueToday -> Label(value, colors.primaryContainer, colors.onPrimaryContainer, key = "$key:")
             else -> Label(value, colors.surfaceVariant, colors.onSurfaceVariant, key = "$key:")

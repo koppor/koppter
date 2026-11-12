@@ -25,7 +25,10 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import io.github.koppor.koppter.storage.Appearance
 import io.github.koppor.koppter.storage.ColorTheme
 import io.github.koppor.koppter.storage.CompanionFiles
@@ -220,6 +223,33 @@ class AppTest {
         onNodeWithTag("settings-save").performClick()
         onAllNodesWithTag("task-done")[0].performClick()
         assertEquals("x 2026-11-12 Thank Mom @phone due:2026-11-20 pri:A", storage.text.lines()[2])
+    }
+
+    // [utest->dsn~context-switcher-tag~1]
+    @Test
+    fun theLabelOfAContextSwitcherTaskSwitchesToItAndAPastedLinkBecomesTheTag() = runComposeUiTest {
+        val opened = mutableListOf<String>()
+        val links = object : UriHandler {
+            override fun openUri(uri: String) {
+                if ("missing" in uri) error("no handler")
+                opened += uri
+            }
+        }
+        val controller = TodoController(Settings(), { storage }, today = { LocalDate(2026, 11, 12) })
+        setContent { CompositionLocalProvider(LocalUriHandler provides links) { App(controller, "todo.txt") } }
+
+        onNodeWithTag("quick-add").performTextInput("Review the comments contextswitcher://task/jabref/fix-npe +JabRef")
+        onNodeWithTag("quick-add").performKeyInput { pressKey(Key.Enter) }
+        assertEquals("Review the comments +JabRef cs:jabref/fix-npe", storage.text.trim().lines().last())
+
+        onNodeWithTag("label-cs", useUnmergedTree = true).performClick()
+        assertEquals(listOf("contextswitcher://switch/jabref/fix-npe"), opened)
+        // The click on the label does not open the task.
+        onNodeWithTag("edit-dialog").assertDoesNotExist()
+
+        controller.add("Call cs:missing")
+        onAllNodesWithTag("label-cs", useUnmergedTree = true)[1].performClick()
+        onNodeWithText("Not opened: contextswitcher://switch/missing").assertExists()
     }
 
     // [utest->dsn~color-themes~1]

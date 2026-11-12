@@ -45,6 +45,14 @@ data class Task(
     /** The value of the first tag with the given key. */
     fun tag(key: String): String? = tags.firstOrNull { it.first == key }?.second
 
+    /** Replaces links that were copied from ContextSwitcher by `cs:` tags behind the other metadata. */
+    // [impl->dsn~context-switcher-tag~1]
+    fun withContextSwitcherTags(): Task {
+        val ids = tokens.mapNotNull { CONTEXT_SWITCHER_LINK.matchEntire(it)?.groupValues?.get(1) }
+        if (ids.isEmpty()) return this
+        return copy(body = (tokens.filterNot(CONTEXT_SWITCHER_LINK::matches) + ids.map { "$CONTEXT_SWITCHER:$it" }).joinToString(" "))
+    }
+
     val due: LocalDate? get() = tag(DUE)?.let(::parseDate)
 
     /** The threshold date: the task is not relevant before it. */
@@ -166,6 +174,16 @@ data class Task(
         const val RECURRENCE = "rec"
         const val PRIORITY = "pri"
         const val NOTE = "note"
+        const val CONTEXT_SWITCHER = "cs"
+
+        /**
+         * The link that makes ContextSwitcher switch to the task that a tag `cs:` names.
+         * The tag holds the id as a link of ContextSwitcher has it, so the link needs no encoding.
+         */
+        // [impl->dsn~context-switcher-tag~1]
+        fun contextSwitcherLink(id: String) = "contextswitcher://switch/$id"
+
+        private val CONTEXT_SWITCHER_LINK = Regex("^contextswitcher://(?:task|switch)/(.+)$")
 
         private val WHITESPACE = Regex("\\s+")
         private val PRIORITY_PREFIX = Regex("^\\(([A-Z])\\) ")
