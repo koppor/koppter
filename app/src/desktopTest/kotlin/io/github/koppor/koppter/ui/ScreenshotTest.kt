@@ -4,7 +4,8 @@ import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.runDesktopComposeUiTest
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.TodoStorage
 import kotlinx.datetime.LocalDate
@@ -36,6 +37,9 @@ class ScreenshotTest {
         val controller = TodoController(Settings(), { storage }, today = { LocalDate(2026, 11, 12) })
         setContent { App(controller, "todo.txt") }
         save("main.png")
+        onNodeWithTag("board-switch").performClick()
+        save("board.png")
+        onNodeWithTag("board-switch").performClick()
         onNodeWithText("Test hallo du").performClick()
         save("edit.png")
     }

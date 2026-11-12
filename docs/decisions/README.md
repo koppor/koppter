@@ -12,6 +12,8 @@ Architectural decisions are recorded as [Markdown Architectural Decision Records
 | [0005](0005-dates-from-the-git-history.md) | Creation and completion dates come from the git history |
 | [0006](0006-jgit-for-git-access.md) | JGit for git access |
 | [0007](0007-ssh-key-created-in-the-application.md) | SSH key created in the application on devices without SSH configuration |
+| [0008](0008-board-columns-by-attribute.md) | Board columns are the values of an attribute |
+| [0009](0009-no-notation-for-most-important-tasks.md) | No separate notation for most important tasks |
 
 ## Conventions
 

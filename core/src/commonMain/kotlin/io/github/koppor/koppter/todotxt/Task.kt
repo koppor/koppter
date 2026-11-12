@@ -1,6 +1,9 @@
 package io.github.koppor.koppter.todotxt
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.minus
 
 /**
  * One task line of a todo.txt file.
@@ -118,6 +121,29 @@ data class Task(
                 else -> others.map { if (it.first == key) key to value else it }
             },
         )
+    }
+
+    /**
+     * The next occurrence of a recurring task, to be added when this one is completed; `null` without a `rec:` tag.
+     *
+     * A strict recurrence counts from the due date (or, without one, the threshold date) of this task,
+     * a plain one from [today]. The distance between threshold and due date is kept.
+     * A task without either date gets a due date, as the recurrence would otherwise be invisible.
+     */
+    // [impl->dsn~recurrence-on-completion~1]
+    fun nextOccurrence(today: LocalDate): Task? {
+        val recurrence = recurrence ?: return null
+        val due = due
+        val threshold = threshold
+        val from = if (recurrence.strict) due ?: threshold ?: today else today
+        val next = recurrence.next(from)
+        val open = if (completed) reopen() else this
+        return when {
+            due != null && threshold != null ->
+                open.withTag(DUE, next.toString()).withTag(THRESHOLD, next.minus(threshold.daysUntil(due), DateTimeUnit.DAY).toString())
+            due == null && threshold != null -> open.withTag(THRESHOLD, next.toString())
+            else -> open.withTag(DUE, next.toString())
+        }.copy(creationDate = null, completionDate = null)
     }
 
     /** The task as it is added to the file: with today as creation date if dates are written. */

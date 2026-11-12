@@ -57,6 +57,8 @@ fun SettingsDialog(
     val scope = rememberCoroutineScope()
     var todoFile by remember { mutableStateOf(settings.todoFile) }
     var writeDates by remember { mutableStateOf(settings.writeDates) }
+    var topCount by remember { mutableStateOf(settings.topCount.toString()) }
+    val topCountValue = topCount.trim().toIntOrNull()?.takeIf { it > 0 }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large, tonalElevation = 6.dp, modifier = Modifier.widthIn(max = 560.dp).testTag("settings-dialog")) {
@@ -84,6 +86,14 @@ fun SettingsDialog(
                     Checkbox(checked = writeDates, onCheckedChange = null, modifier = Modifier.padding(6.dp))
                     Text("Write creation and completion dates into the file")
                 }
+                OutlinedTextField(
+                    value = topCount,
+                    onValueChange = { topCount = it },
+                    label = { Text("Number of tasks in the Top view") },
+                    isError = topCountValue == null,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("settings-top-count"),
+                )
                 Text(
                     "A file in a git repository is committed after every change and synchronized with the remote repository.",
                     style = MaterialTheme.typography.bodySmall,
@@ -96,7 +106,8 @@ fun SettingsDialog(
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = onDismiss) { Text("Cancel") }
                     Button(
-                        onClick = { onSave(settings.copy(todoFile = todoFile.trim(), writeDates = writeDates)) },
+                        onClick = { onSave(settings.copy(todoFile = todoFile.trim(), writeDates = writeDates, topCount = topCountValue ?: settings.topCount)) },
+                        enabled = topCountValue != null,
                         modifier = Modifier.testTag("settings-save"),
                     ) { Text("Save") }
                 }

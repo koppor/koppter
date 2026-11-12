@@ -2,7 +2,10 @@ package io.github.koppor.koppter.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +22,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import io.github.koppor.koppter.storage.SyncState
 import io.github.koppor.koppter.storage.SyncStatus
 import io.github.koppor.koppter.todotxt.Entry
+import io.github.koppor.koppter.todotxt.GroupKey
 import io.github.koppor.koppter.todotxt.Task
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -163,13 +168,13 @@ private fun MainScreen(
                     }
                     Column(Modifier.weight(1f)) {
                         QuickAdd(onAdd = controller::add)
-                        TaskList(
-                            entries = controller.visible,
-                            today = controller.today(),
-                            onToggle = controller::toggle,
-                            onOpen = { editing = Editing(it) },
-                            emptyText = if (controller.file.entries.isEmpty()) "No tasks" else "No task matches the filter",
-                        )
+                        ViewOptions(controller)
+                        val emptyText = if (controller.file.entries.isEmpty()) "No tasks" else "No task matches the filter"
+                        if (controller.board) {
+                            Board(controller.groups, controller.today(), controller::toggle, { editing = Editing(it) }, emptyText)
+                        } else {
+                            TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, emptyText)
+                        }
                     }
                 }
             }
@@ -206,6 +211,37 @@ private fun MainScreen(
             },
             onDismiss = { showSettings = false },
         )
+    }
+}
+
+/** The switches above the tasks: only the top tasks, list or board, and the attribute that forms the columns of the board. */
+// [impl->dsn~view-options~1]
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ViewOptions(controller: TodoController) {
+    FlowRow(Modifier.padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        FilterChip(
+            selected = controller.topOnly,
+            onClick = { controller.topOnly = !controller.topOnly },
+            label = { Text("Top ${controller.settings.topCount}") },
+            modifier = Modifier.testTag("top"),
+        )
+        FilterChip(
+            selected = controller.board,
+            onClick = { controller.board = !controller.board },
+            label = { Text("Board") },
+            modifier = Modifier.testTag("board-switch"),
+        )
+        if (controller.board) {
+            for (key in GroupKey.entries) {
+                FilterChip(
+                    selected = controller.groupKey == key,
+                    onClick = { controller.groupKey = key },
+                    label = { Text("by ${key.label.lowercase()}") },
+                    modifier = Modifier.testTag("group-${key.name}"),
+                )
+            }
+        }
     }
 }
 

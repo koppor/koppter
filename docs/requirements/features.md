@@ -66,6 +66,8 @@ Needs: req
 
 The application shows the tasks as a board with columns.
 
+Needs: req
+
 ## Platforms
 `feat~platforms~1`
 

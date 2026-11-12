@@ -7,11 +7,15 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import io.github.koppor.koppter.todotxt.Entry
+import io.github.koppor.koppter.todotxt.Group
 import kotlinx.datetime.LocalDate
 
 @Composable
@@ -78,6 +83,50 @@ fun TaskCard(entry: Entry, today: LocalDate, onToggle: () -> Unit, onOpen: () ->
                     textDecoration = if (task.completed) TextDecoration.LineThrough else null,
                     color = if (task.completed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 )
+            }
+        }
+    }
+}
+
+/**
+ * The tasks as a board: one column per group, side by side, each a list of task cards.
+ * The board scrolls horizontally, each column vertically.
+ */
+// [impl->dsn~board~1]
+@Composable
+fun Board(
+    groups: List<Group>,
+    today: LocalDate,
+    onToggle: (Entry) -> Unit,
+    onOpen: (Entry) -> Unit,
+    emptyText: String,
+    modifier: Modifier = Modifier,
+) {
+    if (groups.isEmpty()) {
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(emptyText, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        return
+    }
+    Row(
+        modifier.fillMaxSize().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp).testTag("board"),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        for (group in groups) {
+            Column(Modifier.width(320.dp).fillMaxHeight().testTag("board-column")) {
+                Text(
+                    "${group.title} (${group.entries.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp).testTag("board-column-title"),
+                )
+                LazyColumn(
+                    contentPadding = PaddingValues(bottom = 88.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    items(group.entries, key = { it.index }) { entry ->
+                        TaskCard(entry, today, onToggle = { onToggle(entry) }, onOpen = { onOpen(entry) })
+                    }
+                }
             }
         }
     }

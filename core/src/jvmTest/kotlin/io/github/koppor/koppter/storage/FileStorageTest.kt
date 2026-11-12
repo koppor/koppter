@@ -41,7 +41,7 @@ class FileStorageTest {
     fun settingsSurviveSavingAndLoading() {
         val file = SettingsFile(directory.resolve("config/settings.properties"))
         assertEquals(Settings(), file.load())
-        val settings = Settings(todoFile = "C:\\Users\\me\\todo.txt", writeDates = true)
+        val settings = Settings(todoFile = "C:\\Users\\me\\todo.txt", writeDates = true, topCount = 5)
         file.save(settings)
         assertEquals(settings, file.load())
     }

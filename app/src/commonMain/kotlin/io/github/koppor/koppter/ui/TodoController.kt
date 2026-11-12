@@ -11,6 +11,9 @@ import io.github.koppor.koppter.storage.TodoStorage
 import io.github.koppor.koppter.sync.TaskDates
 import io.github.koppor.koppter.todotxt.Entry
 import io.github.koppor.koppter.todotxt.Filter
+import io.github.koppor.koppter.todotxt.Group
+import io.github.koppor.koppter.todotxt.GroupKey
+import io.github.koppor.koppter.todotxt.groupEntries
 import io.github.koppor.koppter.todotxt.Task
 import io.github.koppor.koppter.todotxt.TodoFile
 import io.github.koppor.koppter.todotxt.listOrder
@@ -34,6 +37,17 @@ class TodoController(
         private set
     var filter by mutableStateOf(Filter())
     var error by mutableStateOf<String?>(null)
+
+    /**
+     * Restricts the list to its first tasks, the ones to do next.
+     * With priority A and a due date, these are the most important tasks; there is no notation of its own for them.
+     */
+    // [impl->dsn~most-important-tasks~1]
+    var topOnly by mutableStateOf(false)
+
+    /** Shows the tasks as a board with one column per value of [groupKey] instead of as a list. */
+    var board by mutableStateOf(false)
+    var groupKey by mutableStateOf(GroupKey.PRIORITY)
 
     /** The state of the synchronization; `null` if the storage does not synchronize. */
     var syncStatus by mutableStateOf<SyncStatus?>(null)
@@ -72,6 +86,12 @@ class TodoController(
     // [impl->dsn~visible-tasks~1]
     val visible: List<Entry>
         get() = file.entries.filter { filter.matches(it.task, today()) }.sortedWith(listOrder)
+            // [impl->dsn~top-tasks~1]
+            .let { if (topOnly) it.take(settings.topCount) else it }
+
+    /** The visible tasks as the columns of the board. */
+    // [impl->dsn~board~1]
+    val groups: List<Group> get() = groupEntries(visible, groupKey, today())
 
     val projects: List<String> get() = file.entries.flatMap { it.task.projects }.distinct().sorted()
     val contexts: List<String> get() = file.entries.flatMap { it.task.contexts }.distinct().sorted()
@@ -106,7 +126,10 @@ class TodoController(
         if (entry.task.completed) {
             write(file.replace(index, entry.task.reopen()), "Reopen task: ${entry.task.description}")
         } else {
-            write(file.replace(index, entry.task.complete(today(), settings.writeDates)), "Complete task: ${entry.task.description}")
+            var new = file.replace(index, entry.task.complete(today(), settings.writeDates))
+            // [impl->dsn~recurrence-on-completion~1]
+            entry.task.nextOccurrence(today())?.let { new = new.add(it.created(today(), settings.writeDates)) }
+            write(new, "Complete task: ${entry.task.description}")
         }
     }
 

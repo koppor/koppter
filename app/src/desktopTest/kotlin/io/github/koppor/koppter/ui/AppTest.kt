@@ -254,4 +254,47 @@ class AppTest {
         onNodeWithTag("settings-save").performClick()
         assertEquals("/data/repository/todo.txt", controller.settings.todoFile)
     }
+
+    // [utest->dsn~recurrence-on-completion~1]
+    @Test
+    fun completingARecurringTaskAddsItsNextOccurrence() = runComposeUiTest {
+        storage.text = "Water plants due:2026-11-10 rec:1w\n"
+        start()
+        onNodeWithTag("task-done").performClick()
+        assertEquals("x Water plants due:2026-11-10 rec:1w\nWater plants due:2026-11-19 rec:1w\n", storage.text)
+        onAllNodesWithTag("task").assertCountEquals(1)
+    }
+
+    // [utest->dsn~top-tasks~1]
+    // [utest->dsn~view-options~1]
+    @Test
+    fun theTopViewShowsTheFirstTasksOnly() = runComposeUiTest {
+        start(Settings(topCount = 2))
+        onNodeWithTag("top").assertTextEquals("Top 2").performClick()
+        onAllNodesWithTag("task").assertCountEquals(2)
+        onNodeWithText("Thank Mom").assertExists()
+        onNodeWithText("Schedule pickup").assertExists()
+        onNodeWithTag("top").performClick()
+        onAllNodesWithTag("task").assertCountEquals(3)
+    }
+
+    // [utest->dsn~board~1]
+    // [utest->dsn~view-options~1]
+    @Test
+    fun theBoardShowsOneColumnPerGroup() = runComposeUiTest {
+        start()
+        onNodeWithTag("board-switch").performClick()
+        onAllNodesWithTag("board-column").assertCountEquals(3)
+        onNodeWithText("A (1)").assertExists()
+        onNodeWithText("No priority (1)").assertExists()
+
+        onNodeWithTag("group-PROJECT").performClick()
+        onAllNodesWithTag("board-column").assertCountEquals(2)
+        onNodeWithText("+GarageSale (2)").assertExists()
+        onNodeWithText("No project (1)").assertExists()
+
+        // A task on the board is completed and edited like a task in the list.
+        onNodeWithText("Thank Mom").performClick()
+        onNodeWithTag("edit-dialog").assertExists()
+    }
 }

@@ -154,4 +154,40 @@ class TaskTest {
         assertEquals("(A) 2026-11-12 Call Mom", Task.parse("(A) Call Mom").created(today, writeDate = true).toLine())
         assertEquals("2026-11-01 Call Mom", Task.parse("2026-11-01 Call Mom").created(today, writeDate = true).toLine())
     }
+
+    // [utest->dsn~recurrence-on-completion~1]
+    @Test
+    fun aPlainRecurrenceCountsFromToday() {
+        val task = Task.parse("(B) Water plants due:2026-11-01 rec:1w")
+        assertEquals("(B) Water plants due:2026-11-19 rec:1w", task.nextOccurrence(today)!!.toLine())
+    }
+
+    // [utest->dsn~recurrence-on-completion~1]
+    @Test
+    fun aStrictRecurrenceCountsFromTheDueDate() {
+        val task = Task.parse("Pay rent due:2026-11-01 rec:+1m")
+        assertEquals("Pay rent due:2026-12-01 rec:+1m", task.nextOccurrence(today)!!.toLine())
+    }
+
+    // [utest->dsn~recurrence-on-completion~1]
+    @Test
+    fun theDistanceBetweenThresholdAndDueDateIsKept() {
+        val task = Task.parse("Tax return t:2026-11-01 due:2026-11-11 rec:+1y")
+        assertEquals("Tax return t:2027-11-01 due:2027-11-11 rec:+1y", task.nextOccurrence(today)!!.toLine())
+        assertEquals("Check mail t:2026-11-13 rec:1d", Task.parse("Check mail t:2026-11-10 rec:1d").nextOccurrence(today)!!.toLine())
+    }
+
+    // [utest->dsn~recurrence-on-completion~1]
+    @Test
+    fun aRecurringTaskWithoutDatesGetsADueDateAndOthersDoNotRecur() {
+        assertEquals("Stretch rec:1d due:2026-11-13", Task.parse("Stretch rec:1d").nextOccurrence(today)!!.toLine())
+        assertNull(Task.parse("Call Mom").nextOccurrence(today))
+    }
+
+    // [utest->dsn~recurrence-on-completion~1]
+    @Test
+    fun theNextOccurrenceOfACompletedTaskIsOpenWithItsPriority() {
+        val completed = Task.parse("(A) 2026-11-01 Water plants rec:1w").complete(today, writeDate = true)
+        assertEquals("(A) Water plants rec:1w due:2026-11-19", completed.nextOccurrence(today)!!.toLine())
+    }
 }

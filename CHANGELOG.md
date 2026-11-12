@@ -20,6 +20,9 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - On Android, the settings show the public SSH key of the device and clone a git repository whose todo.txt file is then used.
 - Synchronization status and a button to synchronize in the top bar.
 - The edit dialog shows when a task was added and completed, derived from the git history.
+- Completing a task with a recurrence tag (`rec:`) adds its next occurrence.
+- *Top* switch that restricts the list to the first tasks; their number is a setting.
+- Board view with one column per priority, project, context or due date range.
 - Changes that other programs make to the todo.txt file are picked up while the application runs.
 - Project infrastructure: Gradle build with a Kotlin Multiplatform `core` module, requirements tracing, decision records and continuous integration.
 
