@@ -18,7 +18,7 @@ import io.github.koppor.koppter.todotxt.BoardColumn
 // [impl->dsn~config-file~1]
 object ConfigFile {
     // ponytail: one name for every todo.txt file, so two todo.txt files in one directory share it; derive it from the file name if that matters.
-    const val NAME = "todo.txt-config.yml"
+    const val NAME = "koppter.yml"
 
     private const val BOARD_COLUMNS = "board-columns:"
     private const val HEADER = "# Configuration of koppter for the todo.txt file in this directory"

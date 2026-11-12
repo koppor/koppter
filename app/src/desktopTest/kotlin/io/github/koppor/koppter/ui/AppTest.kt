@@ -440,7 +440,7 @@ class AppTest {
         assertEquals(
             "# Configuration of koppter for the todo.txt file in this directory\n" +
                 "board-columns:\n  \"Phone\": \"@phone\"\n  \"Soon\": \"due:<2w\"\n  \"Nothing\": \"+Nowhere\"\n",
-            storage.companions["todo.txt-config.yml"],
+            storage.companions["koppter.yml"],
         )
         assertEquals("Edit board columns", storage.changes.last())
         onNodeWithTag("group-FILTER").performClick()
@@ -456,7 +456,7 @@ class AppTest {
     fun columnsThatAnotherDeviceDefinedAppear() = runComposeUiTest {
         start()
         onNodeWithTag("board-switch").performClick()
-        storage.companions["todo.txt-config.yml"] = "board-columns:\n  Phone: \"@phone\"\n"
+        storage.companions["koppter.yml"] = "board-columns:\n  Phone: \"@phone\"\n"
         mainClock.advanceTimeBy(5_000)
 
         onNodeWithTag("group-FILTER").performClick()
@@ -466,7 +466,7 @@ class AppTest {
     // [utest->dsn~board-move-to-filter~1]
     @Test
     fun draggingACardToAColumnDefinedByAFilterMakesTheTaskMatchTheFilter() = runComposeUiTest {
-        storage.companions["todo.txt-config.yml"] = "board-columns:\n  Phone: \"@phone\"\n  Garage: +GarageSale\n"
+        storage.companions["koppter.yml"] = "board-columns:\n  Phone: \"@phone\"\n  Garage: +GarageSale\n"
         start()
         onNodeWithTag("board-switch").performClick()
         onNodeWithTag("group-FILTER").performClick()

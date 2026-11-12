@@ -68,7 +68,7 @@ The planned scope is tracked as requirements in [docs/requirements](docs/require
 | --- | --- |
 | `todo.txt` | The tasks |
 | `notes/<name>.txt` | The note of the task with the tag `note:<name>.txt` |
-| `todo.txt-config.yml` | Configuration that belongs to the todo.txt file: the [board columns defined by filters](#board) |
+| `koppter.yml` | Configuration of this application that belongs to the todo.txt file: the [board columns defined by filters](#board) |
 | `ice_recur.txt` | Schedules of [recurring tasks](#recurring-tasks) in the format of the ice_recur add-on, such as `weekly ; day Monday - (B) Plan the week` |
 
 If these files lie in a git repository, the application commits every change and synchronizes with the remote repository.
@@ -188,7 +188,7 @@ The board shows one column per priority, project, context, hashtag or due date r
 Dragging a task to another column changes that attribute of the task.
 
 Columns can also be defined by filters, one per line as `title = filter`.
-They are entered in the settings and kept in `todo.txt-config.yml` next to the todo.txt file, so that they are synchronized with the tasks ([decision 0012](docs/decisions/0012-board-columns-by-filter-in-a-file.md)):
+They are entered in the settings and kept in `koppter.yml` next to the todo.txt file, so that they are synchronized with the tasks ([decision 0012](docs/decisions/0012-board-columns-by-filter-in-a-file.md)):
 
 ```text
 Now = due:<=today -@waiting
@@ -209,7 +209,7 @@ Dragging a task to such a column changes the task as little as possible so that 
 Nothing else is removed, so the task stays in its former column as well unless the filter of the new column excludes that.
 A column whose filter contains a word or a negated comparison does not take tasks.
 
-In `todo.txt-config.yml`, a filter that contains a hashtag has to be quoted (`Doing: "#doing"`), as YAML reads an unquoted `#` as the start of a comment.
+In `koppter.yml`, a filter that contains a hashtag has to be quoted (`Doing: "#doing"`), as YAML reads an unquoted `#` as the start of a comment.
 The application writes all filters quoted.
 
 ## Building

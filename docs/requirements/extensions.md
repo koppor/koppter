@@ -237,7 +237,7 @@ Needs: impl, utest
 ### Configuration file
 `dsn~config-file~1`
 
-`ConfigFile` reads and changes the companion file `todo.txt-config.yml`, a YAML file with the configuration that belongs to the todo.txt file.
+`ConfigFile` reads and changes the companion file `koppter.yml`, a YAML file with the configuration that belongs to the todo.txt file; it is named after the application that reads it.
 The key `board-columns` maps the title of each column to its filter expression, one column per line, in the order of the board.
 Titles and expressions are read as plain, single-quoted or double-quoted scalars and written double-quoted.
 Replacing the columns keeps the other content of the file.

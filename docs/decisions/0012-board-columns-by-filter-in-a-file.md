@@ -27,7 +27,9 @@ Which syntax is used, and where are the definitions kept?
 
 Chosen option: "Expressions in the syntax of topydo, kept in a configuration file next to the todo.txt file", because the syntax is known to users of topydo and the board is then the same on every device that synchronizes the tasks.
 
-The file is `todo.txt-config.yml`, a name that file listings sort next to the todo.txt file.
+The file is `koppter.yml`.
+The directory of the todo.txt file collects the files that belong to the tasks, as `ice_recur.txt` and `notes` show, so the name needs no reference to todo.txt.
+It names the application instead, as the content is in a format of this application and the directory may hold files of other tools.
 It is a YAML file, so that it can take further configuration that belongs to the todo.txt file rather than to a device.
 The key `board-columns` maps the title of each column to its expression, one column per line.
 The columns are edited in the settings dialog, and the file is committed like the notes.

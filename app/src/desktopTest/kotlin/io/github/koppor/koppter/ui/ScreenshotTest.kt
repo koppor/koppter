@@ -30,7 +30,7 @@ import kotlin.test.assertTrue
 class ScreenshotTest {
     private val storage = object : SyncingStorage, CompanionFiles {
         private val companions = mapOf(
-            "todo.txt-config.yml" to """
+            "koppter.yml" to """
                 board-columns:
                   Now: due:<=today -@waiting
                   Waiting: "@waiting"
