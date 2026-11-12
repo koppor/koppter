@@ -24,6 +24,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Completing a task with a recurrence tag (`rec:`, such as `rec:2w`, `rec:m` or `rec:+1y`) adds its next occurrence.
 - Notes for tasks, kept as files in the directory `notes` next to the todo.txt file and named by the tag `note:`.
 - Tasks scheduled in `ice_recur.txt` next to the todo.txt file are added on their days; days on which the application was not open are caught up.
+- Editor for the schedule of `ice_recur.txt`, which shows for each entry the next day on which it adds its task and marks lines that are not understood.
 - *Top* switch that restricts the list to the first tasks; their number is a setting.
 - Hashtags (`#tag`) as a third kind of label next to projects and contexts: shown on the task, offered in the filter panel, the edit dialog and the filters of board columns.
 - Board view with one column per priority, project, context, hashtag or due date range.

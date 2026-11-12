@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -100,6 +101,7 @@ private fun MainScreen(
 ) {
     var editing by remember { mutableStateOf<Editing?>(null) }
     var showSettings by remember { mutableStateOf(false) }
+    var schedule by remember { mutableStateOf<String?>(null) }
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
@@ -149,6 +151,11 @@ private fun MainScreen(
                         },
                         actions = {
                             controller.syncStatus?.let { SyncIndicator(it, onSync = controller::sync) }
+                            if (controller.canSchedule) {
+                                IconButton(onClick = { schedule = controller.schedule() }, modifier = Modifier.testTag("open-schedule")) {
+                                    Icon(Icons.Default.DateRange, contentDescription = "Scheduled tasks")
+                                }
+                            }
                             IconButton(onClick = { showSettings = true }, modifier = Modifier.testTag("open-settings")) {
                                 Icon(Icons.Default.Settings, contentDescription = "Settings")
                             }
@@ -206,6 +213,17 @@ private fun MainScreen(
                 editing = null
             },
             onDismiss = { editing = null },
+        )
+    }
+    schedule?.let {
+        ScheduleDialog(
+            schedule = it,
+            today = controller.today(),
+            onSave = { text ->
+                controller.updateSchedule(text)
+                schedule = null
+            },
+            onDismiss = { schedule = null },
         )
     }
     if (showSettings) {

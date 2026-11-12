@@ -100,4 +100,16 @@ class IceRecurTest {
         assertEquals(1, added("Pay the rent +Home", "Pay the rent"))
         assertEquals(1, added("Pay the rent", "Pay the rent rec:1m"))
     }
+
+    // [utest->dsn~ice-recur-editor~1]
+    @Test
+    fun theLinesOfAScheduleTellTheirNextDayOrThatTheyAreNotUnderstood() {
+        val thursday = LocalDate(2026, 11, 12)
+        val lines = iceRecurLines("# Household\n\nweekly ; day Monday - Plan the week\nsometimes - Dream\n@@2026-11-01 daily - Rake the leaves\n")
+
+        assertEquals(listOf(3, 4, 5), lines.map { it.number })
+        assertEquals(LocalDate(2026, 11, 16), lines[0].entry?.next(thursday))
+        assertEquals(null, lines[1].entry)
+        assertEquals(null, lines[2].entry!!.next(thursday))
+    }
 }

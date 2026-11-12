@@ -366,6 +366,27 @@ class AppTest {
         assertEquals(0, storage.text.lines().count { "kitchen" in it })
     }
 
+    // [utest->dsn~ice-recur-editor~1]
+    @Test
+    fun theScheduleIsEditedAndANewEntryAddsItsTaskOfToday() = runComposeUiTest {
+        storage.companions["ice_recur.txt"] = "weekly ; day Thursday - Put out the bin\n"
+        start(Settings(iceRecurLastRun = "2026-11-12"))
+        onNodeWithTag("open-schedule").performClick()
+        onNodeWithTag("schedule-line-1").assertTextEquals("Line 1: next on Thu 2026-11-12")
+
+        onNodeWithTag("schedule-text").performTextReplacement("weekly ; day Thursday - Put out the bin\ndaily - Check the mail\nsometimes - Dream\nweekly ; day Monday - Plan the week")
+        onNodeWithTag("schedule-line-3").assertTextEquals("Line 3 is not understood")
+        onNodeWithTag("schedule-line-4").assertTextEquals("Line 4: next on Mon 2026-11-16")
+        onNodeWithTag("schedule-save").performScrollTo().performClick()
+
+        assertEquals("weekly ; day Thursday - Put out the bin\ndaily - Check the mail\nsometimes - Dream\nweekly ; day Monday - Plan the week\n", storage.companions["ice_recur.txt"])
+        assertEquals("Edit scheduled tasks", storage.changes.last())
+        // Only the new entry that occurs today adds its task; the entry that was there ran already.
+        assertEquals("Check the mail", storage.text.trim().lines().last())
+        assertEquals(0, storage.text.lines().count { "bin" in it || "Plan" in it })
+        onNodeWithText("Check the mail").assertExists()
+    }
+
     // [utest->dsn~board-drag~1]
     @Test
     fun draggingACardToAnotherColumnChangesTheTask() = runComposeUiTest {

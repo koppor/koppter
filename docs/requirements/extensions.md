@@ -63,6 +63,18 @@ Covers:
 
 Needs: dsn
 
+### Editor of the scheduled tasks
+`req~scheduled-tasks-editor~1`
+
+The user edits the schedule of `ice_recur.txt` in the application.
+The application tells for each entry on which day it adds its task next, and which lines it does not understand.
+
+Covers:
+
+* `feat~extensions~1`
+
+Needs: dsn
+
 ### Board
 `req~board~1`
 
@@ -371,5 +383,19 @@ With a synchronizing storage, the run waits for a running synchronization, and a
 Covers:
 
 * `req~scheduled-tasks~1`
+
+Needs: impl, utest
+
+### Editor of ice_recur
+`dsn~ice-recur-editor~1`
+
+`ScheduleDialog`, opened from the top bar if the storage keeps files next to the todo.txt file, edits the text of `ice_recur.txt`.
+`iceRecurLines` returns the lines that are neither blank nor comments; the dialog shows for each the day of `IceRecurEntry.next`, or that the line is not understood.
+Such a line does not prevent saving, as the run skips it.
+`TodoController.updateSchedule` writes the file and adds the tasks that the lines which were not in the file before have for today, as the run of the day does not come back to them.
+
+Covers:
+
+* `req~scheduled-tasks-editor~1`
 
 Needs: impl, utest

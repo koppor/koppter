@@ -189,6 +189,37 @@ class TodoController(
         }
     }
 
+    /** Whether the storage keeps files next to the todo.txt file, of which the schedule is one. */
+    val canSchedule: Boolean get() = config != null
+
+    /** The schedule of `ice_recur.txt`; empty if the file does not exist, `null` if it cannot be read. */
+    fun schedule(): String? = try {
+        (storage as? CompanionFiles)?.let { it.readCompanion(ICE_RECUR_FILE).orEmpty().replace("\r\n", "\n") }
+    } catch (e: Exception) {
+        error = e.message ?: e.toString()
+        null
+    }
+
+    /** Writes the schedule and adds the tasks that its new and changed entries have for today. */
+    // [impl->dsn~ice-recur-editor~1]
+    fun updateSchedule(text: String) {
+        val old = schedule() ?: return
+        val new = text.trimEnd().let { if (it.isEmpty()) "" else "$it\n" }
+        if (new == old) return
+        guarded {
+            (storage as? CompanionFiles)?.writeCompanion(ICE_RECUR_FILE, new) ?: return@guarded
+            // The daily run does not come back to today, so an entry that was not there takes effect now.
+            val today = today()
+            val known = old.lines().toSet()
+            val tasks = iceRecurTasks(new.lines().filterNot { it in known }.joinToString("\n"), today..today, file.entries.map { it.task })
+            val added = tasks.fold(file) { current, (day, task) -> current.add(task.created(day, settings.writeDates)) }
+            // The storage records the files next to the todo.txt file with a change of that file.
+            storage.write(added.serialize(), "Edit scheduled tasks")
+            file = added
+            loadedVersion = storage.version()
+        }
+    }
+
     /** The text of the note of the task; empty if it has none, `null` if the storage keeps no notes. */
     // [impl->dsn~notes~1]
     fun noteOf(task: Task): String? = try {

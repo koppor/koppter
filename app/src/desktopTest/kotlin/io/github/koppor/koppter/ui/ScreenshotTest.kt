@@ -37,6 +37,17 @@ class ScreenshotTest {
                   This week: due:<1w
                   Important: (>C)
             """.trimIndent(),
+            // No entry occurs on the day of the screenshots, so the list stays as the file has it.
+            "ice_recur.txt" to """
+                # Work
+                weekly ; day Monday - (B) Plan the week +Work
+                monthly ; day_of_month -1 - Send the time sheet +Work @computer
+
+                # Household
+                @2026-11-05 weekly 2 ; day Thursday - Put out the paper bin @home
+                monthly ; day_of_week Saturday => 1 - Clean the bike @home
+                @2026-04-15 yearly - (A) Renew the insurance #money
+            """.trimIndent() + "\n",
             "notes/k3f.txt" to "Agenda: results of the survey, plan for December.\nAsk for the room with the projector.",
         )
 
@@ -91,6 +102,13 @@ class ScreenshotTest {
         onNodeWithTag("edit-cancel").performClick()
         onNodeWithTag("open-settings").performClick()
         save("settings.png")
+    }
+
+    @Test
+    fun rendersSchedule() = runDesktopComposeUiTest(width = 1100, height = 980) {
+        start()
+        onNodeWithTag("open-schedule").performClick()
+        save("schedule.png")
     }
 
     @Test

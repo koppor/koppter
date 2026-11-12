@@ -56,6 +56,10 @@ data class IceRecurEntry(
         }
     }
 
+    /** The first day from [from] on which the entry occurs; `null` if there is none within ten years. */
+    // ponytail: tries each day; compute it from the rule if that ever shows.
+    fun next(from: LocalDate): LocalDate? = generateSequence(from) { it.plus(DatePeriod(days = 1)) }.take(3660).firstOrNull(::occursOn)
+
     companion object {
         /** The start the add-on assumes for an entry without one. */
         private val DEFAULT_START = LocalDate(2018, 1, 1)
@@ -140,6 +144,15 @@ private fun comparableText(task: Task) = task.body.split(' ').filter { it.isNotE
  * As in the add-on, two tasks have the same text if they differ at most in priority, dates,
  * and the tags `t:`, `due:` and `note:`. Several days are given after days on which the schedules were not run.
  */
+/** A line of a schedule with its number in the file; [entry] is `null` if the line is not understood. */
+data class IceRecurLine(val number: Int, val text: String, val entry: IceRecurEntry?)
+
+/** The lines of the schedule that are neither blank nor comments. */
+// [impl->dsn~ice-recur-editor~1]
+fun iceRecurLines(schedule: String): List<IceRecurLine> = schedule.lines().mapIndexedNotNull { index, line ->
+    if (line.isBlank() || line.trimStart().startsWith("#")) null else IceRecurLine(index + 1, line, IceRecurEntry.parse(line))
+}
+
 // [impl->dsn~ice-recur-run~1]
 fun iceRecurTasks(schedule: String, days: ClosedRange<LocalDate>, existing: List<Task>): List<Pair<LocalDate, Task>> {
     val entries = schedule.lines().mapNotNull(IceRecurEntry::parse)

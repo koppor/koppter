@@ -39,6 +39,10 @@ The settings, with the board columns by filter and the public SSH key for the gi
 
 ![Settings dialog](docs/screenshots/settings.png)
 
+The editor of the scheduled tasks tells for each entry on which day it adds its task next.
+
+![Editor of the scheduled tasks](docs/screenshots/schedule.png)
+
 In a narrow window, as on a phone, the filter panel is a drawer.
 
 ![Task list in a narrow window](docs/screenshots/narrow.png)
@@ -133,11 +137,14 @@ The next task keeps the priority.
 Use it for a task that has to appear on certain days whether or not the previous one is done: every Monday, on the first of the month, on the last Friday of the month.
 The format is that of the [ice_recur](https://github.com/rlpowell/todo-text-stuff/blob/master/ice_recur) add-on.
 
-1. Create the file `ice_recur.txt` next to the todo.txt file with a text editor; the application has no editor for it.
+1. Open the editor with the calendar button in the top bar.
+   It edits the file `ice_recur.txt` next to the todo.txt file, which any text editor can edit as well; the file name is fixed, as in the add-on.
 2. Write one entry per line: `[@start] [@@end] timing - task`.
    The part after ` - ` is the task as it is added to the todo.txt file.
 3. The application adds the tasks of the day when it is open, once per day.
    The days since it was last open are caught up.
+   A task of an entry that is added or changed in the editor and occurs today is added at once.
+4. Below the text, the editor tells for each entry the next day on which it adds its task, and which lines it does not understand.
 
 | Entry | Adds the task |
 | --- | --- |
@@ -169,7 +176,7 @@ The application differs from the add-on in these points:
 
 * The add-on is started once a day by a scheduler; the application runs the schedules itself, and only while it is open.
 * The add-on always writes the creation date; the application writes it only if writing dates is switched on in the settings.
-* The add-on stops at a line it does not understand; the application skips the line.
+* The add-on stops at a line it does not understand; the application skips the line and marks it in its editor.
 * The options of the add-on to ignore projects and contexts when comparing tasks do not exist.
 * Each device remembers on its own when it last ran the schedules.
   In a git repository, a task that any device added since then counts as existing, also when it is completed already.
