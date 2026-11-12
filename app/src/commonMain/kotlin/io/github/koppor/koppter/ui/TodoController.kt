@@ -4,6 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import io.github.koppor.koppter.storage.CompanionFiles
+import io.github.koppor.koppter.plan.CalendarTxt
+import io.github.koppor.koppter.plan.Ics
+import io.github.koppor.koppter.plan.PlanState
+import io.github.koppor.koppter.plan.Planned
+import io.github.koppor.koppter.plan.Span
+import io.github.koppor.koppter.plan.plan
 import io.github.koppor.koppter.storage.ConfigFile
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SyncState
@@ -44,6 +50,8 @@ class TodoController(
     private val storageFor: (Settings) -> TodoStorage,
     private val saveSettings: (Settings) -> Unit = {},
     val today: () -> LocalDate,
+    /** The minutes of today that have passed. */
+    private val minuteOfDay: () -> Int = { 0 },
 ) {
     var settings by mutableStateOf(settings)
         private set
@@ -70,6 +78,9 @@ class TodoController(
 
     /** The configuration file next to the todo.txt file; `null` if the storage keeps no files next to the todo.txt file. */
     private var config by mutableStateOf<String?>(null)
+
+    /** When the tasks are planned according to `calendar.txt`, by the text of their blocks; `null` without that file. */
+    private var planned by mutableStateOf<Map<String, Planned>?>(null)
 
     /** The columns the user defined. */
     val boardColumns: List<BoardColumn> get() = ConfigFile.boardColumns(config.orEmpty())
@@ -146,6 +157,11 @@ class TodoController(
             config
         }
         if (boardColumns.isEmpty() && groupKey == null) groupKey = GroupKey.PRIORITY
+        planned = try {
+            (storage as? CompanionFiles)?.readCompanion(CalendarTxt.NAME)?.let { CalendarTxt.planned(it, today()) }
+        } catch (_: Exception) {
+            planned
+        }
     }
 
     /** Replaces the columns the user defined by those in the text, one per line as `title = filter expression`. */
@@ -159,6 +175,63 @@ class TodoController(
             loadedVersion = storage.version()
         }
         loadConfig()
+    }
+
+    /** The state of the plan of an open task and a text that tells its start; `null` if nothing was planned yet. */
+    // [impl->dsn~plan-state~1]
+    fun planOf(task: Task): Pair<PlanState, String>? {
+        val plan = planned?.takeIf { !task.completed } ?: return null
+        val own = plan[CalendarTxt.text(task)]
+        return CalendarTxt.state(task, own) to (own?.let { "Planned for ${CalendarTxt.startText(it)}" } ?: "Not planned")
+    }
+
+    /** The configuration for planning as the dialog shows it; `null` if the storage keeps no files next to the todo.txt file. */
+    val planSettings: PlanSettings?
+        get() = config?.let { text ->
+            PlanSettings(
+                ConfigFile.toLines(ConfigFile.entries(text, ConfigFile.TIME_MAPS)),
+                ConfigFile.toLines(ConfigFile.entries(text, ConfigFile.CONTEXT_TIME_MAPS)),
+                ConfigFile.toLines(ConfigFile.entries(text, ConfigFile.BARRIERS)),
+            )
+        }
+
+    /**
+     * Saves the configuration for planning, plans the open tasks from now on and writes the plan to `calendar.txt`.
+     * The todo.txt file is not changed: the plan is derived from it.
+     *
+     * @param busy the times that are taken, by day
+     */
+    // [impl->dsn~plan-dialog~1]
+    fun plan(settings: PlanSettings, busy: Map<LocalDate, List<Span>> = emptyMap()): PlanResult? {
+        var result: PlanResult? = null
+        guarded {
+            val files = storage as? CompanionFiles ?: return@guarded
+            val newConfig = listOf(
+                ConfigFile.TIME_MAPS to settings.timeMaps,
+                ConfigFile.CONTEXT_TIME_MAPS to settings.contextMaps,
+                ConfigFile.BARRIERS to settings.barriers,
+            ).fold(config.orEmpty()) { text, (key, lines) -> ConfigFile.withEntries(text, key, ConfigFile.parseLines(lines)) }
+            if (newConfig != config.orEmpty()) files.writeCompanion(ConfigFile.NAME, newConfig)
+            val planConfig = ConfigFile.planConfig(newConfig)
+            // A block does not start at an odd minute.
+            val plan = plan(file.entries, planConfig, busy, today(), (minuteOfDay() + 14) / 15 * 15)
+            files.writeCompanion(CalendarTxt.NAME, CalendarTxt.write(files.readCompanion(CalendarTxt.NAME).orEmpty(), plan.blocks, today()))
+            // [impl->dsn~ics-export~1]
+            files.writeCompanion(Ics.NAME, Ics.write(plan.blocks, today()))
+            // The storage records the files next to the todo.txt file with a change of that file.
+            storage.write(file.serialize(), "Update the plan")
+            loadedVersion = storage.version()
+            val tasks = plan.blocks.map { it.entry }.distinct().size
+            result = PlanResult(
+                if (plan.blocks.isEmpty()) "Nothing was planned." else "Planned $tasks tasks until ${plan.blocks.last().date}.",
+                planConfig.problems,
+                plan.unplaced.map { entry ->
+                    "${entry.task.description}${entry.task.contexts.firstOrNull()?.let { " @$it" }.orEmpty()} (barrier ${planConfig.barrierOf(entry.task, today())})"
+                },
+            )
+        }
+        loadConfig()
+        return result
     }
 
     // [impl->dsn~share-actions~1]

@@ -36,6 +36,7 @@
 
 * `:core` — Kotlin Multiplatform, JVM target.
   `commonMain`: todo.txt model, parser, filter, sort, storage interface, settings.
+  `commonMain` `plan`: time maps, barriers, planner, `calendar.txt` and iCalendar writer (decision 0019); the todo.txt file leads and planning never changes it.
   `commonMain` `sync`: `mergeLines` (three-way line merge), `taskDates` (dates from history).
   `jvmMain`: file storage, settings file, `GitStorage` (JGit; used automatically when the file lies in a git working tree), `GitSetup` (SSH key, known hosts and clone for devices without `~/.ssh`).
   JGit types stay out of the public API of `:core`.
@@ -49,7 +50,7 @@
 * `:android` — the Android application: `MainActivity`, `DocumentStorage` (file behind a `content:` URI).
   Not run on a device or emulator in development sessions; say so when reporting Android changes.
   CI signs the release APK with the key from the secrets `SIGNING_KEYSTORE_BASE64` and `SIGNING_KEYSTORE_PASSWORD` (decision 0010); the key store itself is never committed.
-* Files next to todo.txt (`notes/`, `ice_recur.txt`, `koppter.yml`) go through `CompanionFiles`; `GitStorage` commits them with the next todo.txt change.
+* Files next to todo.txt (`notes/`, `ice_recur.txt`, `koppter.yml`, `calendar.txt`, `calendar.ics`) go through `CompanionFiles`; `GitStorage` commits them with the next todo.txt change.
 * UI elements carry a `testTag`; colors come from `MaterialTheme.colorScheme`, never from literals; `Theme.kt` builds the scheme from the palettes (decision 0015).
 * The file is the data store.
   A line that the user did not edit is written back unchanged.

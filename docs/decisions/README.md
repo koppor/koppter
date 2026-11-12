@@ -23,6 +23,7 @@ Architectural decisions are recorded as [Markdown Architectural Decision Records
 | [0016](0016-tag-for-the-task-of-contextswitcher.md) | A tag names the task of ContextSwitcher |
 | [0017](0017-levels-of-a-context-separated-by-a-greater-than-sign.md) | The levels of a context are separated by a greater-than sign |
 | [0018](0018-tag-for-the-duration-of-a-task.md) | A tag holds the duration of a task |
+| [0019](0019-the-plan-is-derived-and-kept-in-calendar-txt.md) | The plan is derived from the tasks and kept in calendar.txt |
 
 ## Conventions
 

@@ -10,6 +10,7 @@ Requirements are traced with [OpenFastTrace](https://github.com/itsallcode/openf
 | [todotxt.md](todotxt.md) | Reading, writing, filtering and ordering tasks (`req`, `dsn`) |
 | [ui.md](ui.md) | Screens, storage and settings (`req`, `dsn`) |
 | [sync.md](sync.md) | Synchronization through git (`req`, `dsn`) |
+| [planning.md](planning.md) | Time maps, barriers, planner, calendar.txt (`req`, `dsn`) |
 | [extensions.md](extensions.md) | Recurrence, top tasks, most important tasks, notes, scheduled tasks, board (`req`, `dsn`) |
 | [android.md](android.md) | Android application (`req`, `dsn`) |
 

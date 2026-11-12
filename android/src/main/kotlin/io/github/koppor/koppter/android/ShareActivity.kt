@@ -62,6 +62,7 @@ internal fun Context.todoController(gitSetup: GitSetup): TodoController {
         storageFor = { storageFor(it, gitSetup) },
         saveSettings = settingsFile::save,
         today = { java.time.LocalDate.now().let { LocalDate(it.year, it.monthValue, it.dayOfMonth) } },
+        minuteOfDay = { java.time.LocalTime.now().toSecondOfDay() / 60 },
     )
 }
 

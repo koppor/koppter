@@ -41,6 +41,10 @@ A click on a context shows its tasks, the most urgent first; the bar of a task f
 
 ![Tasks of a context with bars that show their urgency](docs/screenshots/overview-context.png)
 
+*Plan* with the time maps, the time maps of contexts and the barriers; the calendar icons of the tasks tell the state of their plan.
+
+![Plan dialog with time maps and barriers](docs/screenshots/plan.png)
+
 The edit dialog: the description without metadata at the top, the metadata below, then the note, the resulting line of the todo.txt file, and the date the task was added according to the git history.
 
 ![Edit dialog of a task](docs/screenshots/edit.png)
@@ -87,8 +91,11 @@ The planned scope is tracked as requirements in [docs/requirements](docs/require
 | --- | --- |
 | `todo.txt` | The tasks |
 | `notes/<name>.txt` | The note of the task with the tag `note:<name>.txt` |
-| `koppter.yml` | Configuration of this application that belongs to the todo.txt file: the [board columns defined by filters](#board) |
+| `koppter.yml` | Configuration of this application that belongs to the todo.txt file: the [board columns defined by filters](#board), the [share actions](#sharing-to-koppter-on-android), and the time maps and barriers for [planning](#planning) |
 | `ice_recur.txt` | Schedules of [recurring tasks](#recurring-tasks) in the format of the ice_recur add-on, such as `weekly ; day Monday - (B) Plan the week` |
+
+| `calendar.txt` | The [plan](#planning): when the open tasks are worked on, one line per day |
+| `calendar.ics` | The plan as tentative events, for import into a calendar program |
 
 If these files lie in a git repository, the application commits every change and synchronizes with the remote repository.
 
@@ -213,6 +220,36 @@ The filter panel applies to the overview as it does to the list.
 
 A click on a tile lists the tasks of the context, the most urgent first and those without due date last.
 The bar of a task shows how much of its time has passed: from its threshold date (`t:`) to its due date, else from its creation date, else over the two weeks before the due date.
+
+## Planning
+
+*Plan* above the tasks gives each open task times in which it is to be worked on and writes them to `calendar.txt` next to the todo.txt file.
+The todo.txt file leads: the plan is computed from it, and planning does not change it.
+
+* A task with a higher priority is planned first, and every task gets the earliest free times, so that tasks without dates are planned soon as well.
+* A task takes its duration (`dur:`), half an hour without one, and is not planned before its threshold date (`t:`).
+  A free time that is too short takes a part of the task.
+* A **time map** names times of the week: `General = Mon-Fri 08:00-12:00 13:00-18:00`.
+  A map that starts with the name of another one is restricted to its times: `Morning-Focus = General 08:00-11:00`.
+  The first map is for tasks whose contexts name none.
+* A context gets a time map: `@research = Morning-Focus`.
+  It holds for the contexts below it, such as `@research>reading`, unless they name their own.
+* A **barrier** is the day behind which a task is not planned: `week`, `month`, `quarter` (the default), `year` or a date.
+  It is set in general (`default = year`), for a project (`+Thesis = 2027-03-31`) or for a context (`@research = year`); the earliest barrier of a task counts.
+  A task that does not fit before its barrier is listed after planning instead of being planned later.
+
+After the first plan, each open task carries a calendar icon: green if its plan ends before its due date or it has none, yellow if it ends on the due date, red if it ends later or the task is not planned.
+The pointer on the icon shows the start of the plan.
+
+`calendar.txt` has the [format of calendar.txt](https://terokarvinen.com/2021/calendar-txt/), one line per day:
+
+```text
+2026-11-16 w47 Mon  08:00-09:00 Read the survey @research>reading. 09:00-09:30 Call the landlord @phone
+```
+
+The lines of past days stay; the lines from today on are written anew by every plan, so what is written there by hand is lost.
+In a git repository, each plan is one commit ([decision 0019](docs/decisions/0019-the-plan-is-derived-and-kept-in-calendar-txt.md)).
+The plan is also written to `calendar.ics`, with tentative events, for import into a calendar program.
 
 ## Sharing to koppter on Android
 

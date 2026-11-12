@@ -5,7 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
@@ -26,10 +30,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.github.koppor.koppter.plan.PlanState
 import io.github.koppor.koppter.todotxt.LEVEL_SEPARATOR
 import io.github.koppor.koppter.todotxt.Task
 import io.github.koppor.koppter.todotxt.lastLevel
 import kotlinx.datetime.LocalDate
+
+/** Tells the state of the plan of a task and a text about it; `null` for a task that shows none. */
+val LocalPlanOf = staticCompositionLocalOf<(Task) -> Pair<PlanState, String>?> { { null } }
 
 /** What a click on the context label of a task does with the context. */
 val LocalShowContext = staticCompositionLocalOf<(String) -> Unit> { {} }
@@ -67,6 +75,25 @@ fun Label(text: String, container: Color, content: Color, modifier: Modifier = M
 fun TaskLabels(task: Task, today: LocalDate) {
     val colors = MaterialTheme.colorScheme
     val uriHandler = LocalUriHandler.current
+    // [impl->dsn~plan-state~1]
+    LocalPlanOf.current(task)?.let { (state, text) ->
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+            tooltip = { PlainTooltip { Text(text) } },
+            state = rememberTooltipState(),
+        ) {
+            Icon(
+                Icons.Default.DateRange,
+                contentDescription = text,
+                tint = when (state) {
+                    PlanState.FITS -> LocalFineColor.current
+                    PlanState.TIGHT -> colors.secondary
+                    PlanState.LATE -> colors.error
+                },
+                modifier = Modifier.size(18.dp).testTag("plan-$state"),
+            )
+        }
+    }
     task.projects.forEach { ProjectLabel(it) }
     // [impl->dsn~context-hierarchy~1]
     val showContext = LocalShowContext.current

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -105,6 +106,8 @@ fun App(
         CompositionLocalProvider(
             LocalUriHandler provides uriHandler,
             LocalShowContext provides { controller.filter = controller.filter.copy(contexts = setOf(it)) },
+            LocalFineColor provides fineColor(controller.settings.theme, dark),
+            LocalPlanOf provides controller::planOf,
         ) {
             MainScreen(controller, defaultTodoFile, chooseFile, git)
         }
@@ -126,6 +129,7 @@ private fun MainScreen(
     var editing by remember { mutableStateOf<Editing?>(null) }
     var showSettings by remember { mutableStateOf(false) }
     var schedule by remember { mutableStateOf<String?>(null) }
+    var planning by remember { mutableStateOf<PlanSettings?>(null) }
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
@@ -200,7 +204,7 @@ private fun MainScreen(
                     }
                     Column(Modifier.weight(1f)) {
                         QuickAdd(onAdd = controller::add)
-                        ViewOptions(controller)
+                        ViewOptions(controller, onPlan = { planning = controller.planSettings })
                         val emptyText = if (controller.file.entries.isEmpty()) "No tasks" else "No task matches the filter"
                         if (controller.overview) {
                             Overview(contextStates(controller.visible, controller.today()), controller.today(), { editing = Editing(it) }, emptyText)
@@ -241,6 +245,9 @@ private fun MainScreen(
             onDismiss = { editing = null },
         )
     }
+    planning?.let {
+        PlanDialog(settings = it, onPlan = controller::plan, onDismiss = { planning = null })
+    }
     schedule?.let {
         ScheduleDialog(
             schedule = it,
@@ -276,7 +283,7 @@ private fun MainScreen(
 // [impl->dsn~view-options~1]
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ViewOptions(controller: TodoController) {
+private fun ViewOptions(controller: TodoController, onPlan: () -> Unit) {
     FlowRow(Modifier.padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         FilterChip(
             selected = controller.topOnly,
@@ -303,6 +310,10 @@ private fun ViewOptions(controller: TodoController) {
             label = { Text("Overview") },
             modifier = Modifier.testTag("overview-switch"),
         )
+        // [impl->dsn~plan-dialog~1]
+        if (controller.canSchedule) {
+            AssistChip(onClick = onPlan, label = { Text("Plan") }, modifier = Modifier.testTag("open-plan"))
+        }
         if (controller.board) {
             for (key in GroupKey.entries) {
                 FilterChip(

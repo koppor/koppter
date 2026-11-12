@@ -39,7 +39,25 @@ class ScreenshotTest {
                   Waiting: "@waiting"
                   This week: due:<1w
                   Important: (>C)
+                time-maps:
+                  General: Mon-Fri 08:00-12:00 13:00-17:00
+                  Focus: General 08:00-10:00
+                  Evenings: Mon-Thu 19:00-21:00, Sat 10:00-12:00
+                context-time-maps:
+                  "@computer": Focus
+                  "@home": Evenings
+                barriers:
+                  default: quarter
+                  "+Vacation": 2026-11-30
             """.trimIndent(),
+            // As "Save and plan" writes it on the day of the screenshots at noon; the bike was added afterwards.
+            "calendar.txt" to """
+                2026-11-12 w46 Thu  13:00-13:30 Call the landlord about the heating @phone. 13:30-14:00 Schedule Goodwill pickup +GarageSale @phone. 14:00-14:30 Post signs around the neighborhood +GarageSale @errands. 14:30-15:00 Renew the library card @errands>city. 19:00-19:30 Water the plants @home
+                2026-11-13 w46 Fri  08:00-08:30 Submit the travel expense report +Work @computer. 08:30-10:00 Prepare the slides for the team meeting +Work @computer
+                2026-11-14 w46 Sat
+                2026-11-15 w46 Sun
+                2026-11-16 w47 Mon  08:00-08:30 Prepare the slides for the team meeting +Work @computer. 08:30-09:00 Book the train to Hamburg +Vacation @computer @waiting. 09:00-09:30 Back up the photos @computer>backup
+            """.trimIndent() + "\n",
             // No entry occurs on the day of the screenshots, so the list stays as the file has it.
             "ice_recur.txt" to """
                 # Work
@@ -114,6 +132,14 @@ class ScreenshotTest {
         save("overview.png")
         onNodeWithTag("overview-computer").performClick()
         save("overview-context.png")
+    }
+
+    @Test
+    fun rendersPlan() = runDesktopComposeUiTest(width = 1100, height = 1060) {
+        start()
+        onNodeWithTag("open-plan").performClick()
+        onNodeWithTag("plan-update").performScrollTo().performClick()
+        save("plan.png")
     }
 
     @Test

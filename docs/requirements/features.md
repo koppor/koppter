@@ -70,6 +70,13 @@ The application shows the tasks as a board with columns.
 
 Needs: req
 
+## Planning
+`feat~planning~1`
+
+The application plans when the open tasks are worked on.
+
+Needs: req
+
 ## Platforms
 `feat~platforms~1`
 

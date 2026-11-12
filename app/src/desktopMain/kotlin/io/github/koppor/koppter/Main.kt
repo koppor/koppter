@@ -39,6 +39,7 @@ fun main() {
         storageFor = { storageForFile(it.todoFile.takeIf(String::isNotBlank)?.let(::Path) ?: defaultTodoFile) },
         saveSettings = settingsFile::save,
         today = { java.time.LocalDate.now().let { LocalDate(it.year, it.monthValue, it.dayOfMonth) } },
+        minuteOfDay = { java.time.LocalTime.now().toSecondOfDay() / 60 },
     )
     // [impl->dsn~application-icon~1]
     val icon = BitmapPainter(object {}.javaClass.getResourceAsStream("/koppter.png")!!.readBytes().decodeToImageBitmap())

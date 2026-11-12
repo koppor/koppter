@@ -352,6 +352,45 @@ class AppTest {
         onNodeWithTag("overview-phone").assertExists()
     }
 
+    // [utest->dsn~plan-dialog~1]
+    // [utest->dsn~plan-state~1]
+    @Test
+    fun planningWritesTheCalendarAndMarksTheTasksWithTheStateOfTheirPlan() = runComposeUiTest {
+        storage.text = "(A) Thank Mom @phone dur:1h due:2026-11-12\nPost signs +GarageSale dur:2h\nPaint the fence @home dur:200h\n"
+        // A Thursday, at 09:05.
+        val controller = TodoController(Settings(), { storage }, today = { LocalDate(2026, 11, 12) }, minuteOfDay = { 9 * 60 + 5 })
+        setContent { App(controller, "todo.txt") }
+        // Nothing was planned yet: no task carries a mark.
+        onAllNodesWithTag("plan-LATE", useUnmergedTree = true).assertCountEquals(0)
+
+        onNodeWithTag("open-plan").performClick()
+        onNodeWithTag("plan-time-maps").performTextInput("General = Mon-Fri 08:00-12:00 13:00-17:00\nEvenings = General 15:00-17:00 Noday")
+        onNodeWithTag("plan-context-maps").performTextInput("@home = Evenings")
+        onNodeWithTag("plan-barriers").performScrollTo().performTextInput("default = year\n@home = week")
+        onNodeWithTag("plan-update").performScrollTo().performClick()
+
+        onNodeWithTag("plan-summary").performScrollTo().assertTextEquals("Planned 2 tasks until 2026-11-12.")
+        onNodeWithTag("plan-problem").assertTextEquals("Evenings: \"Noday\" is neither days nor times")
+        onNodeWithTag("plan-unplaced").assertTextEquals("Paint the fence @home (barrier 2026-11-15)")
+        assertEquals(
+            "2026-11-12 w46 Thu  09:15-10:15 Thank Mom @phone. 10:15-12:00 Post signs +GarageSale. 13:00-13:15 Post signs +GarageSale\n",
+            storage.companions.getValue("calendar.txt"),
+        )
+        assertEquals("Update the plan", storage.changes.last())
+        assertEquals(true, storage.companions.getValue("koppter.yml").contains("time-maps:\n  \"General\": \"Mon-Fri 08:00-12:00 13:00-17:00\""))
+        // The todo.txt file is not changed by planning.
+        assertEquals(3, storage.text.trim().lines().size)
+        onNodeWithTag("plan-close").performClick()
+
+        // Due today and planned for today: tight. Without due date: fits. Not planned: late.
+        onNodeWithTag("plan-TIGHT", useUnmergedTree = true).assertExists()
+        onNodeWithTag("plan-FITS", useUnmergedTree = true).assertExists()
+        onNodeWithTag("plan-LATE", useUnmergedTree = true).assertExists()
+        // The dialog shows the saved settings again.
+        onNodeWithTag("open-plan").performClick()
+        onNodeWithTag("plan-context-maps").assertTextContains("@home = Evenings")
+    }
+
     // [utest->dsn~color-themes~1]
     @Test
     fun theSettingsDialogChoosesThePaletteAndItsVariant() = runComposeUiTest {

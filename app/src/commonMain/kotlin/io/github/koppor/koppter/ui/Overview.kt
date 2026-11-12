@@ -42,7 +42,7 @@ import kotlinx.datetime.LocalDate
 
 @Composable
 private fun UrgencyState.color(): Color = when (this) {
-    UrgencyState.FINE -> MaterialTheme.colorScheme.primary
+    UrgencyState.FINE -> LocalFineColor.current
     UrgencyState.DUE -> MaterialTheme.colorScheme.secondary
     UrgencyState.OVERDUE -> MaterialTheme.colorScheme.error
 }

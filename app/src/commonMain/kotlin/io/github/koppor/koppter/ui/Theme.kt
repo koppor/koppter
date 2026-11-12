@@ -3,6 +3,7 @@ package io.github.koppor.koppter.ui
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
@@ -101,13 +102,20 @@ internal fun contrast(a: Color, b: Color): Float {
  * The Material color roles filled with the colors of a palette.
  * The palettes have no colors for containers, so a container is the color of its role mixed into the color of the cards.
  */
+private fun palette(theme: ColorTheme, dark: Boolean) = when (theme) {
+    ColorTheme.NORD -> if (dark) NORD_DARK else NORD_LIGHT
+    ColorTheme.EVERFOREST -> if (dark) EVERFOREST_DARK else EVERFOREST_LIGHT
+}
+
+/** The green of the palette, for what is fine; the Material color scheme has no role for it. */
+fun fineColor(theme: ColorTheme, dark: Boolean): Color = palette(theme, dark).project
+
+/** The color for a state that needs no attention, see [fineColor]. */
+val LocalFineColor = staticCompositionLocalOf { Color.Unspecified }
+
 // [impl->dsn~color-themes~1]
 fun colorScheme(theme: ColorTheme, dark: Boolean): ColorScheme {
-    val palette = when (theme) {
-        ColorTheme.NORD -> if (dark) NORD_DARK else NORD_LIGHT
-        ColorTheme.EVERFOREST -> if (dark) EVERFOREST_DARK else EVERFOREST_LIGHT
-    }
-    return with(palette) {
+    return with(palette(theme, dark)) {
         fun container(color: Color) = color.copy(alpha = 0.3f).compositeOver(raised)
 
         // The text on a color of the palette is the lighter or the darker end of the palette, whichever reads better.

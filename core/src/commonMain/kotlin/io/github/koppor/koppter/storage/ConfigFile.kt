@@ -1,5 +1,7 @@
 package io.github.koppor.koppter.storage
 
+import io.github.koppor.koppter.plan.PlanConfig
+import io.github.koppor.koppter.plan.TimeMaps
 import io.github.koppor.koppter.todotxt.BoardColumn
 import io.github.koppor.koppter.todotxt.ShareAction
 
@@ -14,7 +16,8 @@ import io.github.koppor.koppter.todotxt.ShareAction
  *   Waiting: "@waiting"
  * ```
  *
- * The key `share-actions` maps the title of each share action to its template in the same way.
+ * The key `share-actions` maps the title of each share action to its template in the same way,
+ * and so do the keys `time-maps`, `context-time-maps` and `barriers` for planning.
  */
 // ponytail: reads the subset of YAML that it writes (one line per column, plain or quoted scalars, the escapes \" and \\);
 // a YAML library when the file gets nested content.
@@ -25,6 +28,9 @@ object ConfigFile {
 
     private const val BOARD_COLUMNS = "board-columns:"
     private const val SHARE_ACTIONS = "share-actions:"
+    const val TIME_MAPS = "time-maps:"
+    const val CONTEXT_TIME_MAPS = "context-time-maps:"
+    const val BARRIERS = "barriers:"
     private const val HEADER = "# Configuration of koppter for the todo.txt file in this directory"
 
     /** The columns in the order of the file. */
@@ -40,6 +46,24 @@ object ConfigFile {
 
     fun withShareActions(config: String, actions: List<ShareAction>): String =
         withBlock(config, SHARE_ACTIONS, actions.map { it.title to it.template })
+
+    /** The time maps, the time maps of the contexts and the barriers; see [PlanConfig]. */
+    // [impl->dsn~plan-configuration~1]
+    fun planConfig(config: String): PlanConfig =
+        PlanConfig(TimeMaps(entries(config, TIME_MAPS)), entries(config, CONTEXT_TIME_MAPS).toMap(), entries(config, BARRIERS))
+
+    /** The entries below the key, in the order of the file. */
+    fun entries(config: String, key: String): List<Pair<String, String>> = block(config, key)
+
+    fun withEntries(config: String, key: String, entries: List<Pair<String, String>>): String = withBlock(config, key, entries)
+
+    /** Reads entries as the dialogs show them: one per line as `name = value`; lines without a name are skipped. */
+    fun parseLines(text: String): List<Pair<String, String>> = text.lines().mapNotNull { line ->
+        val name = line.substringBefore('=', "").trim()
+        if (name.isEmpty()) null else name to line.substringAfter('=').trim()
+    }
+
+    fun toLines(entries: List<Pair<String, String>>): String = entries.joinToString("\n") { "${it.first} = ${it.second}" }
 
     private fun block(config: String, key: String): List<Pair<String, String>> {
         val lines = config.lines()
