@@ -202,7 +202,7 @@ fun EditDialog(
                     OutlinedTextField(
                         value = note,
                         onValueChange = { note = it },
-                        label = { Text("Note") },
+                        label = { Text("Note (Markdown)") },
                         minLines = 2,
                         maxLines = 8,
                         modifier = Modifier.fillMaxWidth().testTag("edit-note"),

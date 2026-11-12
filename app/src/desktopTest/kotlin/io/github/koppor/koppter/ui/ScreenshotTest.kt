@@ -72,13 +72,13 @@ class ScreenshotTest {
                 monthly ; day_of_week Saturday => 1 - Clean the bike @home
                 @2026-04-15 yearly - (A) Renew the insurance #money
             """.trimIndent() + "\n",
-            "notes/k3f.txt" to "Agenda: results of the survey, plan for December.\nAsk for the room with the projector.",
+            "notes/k3f.md" to "## Agenda\n\n- Results of the survey\n- Plan for December\n\nAsk for the room with the **projector**.",
         )
 
         override var onStatus: (SyncStatus) -> Unit = {}
         override fun sync() = Unit
         override fun dates() = mapOf(
-            "(B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 dur:2h cs:work/team-meeting note:k3f.txt" to TaskDates(added = LocalDate(2026, 11, 5)),
+            "(B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 dur:2h cs:work/team-meeting note:k3f.md" to TaskDates(added = LocalDate(2026, 11, 5)),
         )
 
         override fun readCompanion(path: String) = companions[path]
@@ -88,7 +88,7 @@ class ScreenshotTest {
             (A) Call the landlord about the heating @phone due:2026-11-12
             (A) Submit the travel expense report +Work @computer #money due:2026-11-10
             (B) Schedule Goodwill pickup +GarageSale @phone due:2026-11-14
-            (B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 dur:2h cs:work/team-meeting note:k3f.txt
+            (B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 dur:2h cs:work/team-meeting note:k3f.md
             (C) Post signs around the neighborhood +GarageSale @errands
             (C) Renew the library card @errands>city #someday due:2026-11-20
             Water the plants @home due:2026-11-12 rec:1w

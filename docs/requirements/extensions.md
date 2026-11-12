@@ -481,7 +481,8 @@ Needs: impl, utest
 `dsn~notes~1`
 
 For a storage with companion files, the edit dialog has a field for the note.
-A task without a note gets the tag `note:` with a new file name of three characters and the extension `.txt` when the user enters a note; clearing the note removes the tag and leaves the file.
+A task without a note gets the tag `note:` with a new file name of three characters and the extension `.md` when the user enters a note; clearing the note removes the tag and leaves the file.
+The note is Markdown by its file name only: the dialog edits it as text, and a note with another extension, such as the `.txt` of the add-on, is read and written under its name.
 `TodoController` writes the text to `notes/<name>` before it writes the task.
 A change of the note alone is passed to the storage as a change of its own, so that a storage with a history records it.
 

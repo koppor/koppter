@@ -401,8 +401,8 @@ class TodoController(
         null
     }
 
-    /** A file name for the note of a task that has none yet. */
-    fun newNoteName(): String = Random.nextInt(36 * 36 * 36).toString(36).padStart(3, '0') + ".txt"
+    /** A file name for the note of a task that has none yet; Markdown, so that programs that show the file format it. */
+    fun newNoteName(): String = Random.nextInt(36 * 36 * 36).toString(36).padStart(3, '0') + ".md"
 
     /** Writes the note into the file that the `note:` tag of the task names; returns whether the text changed. */
     private fun saveNote(task: Task, note: String?): Boolean {

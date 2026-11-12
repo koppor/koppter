@@ -96,7 +96,7 @@ It also maps the terms of SkedPal to those of the application.
 | File | Content |
 | --- | --- |
 | `todo.txt` | The tasks |
-| `notes/<name>.txt` | The note of the task with the tag `note:<name>.txt` |
+| `notes/<name>.md` | The note of the task with the tag `note:<name>.md`, as Markdown |
 | `koppter.yml` | Configuration of this application that belongs to the todo.txt file: the [board columns defined by filters](#board), the [share actions](#sharing-to-koppter-on-android), and the time maps and barriers for [planning](#planning) |
 | `ice_recur.txt` | Schedules of [recurring tasks](#recurring-tasks) in the format of the ice_recur add-on, such as `weekly ; day Monday - (B) Plan the week` |
 | `calendar.txt` | The [plan](#planning): when the open tasks are worked on, one line per day |
@@ -117,7 +117,7 @@ The application understands the following extensions, which other todo.txt tools
 | `t:2026-12-01` | Threshold date: the task is not relevant before that day | *Threshold* in the edit dialog. The task is hidden until that day; *Show tasks before their threshold date* in the filter panel shows it. |
 | `rec:1w` | Recurrence: completing the task adds its next occurrence | See [recurring tasks](#recurring-tasks). |
 | `ice_recur.txt` | Schedules that add tasks on certain days | See [recurring tasks](#recurring-tasks). |
-| `note:k3f.txt` | A note for the task, kept in the file `notes/k3f.txt` | *Note* in the edit dialog; the application names the file. As in the [note add-on](https://github.com/mgarrido/todo.txt-cli/tree/note/todo.actions.d). |
+| `note:k3f.md` | A note for the task, kept in the file `notes/k3f.md` | *Note* in the edit dialog; the application names the file. New notes are Markdown files, which the dialog edits as text; a note named otherwise, such as `note:k3f.txt`, keeps its file. As in the [note add-on](https://github.com/mgarrido/todo.txt-cli/tree/note/todo.actions.d), which reads these notes with `TODO_NOTE_EXT=.md` in its configuration. |
 | `#urgent` | Hashtag: a third kind of label next to `+project` and `@context`, without a fixed meaning | *Add hashtag* in the edit dialog, or typed into the task. A hashtag starts with a letter: `#123` and `C#` stay words of the description ([decision 0014](docs/decisions/0014-hashtags-as-a-third-kind-of-label.md)). |
 | `@research>reading` | A context below another context, over any number of levels | Typed as the context. The label shows `@reading`, and the path when the pointer rests on it; a click on it shows the tasks of the context. A filter for `@research` includes the contexts below it, and the filter panel shows the contexts as a tree ([decision 0017](docs/decisions/0017-levels-of-a-context-separated-by-a-greater-than-sign.md)). |
 | `dur:1h30m` | The time the task is expected to take, in hours and minutes | Field *Duration* in the edit dialog, or typed into the task. [Planning](#planning) gives the task that much time ([decision 0018](docs/decisions/0018-tag-for-the-duration-of-a-task.md)). |

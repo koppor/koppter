@@ -717,22 +717,31 @@ class AppTest {
     // [utest->dsn~notes~1]
     @Test
     fun aNoteIsKeptInAFileNamedByATag() = runComposeUiTest {
+        storage.text += "Water the plants note:abc.txt\n"
+        storage.companions["notes/abc.txt"] = "Not the cactus"
         start()
         openTask("Post signs")
         onNodeWithTag("edit-note").performScrollTo().performTextInput("Ask the neighbors first")
         onNodeWithTag("edit-save").performScrollTo().performClick()
 
         val line = storage.text.lines()[1]
-        val name = Regex("^Post signs \\+GarageSale note:([0-9a-z]{3}\\.txt)$").matchEntire(line)!!.groupValues[1]
+        val name = Regex("^Post signs \\+GarageSale note:([0-9a-z]{3}\\.md)$").matchEntire(line)!!.groupValues[1]
         assertEquals("Ask the neighbors first", storage.companions["notes/$name"])
 
         openTask("Post signs")
-        onNodeWithTag("edit-note").assertTextEquals("Note", "Ask the neighbors first")
+        onNodeWithTag("edit-note").assertTextEquals("Note (Markdown)", "Ask the neighbors first")
         onNodeWithTag("edit-note").performScrollTo().performTextReplacement("Ask the neighbors first, then the school")
         onNodeWithTag("edit-save").performScrollTo().performClick()
         assertEquals(line, storage.text.lines()[1])
         assertEquals("Ask the neighbors first, then the school", storage.companions["notes/$name"])
         assertEquals("Edit note: Post signs", storage.changes.last())
+
+        // A note of the add-on keeps its file with the extension it has.
+        openTask("Water the plants")
+        onNodeWithTag("edit-note").performScrollTo().performTextReplacement("Not the cactus, twice the fern")
+        onNodeWithTag("edit-save").performScrollTo().performClick()
+        assertEquals(true, "Water the plants note:abc.txt" in storage.text)
+        assertEquals("Not the cactus, twice the fern", storage.companions["notes/abc.txt"])
     }
 
     // [utest->dsn~ice-recur-run~1]
