@@ -16,6 +16,9 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Setting for the location of the todo.txt file and for writing creation and completion dates, which are not written by default.
 - Android application with the same screens; the todo.txt file is kept in the storage of the application or chosen with the document picker of the system.
 - Button in the settings that opens the file dialog of the platform to choose the todo.txt file.
+- Synchronization through git for a todo.txt file that lies in a git repository: one commit per added, completed, reopened, edited and deleted task, merge of remote changes without conflicts, and push.
+- Synchronization status and a button to synchronize in the top bar.
+- The edit dialog shows when a task was added and completed, derived from the git history.
 - Changes that other programs make to the todo.txt file are picked up while the application runs.
 - Project infrastructure: Gradle build with a Kotlin Multiplatform `core` module, requirements tracing, decision records and continuous integration.
 

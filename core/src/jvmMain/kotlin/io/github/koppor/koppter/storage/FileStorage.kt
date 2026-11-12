@@ -14,7 +14,7 @@ class FileStorage(private val path: Path) : TodoStorage {
     override fun read(): String = if (path.exists()) path.readText() else ""
 
     /** Writes to a temporary file first, so that a crash never leaves a half-written todo.txt behind. */
-    override fun write(text: String) {
+    override fun write(text: String, change: String) {
         val directory = path.toAbsolutePath().parent
         Files.createDirectories(directory)
         val temporary = Files.createTempFile(directory, path.fileName.toString(), ".tmp")

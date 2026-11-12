@@ -21,6 +21,11 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // JGit and Apache MINA sshd are OSGi bundles; several of their jars carry bundle metadata under the same name.
+    packaging {
+        resources.excludes += setOf("OSGI-INF/**", "META-INF/DEPENDENCIES", "META-INF/LICENSE*", "META-INF/NOTICE*", "about.html", "plugin.properties")
+    }
 }
 
 dependencies {

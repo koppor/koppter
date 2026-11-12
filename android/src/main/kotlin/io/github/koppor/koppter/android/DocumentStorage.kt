@@ -16,7 +16,7 @@ class DocumentStorage(private val resolver: ContentResolver, private val uri: Ur
         resolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } ?: throw FileNotFoundException(uri.toString())
 
     // "wt": truncate, otherwise a shorter file keeps the tail of the longer one.
-    override fun write(text: String) {
+    override fun write(text: String, change: String) {
         val stream = resolver.openOutputStream(uri, "wt") ?: throw FileNotFoundException(uri.toString())
         stream.use { it.write(text.encodeToByteArray()) }
     }

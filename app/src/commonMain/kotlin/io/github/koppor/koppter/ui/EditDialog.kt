@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import io.github.koppor.koppter.sync.TaskDates
 import io.github.koppor.koppter.todotxt.Recurrence
 import io.github.koppor.koppter.todotxt.Task
 import kotlinx.datetime.LocalDate
@@ -60,6 +61,7 @@ import kotlinx.datetime.LocalDate
 fun EditDialog(
     original: Task,
     isNew: Boolean,
+    dates: TaskDates?,
     knownProjects: List<String>,
     knownContexts: List<String>,
     onSave: (Task) -> Unit,
@@ -143,6 +145,17 @@ fun EditDialog(
                             modifier = Modifier.padding(8.dp).testTag("edit-line"),
                         )
                     }
+                }
+
+                // [impl->dsn~dates-in-dialog~1]
+                val history = listOfNotNull(dates?.added?.let { "Added $it" }, dates?.completed?.let { "Completed $it" })
+                if (history.isNotEmpty()) {
+                    Text(
+                        history.joinToString(" · ") + " (from the git history)",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.testTag("edit-dates"),
+                    )
                 }
 
                 Row(Modifier.fillMaxWidth()) {

@@ -15,6 +15,10 @@ kotlin {
         commonMain.dependencies {
             api(libs.kotlinx.datetime)
         }
+        jvmMain.dependencies {
+            implementation(libs.jgit)
+            implementation(libs.jgit.ssh)
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }

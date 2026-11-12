@@ -35,7 +35,8 @@
 
 * `:core` — Kotlin Multiplatform, JVM target.
   `commonMain`: todo.txt model, parser, filter, sort, storage interface, settings.
-  `jvmMain`: file storage, settings file.
+  `commonMain` `sync`: `mergeLines` (three-way line merge), `taskDates` (dates from history).
+  `jvmMain`: file storage, settings file, `GitStorage` (JGit; used automatically when the file lies in a git working tree).
 * `:app` — Compose Multiplatform. `commonMain`: all screens and `TodoController` (state and operations).
   `desktopMain`: entry point. `desktopTest`: UI tests (`runComposeUiTest`, headless); `ScreenshotTest` writes `app/build/screenshots/`.
   Android library target: compiled from the same `commonMain`.

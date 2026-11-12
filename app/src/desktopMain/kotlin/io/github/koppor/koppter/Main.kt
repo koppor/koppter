@@ -4,8 +4,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import io.github.koppor.koppter.storage.FileStorage
 import io.github.koppor.koppter.storage.SettingsFile
+import io.github.koppor.koppter.sync.storageForFile
 import io.github.koppor.koppter.ui.App
 import io.github.koppor.koppter.ui.TodoController
 import kotlinx.datetime.LocalDate
@@ -34,7 +34,7 @@ fun main() {
     val settingsFile = SettingsFile(configDirectory().resolve("settings.properties"))
     val controller = TodoController(
         settings = settingsFile.load(),
-        storageFor = { FileStorage(it.todoFile.takeIf(String::isNotBlank)?.let(::Path) ?: defaultTodoFile) },
+        storageFor = { storageForFile(it.todoFile.takeIf(String::isNotBlank)?.let(::Path) ?: defaultTodoFile) },
         saveSettings = settingsFile::save,
         today = { java.time.LocalDate.now().let { LocalDate(it.year, it.monthValue, it.dayOfMonth) } },
     )

@@ -7,10 +7,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import io.github.koppor.koppter.storage.FileStorage
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SettingsFile
 import io.github.koppor.koppter.storage.TodoStorage
+import io.github.koppor.koppter.sync.storageForFile
 import io.github.koppor.koppter.ui.App
 import io.github.koppor.koppter.ui.TodoController
 import kotlinx.coroutines.CompletableDeferred
@@ -41,9 +41,9 @@ class MainActivity : ComponentActivity() {
 
     // [impl->dsn~android-locations~1]
     private fun storageFor(settings: Settings): TodoStorage = when {
-        settings.todoFile.isBlank() -> FileStorage(filesDir.toPath().resolve("todo.txt"))
+        settings.todoFile.isBlank() -> storageForFile(filesDir.toPath().resolve("todo.txt"))
         settings.todoFile.startsWith("content:") -> DocumentStorage(contentResolver, Uri.parse(settings.todoFile))
-        else -> FileStorage(java.nio.file.Paths.get(settings.todoFile))
+        else -> storageForFile(java.nio.file.Paths.get(settings.todoFile))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

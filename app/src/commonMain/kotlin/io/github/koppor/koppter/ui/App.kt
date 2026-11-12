@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,7 +50,10 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.koppor.koppter.storage.SyncState
+import io.github.koppor.koppter.storage.SyncStatus
 import io.github.koppor.koppter.todotxt.Entry
 import io.github.koppor.koppter.todotxt.Task
 import kotlinx.coroutines.delay
@@ -126,6 +131,7 @@ private fun MainScreen(controller: TodoController, defaultTodoFile: String, choo
                             }
                         },
                         actions = {
+                            controller.syncStatus?.let { SyncIndicator(it, onSync = controller::sync) }
                             IconButton(onClick = { showSettings = true }, modifier = Modifier.testTag("open-settings")) {
                                 Icon(Icons.Default.Settings, contentDescription = "Settings")
                             }
@@ -163,6 +169,7 @@ private fun MainScreen(controller: TodoController, defaultTodoFile: String, choo
         EditDialog(
             original = entry?.task ?: Task(body = ""),
             isNew = entry == null,
+            dates = remember(entry) { entry?.let { controller.datesOf(it.task) } },
             knownProjects = controller.projects,
             knownContexts = controller.contexts,
             onSave = { task ->
@@ -187,6 +194,28 @@ private fun MainScreen(controller: TodoController, defaultTodoFile: String, choo
             },
             onDismiss = { showSettings = false },
         )
+    }
+}
+
+/** Shows whether the file is synchronized; a click synchronizes now. */
+// [impl->dsn~sync-status~1]
+@Composable
+private fun SyncIndicator(status: SyncStatus, onSync: () -> Unit) {
+    val (text, color) = when (status.state) {
+        SyncState.IDLE -> "Synchronized" to MaterialTheme.colorScheme.onSurfaceVariant
+        SyncState.RUNNING -> "Synchronizing" to MaterialTheme.colorScheme.onSurfaceVariant
+        SyncState.FAILED -> "Not synchronized: ${status.message}" to MaterialTheme.colorScheme.error
+    }
+    Text(
+        text,
+        color = color,
+        style = MaterialTheme.typography.labelMedium,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.widthIn(max = 360.dp).testTag("sync-status"),
+    )
+    IconButton(onClick = onSync, enabled = status.state != SyncState.RUNNING, modifier = Modifier.testTag("sync-now")) {
+        Icon(Icons.Default.Refresh, contentDescription = "Synchronize now")
     }
 }
 

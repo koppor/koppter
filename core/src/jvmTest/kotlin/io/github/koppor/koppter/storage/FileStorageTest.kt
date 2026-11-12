@@ -19,7 +19,7 @@ class FileStorageTest {
         assertEquals("", storage.read())
         assertNull(storage.version())
 
-        storage.write("Call Mom\n")
+        storage.write("Call Mom\n", "Add task: Call Mom")
 
         assertEquals("Call Mom\n", path.readText())
         assertEquals("Call Mom\n", storage.read())
@@ -30,9 +30,9 @@ class FileStorageTest {
     @Test
     fun theVersionChangesWithTheContent() {
         val storage = FileStorage(directory.resolve("todo.txt"))
-        storage.write("a\n")
+        storage.write("a\n", "")
         val before = storage.version()
-        storage.write("a\nb\n")
+        storage.write("a\nb\n", "")
         assertNotEquals(before, storage.version())
     }
 

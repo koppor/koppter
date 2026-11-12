@@ -27,7 +27,7 @@ class ScreenshotTest {
             x Call Mom +Family @phone
         """.trimIndent() + "\n"
 
-        override fun write(text: String) = Unit
+        override fun write(text: String, change: String) = Unit
         override fun version(): Any? = null
     }
 

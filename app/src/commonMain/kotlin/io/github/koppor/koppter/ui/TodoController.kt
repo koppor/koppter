@@ -4,7 +4,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import io.github.koppor.koppter.storage.Settings
+import io.github.koppor.koppter.storage.SyncState
+import io.github.koppor.koppter.storage.SyncStatus
+import io.github.koppor.koppter.storage.SyncingStorage
 import io.github.koppor.koppter.storage.TodoStorage
+import io.github.koppor.koppter.sync.TaskDates
 import io.github.koppor.koppter.todotxt.Entry
 import io.github.koppor.koppter.todotxt.Filter
 import io.github.koppor.koppter.todotxt.Task
@@ -31,11 +35,37 @@ class TodoController(
     var filter by mutableStateOf(Filter())
     var error by mutableStateOf<String?>(null)
 
+    /** The state of the synchronization; `null` if the storage does not synchronize. */
+    var syncStatus by mutableStateOf<SyncStatus?>(null)
+        private set
+
     private var storage = storageFor(settings)
     private var loadedVersion: Any? = null
 
     init {
+        open()
+    }
+
+    /** Loads the file and, for a synchronizing storage, starts the first synchronization. */
+    // [impl->dsn~sync-status~1]
+    private fun open() {
         load()
+        val syncing = storage as? SyncingStorage
+        syncStatus = syncing?.let { SyncStatus(SyncState.IDLE) }
+        syncing?.onStatus = { status ->
+            // A storage that was replaced in the settings may still report.
+            if (storage === syncing) syncStatus = status
+        }
+        sync()
+    }
+
+    fun sync() = guarded { (storage as? SyncingStorage)?.sync() }
+
+    /** When the task was added and completed according to the history of the storage. */
+    fun datesOf(task: Task): TaskDates? = try {
+        (storage as? SyncingStorage)?.dates()?.get(task.toLine())
+    } catch (_: Exception) {
+        null
     }
 
     /** The tasks to show, filtered and in list order. */
@@ -66,24 +96,28 @@ class TodoController(
     // [impl->dsn~task-operations~1]
     fun add(task: Task) {
         if (task.body.isBlank()) return
-        write(file.add(task.created(today(), settings.writeDates)))
+        write(file.add(task.created(today(), settings.writeDates)), "Add task: ${task.description}")
     }
 
     fun add(line: String) = add(Task.parse(line))
 
     fun toggle(entry: Entry) {
-        val task = if (entry.task.completed) entry.task.reopen() else entry.task.complete(today(), settings.writeDates)
-        replace(entry, task)
+        val index = locate(entry) ?: return
+        if (entry.task.completed) {
+            write(file.replace(index, entry.task.reopen()), "Reopen task: ${entry.task.description}")
+        } else {
+            write(file.replace(index, entry.task.complete(today(), settings.writeDates)), "Complete task: ${entry.task.description}")
+        }
     }
 
     fun replace(entry: Entry, task: Task) {
         val index = locate(entry) ?: return
-        write(file.replace(index, task))
+        write(file.replace(index, task), "Edit task: ${task.description}")
     }
 
     fun delete(entry: Entry) {
         val index = locate(entry) ?: return
-        write(file.remove(index))
+        write(file.remove(index), "Delete task: ${entry.task.description}")
     }
 
     fun updateSettings(new: Settings) {
@@ -93,7 +127,7 @@ class TodoController(
         guarded { saveSettings(new) }
         if (fileChanged) {
             storage = storageFor(new)
-            load()
+            open()
         }
     }
 
@@ -108,10 +142,10 @@ class TodoController(
         return found?.index
     }
 
-    private fun write(new: TodoFile) {
+    private fun write(new: TodoFile, change: String) {
         if (new == file) return
         guarded {
-            storage.write(new.serialize())
+            storage.write(new.serialize(), change)
             file = new
             loadedVersion = storage.version()
         }

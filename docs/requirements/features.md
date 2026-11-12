@@ -40,6 +40,8 @@ Needs: req
 The todo.txt file is synchronized through a git repository.
 Adding and completing a task each create a commit, so that the dates of both events are available without being written into the file.
 
+Needs: req
+
 ## Synchronization through a local folder
 `feat~sync-local-folder~1`
 

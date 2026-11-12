@@ -7,6 +7,7 @@ compose-material3 = "1.9.0"
 compose-material-icons = "1.7.3"
 agp = "9.5.1"
 androidx-activity = "1.13.0"
+jgit = "7.8.1.202611041320-r"
 openfasttrace = "3.5.0"
 
 [libraries]
@@ -21,6 +22,8 @@ compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
 compose-material-icons = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "compose-material-icons" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
+jgit-ssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

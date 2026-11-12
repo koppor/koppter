@@ -19,6 +19,10 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.input.key.Key
 import io.github.koppor.koppter.storage.Settings
+import io.github.koppor.koppter.storage.SyncState
+import io.github.koppor.koppter.storage.SyncStatus
+import io.github.koppor.koppter.storage.SyncingStorage
+import io.github.koppor.koppter.sync.TaskDates
 import io.github.koppor.koppter.storage.TodoStorage
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
@@ -26,7 +30,7 @@ import kotlin.test.assertEquals
 
 private class MemoryStorage(var text: String) : TodoStorage {
     override fun read() = text
-    override fun write(text: String) {
+    override fun write(text: String, change: String) {
         this.text = text
     }
     override fun version(): Any? = text
@@ -193,5 +197,39 @@ class AppTest {
         onNodeWithTag("settings-save").performClick()
         onAllNodesWithTag("task-done")[0].performClick()
         assertEquals("x 2026-11-12 Thank Mom @phone due:2026-11-20 pri:A", storage.text.lines()[2])
+    }
+
+    // [utest->dsn~sync-status~1]
+    // [utest->dsn~dates-in-dialog~1]
+    @Test
+    fun aSynchronizingStorageShowsItsStatusAndTheDatesOfATask() = runComposeUiTest {
+        val syncing = object : SyncingStorage, TodoStorage by storage {
+            override var onStatus: (SyncStatus) -> Unit = {}
+            var synchronizations = 0
+            override fun sync() {
+                synchronizations++
+            }
+            override fun dates() = mapOf("Post signs +GarageSale" to TaskDates(added = LocalDate(2026, 11, 1)))
+        }
+        val controller = TodoController(Settings(), { syncing }, today = { LocalDate(2026, 11, 12) })
+        setContent { App(controller, "todo.txt") }
+
+        onNodeWithTag("sync-status").assertTextEquals("Synchronized")
+        assertEquals(1, syncing.synchronizations)
+        onNodeWithTag("sync-now").performClick()
+        assertEquals(2, syncing.synchronizations)
+
+        syncing.onStatus(SyncStatus(SyncState.FAILED, "no network"))
+        onNodeWithTag("sync-status").assertTextEquals("Not synchronized: no network")
+
+        openTask("Post signs")
+        onNodeWithTag("edit-dates").assertTextEquals("Added 2026-11-01 (from the git history)")
+    }
+
+    // [utest->dsn~sync-status~1]
+    @Test
+    fun aPlainFileHasNoSynchronizationStatus() = runComposeUiTest {
+        start()
+        onNodeWithTag("sync-status").assertDoesNotExist()
     }
 }
