@@ -42,7 +42,7 @@ Needs: dsn
 `req~edit-dialog~1`
 
 The edit dialog shows the description without metadata in its first field.
-Below it, the dialog has fields for priority, due date, threshold date, recurrence, the task of ContextSwitcher, projects, contexts and hashtags.
+Below it, the dialog has fields for priority, due date, threshold date, recurrence, duration, the task of ContextSwitcher, projects, contexts and hashtags.
 Below these fields, the dialog shows the line as it will be written to the todo.txt file, in a monospaced font.
 
 Covers:
@@ -191,7 +191,7 @@ Needs: impl, utest
 
 `EditDialog` keeps the edited values as dialog state and computes the resulting task with `Task.edit` and `Task.withTag` on every change.
 The resulting line is shown below the fields in a monospaced font.
-*Save* is disabled while a date or the recurrence is invalid or the task is empty.
+*Save* is disabled while a date, the recurrence or the duration is invalid or the task is empty.
 The dialog also serves for a new task.
 
 Covers:

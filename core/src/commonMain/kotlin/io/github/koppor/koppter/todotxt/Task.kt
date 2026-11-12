@@ -4,6 +4,7 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
+import kotlin.time.Duration
 
 /**
  * One task line of a todo.txt file.
@@ -59,6 +60,9 @@ data class Task(
     val threshold: LocalDate? get() = tag(THRESHOLD)?.let(::parseDate)
 
     val recurrence: Recurrence? get() = tag(RECURRENCE)?.let(Recurrence::parse)
+
+    /** The time the task is expected to take. */
+    val duration: Duration? get() = tag(DURATION)?.let(::parseDuration)
 
     // [impl->dsn~task-serializer~1]
     fun toLine(): String = buildString {
@@ -175,6 +179,11 @@ data class Task(
         const val PRIORITY = "pri"
         const val NOTE = "note"
         const val CONTEXT_SWITCHER = "cs"
+        const val DURATION = "dur"
+
+        /** Reads a duration such as `45m`, `2h` or `1h30m`; `null` if the text is none or not positive. */
+        // [impl->dsn~duration~1]
+        fun parseDuration(text: String): Duration? = Duration.parseOrNull(text)?.takeIf { it.isPositive() && it.isFinite() }
 
         /**
          * The link that makes ContextSwitcher switch to the task that a tag `cs:` names.

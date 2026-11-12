@@ -65,6 +65,17 @@ Covers:
 
 Needs: dsn
 
+### Duration of a task
+`req~duration~1`
+
+A task states the time it is expected to take.
+
+Covers:
+
+* `feat~extensions~1`
+
+Needs: dsn
+
 ### Task of ContextSwitcher
 `req~context-switcher-link~1`
 
@@ -380,6 +391,20 @@ Covers:
 
 * `req~context-hierarchy~1`
 * `adr~context-hierarchy~1`
+
+Needs: impl, utest
+
+### Tag for the duration
+`dsn~duration~1`
+
+The tag `dur:` holds the duration in hours and minutes, such as `45m`, `2h` or `1h30m`.
+`Task.duration` reads it with the parser of the Kotlin standard library and gives nothing for a value that is no positive duration.
+The edit dialog has a field for the tag and disables *Save* while its value is no duration.
+
+Covers:
+
+* `req~duration~1`
+* `adr~duration-tag~1`
 
 Needs: impl, utest
 

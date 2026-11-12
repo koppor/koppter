@@ -165,6 +165,18 @@ class AppTest {
         assertEquals("Post signs +GarageSale due:2026-11-30", storage.text.lines()[1])
     }
 
+    // [utest->dsn~duration~1]
+    @Test
+    fun theDialogSetsTheDurationAndRejectsWhatIsNone() = runComposeUiTest {
+        start()
+        openTask("Post signs")
+        onNodeWithTag("edit-duration").performTextInput("long")
+        onNodeWithTag("edit-save").performScrollTo().assertIsNotEnabled()
+        onNodeWithTag("edit-duration").performTextReplacement("1h30m")
+        onNodeWithTag("edit-save").performClick()
+        assertEquals("Post signs +GarageSale dur:1h30m", storage.text.lines()[1])
+    }
+
     // [utest->dsn~edit-dialog~1]
     @Test
     fun deletesATaskFromTheDialog() = runComposeUiTest {

@@ -211,6 +211,17 @@ class TaskTest {
         assertEquals(task, task.edit(hashtags = listOf("family")))
     }
 
+    // [utest->dsn~duration~1]
+    @Test
+    fun theDurationIsReadFromItsTag() {
+        assertEquals(90, Task.parse("Read the survey dur:1h30m").duration?.inWholeMinutes)
+        assertEquals(45, Task.parse("Read the survey dur:45m").duration?.inWholeMinutes)
+        assertEquals(120, Task.parse("Read the survey dur:2h").duration?.inWholeMinutes)
+        for (none in listOf("Read the survey", "Read dur:long", "Read dur:0m", "Read dur:-1h", "Read dur:90")) {
+            assertEquals(null, Task.parse(none).duration, none)
+        }
+    }
+
     // [utest->dsn~context-switcher-tag~1]
     @Test
     fun aLinkOfContextSwitcherBecomesATagThatGivesTheLinkToSwitch() {

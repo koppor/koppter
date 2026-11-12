@@ -78,6 +78,7 @@ fun EditDialog(
     var due by remember { mutableStateOf(original.tag(Task.DUE).orEmpty()) }
     var threshold by remember { mutableStateOf(original.tag(Task.THRESHOLD).orEmpty()) }
     var recurrence by remember { mutableStateOf(original.tag(Task.RECURRENCE).orEmpty()) }
+    var duration by remember { mutableStateOf(original.tag(Task.DURATION).orEmpty()) }
     var contextSwitcher by remember { mutableStateOf(original.tag(Task.CONTEXT_SWITCHER).orEmpty()) }
     var projects by remember { mutableStateOf(original.projects) }
     var contexts by remember { mutableStateOf(original.contexts) }
@@ -87,17 +88,19 @@ fun EditDialog(
     val dueValid = due.isBlank() || Task.parseDate(due.trim()) != null
     val thresholdValid = threshold.isBlank() || Task.parseDate(threshold.trim()) != null
     val recurrenceValid = recurrence.isBlank() || Recurrence.parse(recurrence.trim()) != null
+    val durationValid = duration.isBlank() || Task.parseDuration(duration.trim()) != null
     val result = original
         .edit(description = description, priority = priority, projects = projects, contexts = contexts, hashtags = hashtags)
         .withTag(Task.DUE, due.trim())
         .withTag(Task.THRESHOLD, threshold.trim())
         .withTag(Task.RECURRENCE, recurrence.trim())
+        .withTag(Task.DURATION, duration.trim())
         // A link pasted into the description counts only while the field is empty.
         .withTag(Task.CONTEXT_SWITCHER, Task.contextSwitcherId(contextSwitcher))
         .let { if (contextSwitcher.isBlank()) it.withContextSwitcherTags() else it }
         // [impl->dsn~notes~1]
         .let { if (originalNote == null) it else it.withTag(Task.NOTE, if (note.isBlank()) null else original.tag(Task.NOTE) ?: newNoteName) }
-    val valid = dueValid && thresholdValid && recurrenceValid && result.body.isNotBlank()
+    val valid = dueValid && thresholdValid && recurrenceValid && durationValid && result.body.isNotBlank()
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -145,15 +148,27 @@ fun EditDialog(
                     )
                 }
 
-                // [impl->dsn~context-switcher-tag~1]
-                OutlinedTextField(
-                    value = contextSwitcher,
-                    onValueChange = { contextSwitcher = it },
-                    label = { Text("ContextSwitcher task") },
-                    placeholder = { Text("category/task or a copied link") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().testTag("edit-cs"),
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // [impl->dsn~duration~1]
+                    OutlinedTextField(
+                        value = duration,
+                        onValueChange = { duration = it },
+                        label = { Text("Duration") },
+                        placeholder = { Text("45m, 1h30m") },
+                        isError = !durationValid,
+                        singleLine = true,
+                        modifier = Modifier.width(165.dp).testTag("edit-duration"),
+                    )
+                    // [impl->dsn~context-switcher-tag~1]
+                    OutlinedTextField(
+                        value = contextSwitcher,
+                        onValueChange = { contextSwitcher = it },
+                        label = { Text("ContextSwitcher task") },
+                        placeholder = { Text("category/task or a copied link") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f).testTag("edit-cs"),
+                    )
+                }
 
                 NameList("Project", "+", projects, knownProjects, { projects = it }, "edit-project")
                 NameList("Context", "@", contexts, knownContexts, { contexts = it }, "edit-context")

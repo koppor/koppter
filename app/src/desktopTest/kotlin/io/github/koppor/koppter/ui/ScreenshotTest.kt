@@ -57,7 +57,7 @@ class ScreenshotTest {
         override var onStatus: (SyncStatus) -> Unit = {}
         override fun sync() = Unit
         override fun dates() = mapOf(
-            "(B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 cs:work/team-meeting note:k3f.txt" to TaskDates(added = LocalDate(2026, 11, 5)),
+            "(B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 dur:2h cs:work/team-meeting note:k3f.txt" to TaskDates(added = LocalDate(2026, 11, 5)),
         )
 
         override fun readCompanion(path: String) = companions[path]
@@ -67,7 +67,7 @@ class ScreenshotTest {
             (A) Call the landlord about the heating @phone due:2026-11-12
             (A) Submit the travel expense report +Work @computer #money due:2026-11-10
             (B) Schedule Goodwill pickup +GarageSale @phone due:2026-11-14
-            (B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 cs:work/team-meeting note:k3f.txt
+            (B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 dur:2h cs:work/team-meeting note:k3f.txt
             (C) Post signs around the neighborhood +GarageSale @errands
             (C) Renew the library card @errands>city #someday due:2026-11-20
             Water the plants @home due:2026-11-12 rec:1w
