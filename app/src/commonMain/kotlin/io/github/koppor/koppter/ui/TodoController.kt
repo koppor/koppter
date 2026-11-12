@@ -72,7 +72,7 @@ class TodoController(
     fun add(line: String) = add(Task.parse(line))
 
     fun toggle(entry: Entry) {
-        val task = if (entry.task.completed) entry.task.uncomplete() else entry.task.complete(today(), settings.writeDates)
+        val task = if (entry.task.completed) entry.task.reopen() else entry.task.complete(today(), settings.writeDates)
         replace(entry, task)
     }
 

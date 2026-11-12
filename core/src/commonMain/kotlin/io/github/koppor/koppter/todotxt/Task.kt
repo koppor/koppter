@@ -53,7 +53,7 @@ data class Task(
 
     /**
      * Marks the task as completed.
-     * The priority moves to a `pri:` tag, as other todo.txt tools do, so that [uncomplete] restores it.
+     * The priority moves to a `pri:` tag, as other todo.txt tools do, so that [reopen] restores it.
      */
     // [impl->dsn~completion-dates~1]
     fun complete(today: LocalDate, writeDate: Boolean): Task {
@@ -67,7 +67,7 @@ data class Task(
         )
     }
 
-    fun uncomplete(): Task {
+    fun reopen(): Task {
         if (!completed) return this
         val kept = tag(PRIORITY)?.singleOrNull()?.takeIf { it in 'A'..'Z' }
         return copy(

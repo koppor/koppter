@@ -172,7 +172,7 @@ Needs: impl, utest
 
 `Task.complete` sets the completion marker.
 It writes the completion date only if the caller asks for it or if the task has a creation date; without a completion date in front of it, the creation date would be read as the completion date.
-The priority is moved to a tag `pri:`, the convention of other todo.txt tools, and `Task.uncomplete` moves it back.
+The priority is moved to a tag `pri:`, the convention of other todo.txt tools, and `Task.reopen` moves it back.
 
 Covers:
 

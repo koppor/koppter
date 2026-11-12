@@ -109,10 +109,10 @@ class TaskTest {
 
     // [utest->dsn~completion-dates~1]
     @Test
-    fun completingKeepsThePriorityAsTagAndUncompletingRestoresIt() {
+    fun completingKeepsThePriorityAsTagAndReopeningRestoresIt() {
         val completed = Task.parse("(A) Call Mom +Family").complete(today, writeDate = false)
         assertEquals("x Call Mom +Family pri:A", completed.toLine())
-        assertEquals("(A) Call Mom +Family", completed.uncomplete().toLine())
+        assertEquals("(A) Call Mom +Family", completed.reopen().toLine())
     }
 
     // [utest->dsn~canonical-order-on-edit~1]
