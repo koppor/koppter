@@ -62,6 +62,9 @@ class TodoController(
     /** Shows the tasks as a board instead of as a list. */
     var board by mutableStateOf(false)
 
+    /** Shows the contexts with their states instead of the tasks. */
+    var overview by mutableStateOf(false)
+
     /** The attribute whose values are the columns of the board; `null` for the columns the user defined. */
     var groupKey by mutableStateOf<GroupKey?>(GroupKey.PRIORITY)
 

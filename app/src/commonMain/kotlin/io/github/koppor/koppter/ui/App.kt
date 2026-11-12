@@ -64,6 +64,7 @@ import io.github.koppor.koppter.storage.SyncStatus
 import io.github.koppor.koppter.todotxt.Entry
 import io.github.koppor.koppter.todotxt.GroupKey
 import io.github.koppor.koppter.todotxt.Task
+import io.github.koppor.koppter.todotxt.contextStates
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -201,7 +202,9 @@ private fun MainScreen(
                         QuickAdd(onAdd = controller::add)
                         ViewOptions(controller)
                         val emptyText = if (controller.file.entries.isEmpty()) "No tasks" else "No task matches the filter"
-                        if (controller.board) {
+                        if (controller.overview) {
+                            Overview(contextStates(controller.visible, controller.today()), controller.today(), { editing = Editing(it) }, emptyText)
+                        } else if (controller.board) {
                             Board(
                                 controller.groups, controller.today(), controller::toggle, onOpen = { editing = Editing(it) },
                                 canMove = { entry, from, to -> controller.moved(entry, from, to) != null },
@@ -283,9 +286,22 @@ private fun ViewOptions(controller: TodoController) {
         )
         FilterChip(
             selected = controller.board,
-            onClick = { controller.board = !controller.board },
+            onClick = {
+                controller.board = !controller.board
+                controller.overview = false
+            },
             label = { Text("Board") },
             modifier = Modifier.testTag("board-switch"),
+        )
+        // [impl->dsn~overview~1]
+        FilterChip(
+            selected = controller.overview,
+            onClick = {
+                controller.overview = !controller.overview
+                controller.board = false
+            },
+            label = { Text("Overview") },
+            modifier = Modifier.testTag("overview-switch"),
         )
         if (controller.board) {
             for (key in GroupKey.entries) {

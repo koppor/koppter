@@ -108,6 +108,15 @@ class ScreenshotTest {
     }
 
     @Test
+    fun rendersOverview() = runDesktopComposeUiTest(width = 1100, height = 620) {
+        start()
+        onNodeWithTag("overview-switch").performClick()
+        save("overview.png")
+        onNodeWithTag("overview-computer").performClick()
+        save("overview-context.png")
+    }
+
+    @Test
     fun rendersSchedule() = runDesktopComposeUiTest(width = 1100, height = 1060) {
         start()
         onNodeWithTag("open-schedule").performClick()

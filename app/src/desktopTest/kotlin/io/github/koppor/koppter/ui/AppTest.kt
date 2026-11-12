@@ -330,6 +330,28 @@ class AppTest {
         assertEquals("Milk @inbox", storage.text.trim().lines().last())
     }
 
+    // [utest->dsn~overview~1]
+    @Test
+    fun theOverviewShowsTheStateOfEachContextAndItsTasksByUrgency() = runComposeUiTest {
+        storage.text += "Sweep the floor @home due:2026-11-07\nWater the plants @home\n"
+        start()
+        onNodeWithTag("overview-switch").performClick()
+        onNodeWithTag("overview-home").assertExists()
+        onNodeWithTag("overview-phone").assertExists()
+        onNodeWithTag("overview-none").assertExists()
+        onNodeWithText("1 overdue").assertExists()
+
+        onNodeWithTag("overview-home").performClick()
+        onAllNodesWithTag("overview-task").assertCountEquals(2)
+        onNodeWithText("5 days overdue").assertExists()
+        // A click on a task opens it.
+        onNodeWithText("Sweep the floor").performClick()
+        onNodeWithTag("edit-dialog").assertExists()
+        onNodeWithTag("edit-cancel").performScrollTo().performClick()
+        onNodeWithTag("overview-back").performClick()
+        onNodeWithTag("overview-phone").assertExists()
+    }
+
     // [utest->dsn~color-themes~1]
     @Test
     fun theSettingsDialogChoosesThePaletteAndItsVariant() = runComposeUiTest {

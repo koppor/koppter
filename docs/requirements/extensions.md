@@ -76,6 +76,18 @@ Covers:
 
 Needs: dsn
 
+### Overview of the contexts
+`req~overview~1`
+
+The user sees for each context how it is doing: whether tasks are overdue or due today.
+For a context, the user sees its tasks ordered by urgency, each with the days until or since its due date and with the part of its time that has passed.
+
+Covers:
+
+* `feat~task-list~1`
+
+Needs: dsn
+
 ### Task of ContextSwitcher
 `req~context-switcher-link~1`
 
@@ -405,6 +417,21 @@ Covers:
 
 * `req~duration~1`
 * `adr~duration-tag~1`
+
+Needs: impl, utest
+
+### Overview
+`dsn~overview~1`
+
+`Task.urgency` gives the days until the due date of an open task and the part of the time that has passed since its start: the threshold date, else the creation date, else two weeks before the due date.
+`contextStates` groups the open tasks by their contexts of the outermost level, a context including the contexts below it, and sorts the tasks of each by urgency; the tasks without context form a group of their own.
+The state of a context is that of its most urgent task: overdue, due today, or neither.
+`Overview` shows the contexts of the visible tasks as tiles with a dot in the color of the state, and after a click on a tile the tasks of that context with a progress bar and the text of their urgency.
+A switch above the tasks turns the overview on; it and the board exclude each other.
+
+Covers:
+
+* `req~overview~1`
 
 Needs: impl, utest
 

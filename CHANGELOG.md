@@ -33,6 +33,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Contexts below contexts, written as `@research>reading`: the label shows the last level, a click on it shows the tasks of the context, and a filter for a context includes the contexts below it.
 - The tag `dur:` holds the time a task is expected to take, such as `dur:1h30m`; the edit dialog has a field for it.
 - On Android, text shared from another application becomes a task without a dialog; share actions in the settings state the context, dates and duration it gets, and each action is a target of its own in the share sheet.
+- Overview with one tile per context that tells whether tasks of the context are overdue or due today; a click on a tile lists the tasks of the context by urgency, each with a bar that fills up to its due date.
 - Board view with one column per priority, project, context, hashtag or due date range.
 - Board columns defined by filter expressions in the syntax of topydo, such as `Today = due:<=today -@waiting`; they are entered in the settings and kept in `koppter.yml` next to the todo.txt file.
 - On the board, dragging a task to another column changes its priority, project, context or due date accordingly; for a column defined by a filter, the task is changed as little as possible so that it matches the filter.

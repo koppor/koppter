@@ -33,6 +33,14 @@ The board with [columns defined by filters](#board): *Now* is `due:<=today -@wai
 
 ![Board with the columns Now, Waiting, This week and Important](docs/screenshots/board-filter.png)
 
+The overview tells how each context is doing: red if a task is overdue, yellow if one is due today.
+
+![Overview with one tile per context](docs/screenshots/overview.png)
+
+A click on a context shows its tasks, the most urgent first; the bar of a task fills from its start to its due date.
+
+![Tasks of a context with bars that show their urgency](docs/screenshots/overview-context.png)
+
 The edit dialog: the description without metadata at the top, the metadata below, then the note, the resulting line of the todo.txt file, and the date the task was added according to the git history.
 
 ![Edit dialog of a task](docs/screenshots/edit.png)
@@ -195,6 +203,16 @@ The application differs from the add-on in these points:
 * Each device remembers on its own when it last ran the schedules.
   In a git repository, a task that any device added since then counts as existing, also when it is completed already.
   Without git, a second device may add a task again that was added and completed on the first.
+
+## Overview
+
+The switch *Overview* above the tasks shows one tile per context of the outermost level instead of the tasks.
+A tile counts the open tasks of the context and of the contexts below it, and its dot tells the state of the most urgent one: overdue, due today, or neither.
+The tasks without context have a tile of their own.
+The filter panel applies to the overview as it does to the list.
+
+A click on a tile lists the tasks of the context, the most urgent first and those without due date last.
+The bar of a task shows how much of its time has passed: from its threshold date (`t:`) to its due date, else from its creation date, else over the two weeks before the due date.
 
 ## Sharing to koppter on Android
 
