@@ -76,6 +76,17 @@ Covers:
 
 Needs: dsn
 
+### Board columns defined by filters
+`req~board-defined-columns~1`
+
+The user defines columns of the board, each by a title and a filter expression, and switches the board to these columns.
+
+Covers:
+
+* `feat~kanban~1`
+
+Needs: dsn
+
 ### Moving a task on the board
 `req~board-move~1`
 
@@ -155,6 +166,38 @@ Covers:
 
 Needs: impl, utest
 
+### Filter expressions
+`dsn~query~1`
+
+`Query` evaluates a filter expression in the syntax of topydo: terms separated by blanks, all of which a task has to match.
+`+project` and `@context` match a task with this project or context.
+`(A)` matches a task with this priority; `(>B)` and `(<=C)` match a higher priority, and this or a lower one; a task without priority matches none of them.
+`key:value` matches a task whose tag has this value; with `<`, `<=`, `>`, `>=` in front of the value, the tag is compared to it, as a date if both are dates.
+A date is an ISO date, `today`, `tomorrow`, `yesterday`, or an interval from today such as `1w`.
+A leading `-` negates a term, and any other word matches a line that contains it, ignoring case.
+
+Covers:
+
+* `req~board-defined-columns~1`
+
+Needs: impl, utest
+
+### Columns defined by filters
+`dsn~board-defined-columns~1`
+
+The setting `boardColumns` holds one column per line as `title = expression`; a line without title is titled by its expression.
+`groupByColumns` distributes the visible tasks over these columns, in the order of their definition.
+A task appears in every column whose expression it matches, and a column without tasks stays on the board.
+The view options offer these columns once at least one is defined.
+Tasks are not dragged between them.
+
+Covers:
+
+* `req~board-defined-columns~1`
+* `adr~board-columns-by-filter~1`
+
+Needs: impl, utest
+
 ### Move between groups
 `dsn~board-move~1`
 
@@ -188,7 +231,7 @@ Needs: impl, utest
 ### View options
 `dsn~view-options~1`
 
-A row of switches above the tasks turns the *Top* view and the board on and off and, for the board, selects the attribute of the columns.
+A row of switches above the tasks turns the *Top* view and the board on and off and, for the board, selects the attribute of the columns or the columns defined by filters.
 
 Covers:
 

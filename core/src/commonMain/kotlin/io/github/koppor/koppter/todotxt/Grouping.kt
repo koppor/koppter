@@ -46,6 +46,34 @@ fun groupEntries(entries: List<Entry>, key: GroupKey, today: LocalDate): List<Gr
     }.filter { it.entries.isNotEmpty() }
 }
 
+/** A column of the board that the user defined: the tasks that match the filter [expression]. */
+data class BoardColumn(val title: String, val expression: String)
+
+// The equals sign of a comparison such as `due:<=today` does not separate title and expression.
+private val TITLE_SEPARATOR = Regex("(?<![<>:])=")
+
+/**
+ * Reads the definitions of board columns: one column per line, as `title = expression`.
+ * A line without title is a column titled by its expression.
+ */
+// [impl->dsn~board-defined-columns~1]
+fun parseBoardColumns(text: String): List<BoardColumn> =
+    text.lines().map(String::trim).filter(String::isNotEmpty).map { line ->
+        val parts = line.split(TITLE_SEPARATOR, limit = 2).map(String::trim)
+        if (parts.size == 2 && parts[0].isNotEmpty()) BoardColumn(parts[0], parts[1]) else BoardColumn(line, line)
+    }
+
+/**
+ * Distributes the entries over the columns that the user defined, see [Query] for the expressions.
+ * A task appears in each column whose expression it matches; a column without tasks stays.
+ */
+// [impl->dsn~board-defined-columns~1]
+fun groupByColumns(entries: List<Entry>, columns: List<BoardColumn>, today: LocalDate): List<Group> =
+    columns.map { column ->
+        val query = Query.parse(column.expression)
+        Group(column.title, entries.filter { query.matches(it.task, today) })
+    }
+
 private const val OVERDUE = "overdue"
 private const val TODAY = "today"
 private const val LATER = "later"

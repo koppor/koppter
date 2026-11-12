@@ -245,7 +245,7 @@ Needs: impl, utest
 ### Settings dialog
 `dsn~settings-dialog~1`
 
-`SettingsDialog` edits the location of the todo.txt file and the switch for writing dates.
+`SettingsDialog` edits the location of the todo.txt file, the switch for writing dates, the number of top tasks and the board columns defined by filters.
 A changed location makes the controller load the other file.
 
 Covers:

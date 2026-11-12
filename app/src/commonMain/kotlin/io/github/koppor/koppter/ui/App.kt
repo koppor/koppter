@@ -171,7 +171,12 @@ private fun MainScreen(
                         ViewOptions(controller)
                         val emptyText = if (controller.file.entries.isEmpty()) "No tasks" else "No task matches the filter"
                         if (controller.board) {
-                            Board(controller.groups, controller.today(), controller::toggle, { editing = Editing(it) }, controller::move, emptyText)
+                            Board(
+                                controller.groups, controller.today(), controller::toggle, { editing = Editing(it) },
+                                // A column that a filter defines has no value a dropped task could take.
+                                (controller::move).takeIf { controller.groupKey != null },
+                                emptyText,
+                            )
                         } else {
                             TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, emptyText)
                         }
@@ -216,7 +221,7 @@ private fun MainScreen(
     }
 }
 
-/** The switches above the tasks: only the top tasks, list or board, and the attribute that forms the columns of the board. */
+/** The switches above the tasks: only the top tasks, list or board, and what forms the columns of the board. */
 // [impl->dsn~view-options~1]
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -241,6 +246,14 @@ private fun ViewOptions(controller: TodoController) {
                     onClick = { controller.groupKey = key },
                     label = { Text("by ${key.label.lowercase()}") },
                     modifier = Modifier.testTag("group-${key.name}"),
+                )
+            }
+            if (controller.boardColumns.isNotEmpty()) {
+                FilterChip(
+                    selected = controller.groupKey == null,
+                    onClick = { controller.groupKey = null },
+                    label = { Text("by filter") },
+                    modifier = Modifier.testTag("group-FILTER"),
                 )
             }
         }

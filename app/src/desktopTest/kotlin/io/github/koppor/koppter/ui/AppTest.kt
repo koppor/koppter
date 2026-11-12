@@ -384,4 +384,23 @@ class AppTest {
         assertEquals("(A) Schedule pickup +GarageSale @phone", storage.text.lines()[0])
         onNodeWithTag("edit-dialog").assertDoesNotExist()
     }
+
+    // [utest->dsn~board-defined-columns~1]
+    // [utest->dsn~settings-dialog~1]
+    @Test
+    fun columnsDefinedInTheSettingsFormTheBoard() = runComposeUiTest {
+        start()
+        onNodeWithTag("board-switch").performClick()
+        onNodeWithTag("group-FILTER").assertDoesNotExist()
+
+        onNodeWithTag("open-settings").performClick()
+        onNodeWithTag("settings-board-columns").performTextInput("Phone = @phone\nSoon = due:<2w\nNothing = +Nowhere")
+        onNodeWithTag("settings-save").performClick()
+        onNodeWithTag("group-FILTER").performClick()
+
+        onNodeWithText("Phone (2)").assertExists()
+        onNodeWithText("Soon (1)").assertExists()
+        onNodeWithText("Nothing (0)").assertExists()
+        onNodeWithText("A (1)").assertDoesNotExist()
+    }
 }

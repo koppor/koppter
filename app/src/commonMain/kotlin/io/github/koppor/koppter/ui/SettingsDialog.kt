@@ -59,6 +59,7 @@ fun SettingsDialog(
     var writeDates by remember { mutableStateOf(settings.writeDates) }
     var topCount by remember { mutableStateOf(settings.topCount.toString()) }
     val topCountValue = topCount.trim().toIntOrNull()?.takeIf { it > 0 }
+    var boardColumns by remember { mutableStateOf(settings.boardColumns) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large, tonalElevation = 6.dp, modifier = Modifier.widthIn(max = 560.dp).testTag("settings-dialog")) {
@@ -94,6 +95,15 @@ fun SettingsDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag("settings-top-count"),
                 )
+                OutlinedTextField(
+                    value = boardColumns,
+                    onValueChange = { boardColumns = it },
+                    label = { Text("Board columns by filter") },
+                    supportingText = { Text("One column per line as title = filter, for example: Today = due:<=today -@waiting") },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                    minLines = 3,
+                    modifier = Modifier.fillMaxWidth().testTag("settings-board-columns"),
+                )
                 Text(
                     "A file in a git repository is committed after every change and synchronized with the remote repository.",
                     style = MaterialTheme.typography.bodySmall,
@@ -106,7 +116,16 @@ fun SettingsDialog(
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = onDismiss) { Text("Cancel") }
                     Button(
-                        onClick = { onSave(settings.copy(todoFile = todoFile.trim(), writeDates = writeDates, topCount = topCountValue ?: settings.topCount)) },
+                        onClick = {
+                            onSave(
+                                settings.copy(
+                                    todoFile = todoFile.trim(),
+                                    writeDates = writeDates,
+                                    topCount = topCountValue ?: settings.topCount,
+                                    boardColumns = boardColumns.trim(),
+                                ),
+                            )
+                        },
                         enabled = topCountValue != null,
                         modifier = Modifier.testTag("settings-save"),
                     ) { Text("Save") }

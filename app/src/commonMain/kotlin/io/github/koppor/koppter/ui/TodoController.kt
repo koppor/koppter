@@ -13,7 +13,10 @@ import io.github.koppor.koppter.sync.TaskDates
 import io.github.koppor.koppter.todotxt.Entry
 import io.github.koppor.koppter.todotxt.Filter
 import io.github.koppor.koppter.todotxt.Group
+import io.github.koppor.koppter.todotxt.BoardColumn
 import io.github.koppor.koppter.todotxt.GroupKey
+import io.github.koppor.koppter.todotxt.groupByColumns
+import io.github.koppor.koppter.todotxt.parseBoardColumns
 import io.github.koppor.koppter.todotxt.groupEntries
 import io.github.koppor.koppter.todotxt.iceRecurTasks
 import io.github.koppor.koppter.todotxt.Task
@@ -49,9 +52,14 @@ class TodoController(
     // [impl->dsn~most-important-tasks~1]
     var topOnly by mutableStateOf(false)
 
-    /** Shows the tasks as a board with one column per value of [groupKey] instead of as a list. */
+    /** Shows the tasks as a board instead of as a list. */
     var board by mutableStateOf(false)
-    var groupKey by mutableStateOf(GroupKey.PRIORITY)
+
+    /** The attribute whose values are the columns of the board; `null` for the columns the user defined. */
+    var groupKey by mutableStateOf<GroupKey?>(GroupKey.PRIORITY)
+
+    /** The columns the user defined in the settings. */
+    val boardColumns: List<BoardColumn> get() = parseBoardColumns(settings.boardColumns)
 
     /** The state of the synchronization; `null` if the storage does not synchronize. */
     var syncStatus by mutableStateOf<SyncStatus?>(null)
@@ -95,7 +103,9 @@ class TodoController(
 
     /** The visible tasks as the columns of the board. */
     // [impl->dsn~board~1]
-    val groups: List<Group> get() = groupEntries(visible, groupKey, today())
+    // [impl->dsn~board-defined-columns~1]
+    val groups: List<Group>
+        get() = groupKey?.let { groupEntries(visible, it, today()) } ?: groupByColumns(visible, boardColumns, today())
 
     val projects: List<String> get() = file.entries.flatMap { it.task.projects }.distinct().sorted()
     val contexts: List<String> get() = file.entries.flatMap { it.task.contexts }.distinct().sorted()
@@ -192,7 +202,7 @@ class TodoController(
     /** Applies the move of a task from one column of the board to another. */
     // [impl->dsn~board-move~1]
     fun move(entry: Entry, from: Group, to: Group) {
-        val task = moveToGroup(entry.task, groupKey, from, to, today()) ?: return
+        val task = moveToGroup(entry.task, groupKey ?: return, from, to, today()) ?: return
         val index = locate(entry) ?: return
         write(file.replace(index, task), "Move task to ${to.title}: ${task.description}")
     }
@@ -206,6 +216,7 @@ class TodoController(
         if (new == settings) return
         val fileChanged = new.todoFile != settings.todoFile
         settings = new
+        if (boardColumns.isEmpty() && groupKey == null) groupKey = GroupKey.PRIORITY
         guarded { saveSettings(new) }
         if (fileChanged) {
             storage = storageFor(new)

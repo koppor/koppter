@@ -32,6 +32,28 @@ If these files lie in a git repository, the application commits every change and
 
 A file in OneDrive, or in another storage service, is used through the platform ([decision 0011](docs/decisions/0011-onedrive-through-the-platform.md)): on Android, choose it with *Choose file* in the settings; on the desktop, choose it in the synchronized folder.
 
+## Board
+
+The board shows one column per priority, project, context or due date range.
+Dragging a task to another column changes that attribute of the task.
+
+Columns can also be defined by filters, in the settings, one per line as `title = filter` ([decision 0012](docs/decisions/0012-board-columns-by-filter-in-the-settings.md)):
+
+```text
+Now = due:<=today -@waiting
+Waiting = @waiting
+This week = due:<1w
+Important = (>C)
+```
+
+| Term | Matches a task |
+| --- | --- |
+| `+project`, `@context` | with this project or context |
+| `(A)`, `(>B)`, `(<=C)` | with this priority, a higher one, this or a lower one |
+| `due:today`, `due:<1w`, `t:>=2026-12-01`, `status:doing` | whose tag has this value or compares so to it; dates are ISO dates, `today`, `tomorrow`, `yesterday` or an interval from today |
+| `-term` | that does not match the term |
+| any other word | whose line contains it |
+
 ## Building
 
 Requirements: JDK 21 and the Android SDK (`ANDROID_HOME`, or `sdk.dir` in `local.properties`).

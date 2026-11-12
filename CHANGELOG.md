@@ -26,6 +26,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Tasks scheduled in `ice_recur.txt` next to the todo.txt file are added on their days.
 - *Top* switch that restricts the list to the first tasks; their number is a setting.
 - Board view with one column per priority, project, context or due date range.
+- Board columns defined by filter expressions in the syntax of topydo, such as `Today = due:<=today -@waiting`; they are entered in the settings.
 - On the board, dragging a task to another column changes its priority, project, context or due date accordingly.
 - Changes that other programs make to the todo.txt file are picked up while the application runs.
 - Project infrastructure: Gradle build with a Kotlin Multiplatform `core` module, requirements tracing, decision records and continuous integration.
