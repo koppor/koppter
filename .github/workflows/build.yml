@@ -32,6 +32,17 @@ jobs:
       - name: Build, test, and trace requirements
         run: ./gradlew build traceRequirements
 
+      # A convenience for testing; a full artifact storage must not fail the build.
+      # The APK is signed with the debug key of the runner, so one build does not install over another.
+      - name: Upload the Android debug APK
+        continue-on-error: true
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: koppter-android-debug
+          path: android/build/outputs/apk/debug/android-debug.apk
+          retention-days: 7
+          overwrite: true
+
   # [impl->adr~calver-changelog~1]
   changelog:
     runs-on: ubuntu-latest
