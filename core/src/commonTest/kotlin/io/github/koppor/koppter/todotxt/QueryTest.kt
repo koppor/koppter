@@ -73,6 +73,15 @@ class QueryTest {
         assertEquals(true, Query.parse("#123").matches(Task.parse("Fix #123"), today))
     }
 
+    // [utest->dsn~context-hierarchy~1]
+    @Test
+    fun aContextTermMatchesAndRemovesTheContextsBelowIt() {
+        val query = Query.parse("@research")
+        assertEquals(true, query.matches(Task.parse("Read the survey @research>reading"), today))
+        assertEquals(false, query.matches(Task.parse("Read the manual @researching"), today))
+        assertEquals("Read the survey", applied("-@research", "Read the survey @research>reading"))
+    }
+
     private fun applied(expression: String, line: String): String? = Query.parse(expression).applyTo(Task.parse(line), today)?.toLine()
 
     // [utest->dsn~board-move-to-filter~1]

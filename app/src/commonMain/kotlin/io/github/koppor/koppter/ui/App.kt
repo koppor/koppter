@@ -101,7 +101,10 @@ fun App(
         }
     }
     MaterialTheme(colorScheme = colorScheme(controller.settings.theme, dark)) {
-        CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+        CompositionLocalProvider(
+            LocalUriHandler provides uriHandler,
+            LocalShowContext provides { controller.filter = controller.filter.copy(contexts = setOf(it)) },
+        ) {
             MainScreen(controller, defaultTodoFile, chooseFile, git)
         }
     }

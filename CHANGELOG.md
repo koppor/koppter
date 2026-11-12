@@ -30,6 +30,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Application icon, a K as the cabin of a helicopter in the colors of Nord, for the window on the desktop and the launcher on Android.
 - *Top* switch that restricts the list to the first tasks; their number is a setting.
 - Hashtags (`#tag`) as a third kind of label next to projects and contexts: shown on the task, offered in the filter panel, the edit dialog and the filters of board columns.
+- Contexts below contexts, written as `@research>reading`: the label shows the last level, a click on it shows the tasks of the context, and a filter for a context includes the contexts below it.
 - Board view with one column per priority, project, context, hashtag or due date range.
 - Board columns defined by filter expressions in the syntax of topydo, such as `Today = due:<=today -@waiting`; they are entered in the settings and kept in `koppter.yml` next to the todo.txt file.
 - On the board, dragging a task to another column changes its priority, project, context or due date accordingly; for a column defined by a filter, the task is changed as little as possible so that it matches the filter.

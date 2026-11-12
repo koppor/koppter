@@ -61,9 +61,10 @@ class Query private constructor(private val terms: List<Term>) {
     }
 
     private class Context(val name: String) : Term {
-        override fun matches(task: Task, today: LocalDate) = name in task.contexts
+        // [impl->dsn~context-hierarchy~1]
+        override fun matches(task: Task, today: LocalDate) = task.contexts.any { it.isWithin(name) }
         override fun establish(task: Task, today: LocalDate) = task.edit(contexts = task.contexts + name)
-        override fun revoke(task: Task) = task.edit(contexts = task.contexts - name)
+        override fun revoke(task: Task) = task.edit(contexts = task.contexts.filterNot { it.isWithin(name) })
     }
 
     private class Hashtag(val name: String) : Term {

@@ -21,6 +21,7 @@ Architectural decisions are recorded as [Markdown Architectural Decision Records
 | [0014](0014-hashtags-as-a-third-kind-of-label.md) | Hashtags are a third kind of label next to projects and contexts |
 | [0015](0015-colors-from-published-palettes.md) | Colors come from the palettes Nord and Everforest |
 | [0016](0016-tag-for-the-task-of-contextswitcher.md) | A tag names the task of ContextSwitcher |
+| [0017](0017-levels-of-a-context-separated-by-a-greater-than-sign.md) | The levels of a context are separated by a greater-than sign |
 
 ## Conventions
 

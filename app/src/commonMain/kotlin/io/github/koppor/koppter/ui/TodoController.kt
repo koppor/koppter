@@ -22,6 +22,8 @@ import io.github.koppor.koppter.todotxt.parseBoardColumns
 import io.github.koppor.koppter.todotxt.groupEntries
 import io.github.koppor.koppter.todotxt.iceRecurTasks
 import io.github.koppor.koppter.todotxt.Task
+import io.github.koppor.koppter.todotxt.hierarchyOrder
+import io.github.koppor.koppter.todotxt.withAncestors
 import io.github.koppor.koppter.todotxt.TodoFile
 import io.github.koppor.koppter.todotxt.listOrder
 import io.github.koppor.koppter.todotxt.moveToGroup
@@ -118,7 +120,8 @@ class TodoController(
         get() = groupKey?.let { groupEntries(visible, it, today()) } ?: groupByColumns(visible, boardColumns, today())
 
     val projects: List<String> get() = file.entries.flatMap { it.task.projects }.distinct().sorted()
-    val contexts: List<String> get() = file.entries.flatMap { it.task.contexts }.distinct().sorted()
+    /** The contexts of the file and the contexts above them, a context directly before those below it. */
+    val contexts: List<String> get() = file.entries.flatMap { it.task.contexts }.flatMap { it.withAncestors() }.distinct().sortedWith(hierarchyOrder)
     val hashtags: List<String> get() = file.entries.flatMap { it.task.hashtags }.distinct().sorted()
     val priorities: List<Char> get() = file.entries.mapNotNull { it.task.priority }.distinct().sorted()
 

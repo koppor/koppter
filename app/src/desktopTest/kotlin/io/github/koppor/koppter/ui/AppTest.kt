@@ -273,6 +273,31 @@ class AppTest {
         onNodeWithText("Not opened: contextswitcher://switch/missing").assertExists()
     }
 
+    // [utest->dsn~context-hierarchy~1]
+    @Test
+    fun aContextBelowAnotherShowsItsLastLevelAndFiltersByAClick() = runComposeUiTest {
+        storage.text += "Read the survey @research>reading\nReview a paper @research\n"
+        start()
+        onAllNodesWithTag("task").assertCountEquals(5)
+        // The label shows the last level; the path appears when the pointer rests on it.
+        onNode(hasText("@reading") and hasAnyAncestor(hasTestTag("task-labels")), useUnmergedTree = true).assertExists()
+        onNodeWithText("@research>reading").assertDoesNotExist()
+        onNodeWithTag("label-context-research>reading", useUnmergedTree = true).performMouseInput { moveTo(center) }
+        mainClock.advanceTimeBy(2_000)
+        onNodeWithText("@research>reading").assertExists()
+
+        // The filter panel shows the contexts as a tree; the upper context includes the lower one.
+        onNodeWithTag("filter-context-research").performClick()
+        onAllNodesWithTag("task").assertCountEquals(2)
+        onNodeWithTag("filter-clear").performScrollTo().performClick()
+
+        // A click on the label of a task shows the tasks of its context and does not open the task.
+        onNodeWithTag("label-context-research>reading", useUnmergedTree = true).performClick()
+        onNodeWithTag("edit-dialog").assertDoesNotExist()
+        onAllNodesWithTag("task").assertCountEquals(1)
+        onNodeWithTag("filter-context-research>reading").assertIsOn()
+    }
+
     // [utest->dsn~color-themes~1]
     @Test
     fun theSettingsDialogChoosesThePaletteAndItsVariant() = runComposeUiTest {

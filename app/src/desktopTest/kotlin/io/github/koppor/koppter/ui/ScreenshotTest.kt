@@ -69,11 +69,11 @@ class ScreenshotTest {
             (B) Schedule Goodwill pickup +GarageSale @phone due:2026-11-14
             (B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 cs:work/team-meeting note:k3f.txt
             (C) Post signs around the neighborhood +GarageSale @errands
-            (C) Renew the library card @errands #someday due:2026-11-20
+            (C) Renew the library card @errands>city #someday due:2026-11-20
             Water the plants @home due:2026-11-12 rec:1w
             Book the train to Hamburg +Vacation @computer @waiting
             Compare prices for a new bike +Vacation #money #someday
-            Back up the photos @computer due:2026-12-01 rec:+1m
+            Back up the photos @computer>backup due:2026-12-01 rec:+1m
             x Thank Mom for the meatballs +Family @phone
         """.trimIndent() + "\n"
 

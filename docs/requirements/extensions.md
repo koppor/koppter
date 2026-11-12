@@ -51,6 +51,20 @@ Covers:
 
 Needs: dsn
 
+### Contexts below contexts
+`req~context-hierarchy~1`
+
+A context lies below another context, over any number of levels.
+A task shows the last level of its context and, on request, the whole path.
+From the context of a task, the user gets to the tasks of that context.
+Restricting the list to a context includes the contexts below it.
+
+Covers:
+
+* `feat~extensions~1`
+
+Needs: dsn
+
 ### Task of ContextSwitcher
 `req~context-switcher-link~1`
 
@@ -351,6 +365,21 @@ Covers:
 * `req~notes~1`
 * `req~scheduled-tasks~1`
 * `req~board-defined-columns~1`
+
+Needs: impl, utest
+
+### Hierarchy of contexts
+`dsn~context-hierarchy~1`
+
+`>` separates the levels of a context: `research>reading` lies below `research`.
+`Filter` and the context term of `Query` match a context and the contexts below it (`isWithin`); removing a context term from a task removes the contexts below it as well.
+`TaskLabels` shows the last level of a context and the path in a tooltip; a click on the label sets the filter to this context.
+`FilterPanel` offers the contexts of the file and the contexts above them as a tree, one context per line and indented by its level, as soon as one context has levels.
+
+Covers:
+
+* `req~context-hierarchy~1`
+* `adr~context-hierarchy~1`
 
 Needs: impl, utest
 

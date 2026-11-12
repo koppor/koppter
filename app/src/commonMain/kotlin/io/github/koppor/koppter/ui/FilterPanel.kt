@@ -28,6 +28,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.koppor.koppter.todotxt.Completion
 import io.github.koppor.koppter.todotxt.Filter
+import io.github.koppor.koppter.todotxt.LEVEL_SEPARATOR
+import io.github.koppor.koppter.todotxt.hierarchyOrder
 
 /**
  * The filter criteria as a column: text, threshold date, priorities, projects, contexts, hashtags, completion.
@@ -63,8 +65,13 @@ fun FilterPanel(
         LabelFilter("Projects", projects, filter.projects, { "filter-project-$it" }, { onChange(filter.copy(projects = it)) }) { value, suffix, modifier ->
             ProjectLabel(value, modifier, suffix)
         }
-        LabelFilter("Contexts", contexts, filter.contexts, { "filter-context-$it" }, { onChange(filter.copy(contexts = it)) }) { value, suffix, modifier ->
-            ContextLabel(value, modifier, suffix)
+        // [impl->dsn~context-hierarchy~1]
+        LabelFilter(
+            "Contexts", contexts, filter.contexts, { "filter-context-$it" }, { onChange(filter.copy(contexts = it)) },
+            order = hierarchyOrder, depth = { context -> context.count { it == LEVEL_SEPARATOR } },
+        ) { value, suffix, modifier ->
+            // A selected context stands outside the tree and shows its path.
+            ContextLabel(value, modifier, suffix, path = suffix.isNotEmpty())
         }
         // [impl->dsn~hashtags-in-ui~1]
         LabelFilter("Hashtags", hashtags, filter.hashtags, { "filter-hashtag-$it" }, { onChange(filter.copy(hashtags = it)) }) { value, suffix, modifier ->
@@ -113,6 +120,9 @@ private fun <T : Comparable<T>> LabelFilter(
     selected: Set<T>,
     tag: (T) -> String,
     onChange: (Set<T>) -> Unit,
+    order: Comparator<T> = naturalOrder(),
+    /** The level of a value in a hierarchy; with levels, the values form a tree, one value per line. */
+    depth: (T) -> Int = { 0 },
     label: @Composable (value: T, suffix: String, modifier: Modifier) -> Unit,
 ) {
     if (values.isEmpty() && selected.isEmpty()) return
@@ -132,10 +142,17 @@ private fun <T : Comparable<T>> LabelFilter(
                 modifier = Modifier.align(Alignment.CenterVertically),
             )
         }
-        for (value in selected.sorted()) label(value, " \u00d7", modifier(value, true))
+        for (value in selected.sortedWith(order)) label(value, " \u00d7", modifier(value, true))
     }
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        for (value in values.sorted().filter { it !in selected }) label(value, "", modifier(value, false))
+    val others = values.sortedWith(order).filter { it !in selected }
+    if (values.any { depth(it) > 0 }) {
+        Column {
+            for (value in others) label(value, "", modifier(value, false).padding(start = 16.dp * depth(value)))
+        }
+    } else {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (value in others) label(value, "", modifier(value, false))
+        }
     }
 }
 

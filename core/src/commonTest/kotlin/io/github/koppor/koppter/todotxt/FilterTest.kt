@@ -55,6 +55,20 @@ class FilterTest {
         assertEquals(listOf("Plan holiday"), descriptions(Filter(text = "holiday", hideFuture = false)))
     }
 
+    // [utest->dsn~context-hierarchy~1]
+    @Test
+    fun aContextIncludesTheContextsBelowIt() {
+        val tasks = listOf("Read the survey @research>reading", "Review a paper @research", "Read the manual @researching", "Call @phone").map(Task::parse)
+        fun matching(vararg contexts: String) = tasks.filter { Filter(contexts = contexts.toSet()).matches(it, today) }.map { it.description }
+
+        assertEquals(listOf("Read the survey", "Review a paper"), matching("research"))
+        assertEquals(listOf("Read the survey"), matching("research>reading"))
+        assertEquals(listOf("a", "a>b", "a>b>c"), "a>b>c".withAncestors())
+        assertEquals("c", "a>b>c".lastLevel)
+        // A context stands directly before the contexts below it, not behind a name that only starts alike.
+        assertEquals(listOf("a", "a>b", "a1"), listOf("a1", "a>b", "a").sortedWith(hierarchyOrder))
+    }
+
     // [utest->dsn~sort-order~1]
     @Test
     fun ordersByCompletionPriorityDueDateAndPosition() {

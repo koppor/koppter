@@ -5,10 +5,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -19,8 +26,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import io.github.koppor.koppter.todotxt.LEVEL_SEPARATOR
 import io.github.koppor.koppter.todotxt.Task
+import io.github.koppor.koppter.todotxt.lastLevel
 import kotlinx.datetime.LocalDate
+
+/** What a click on the context label of a task does with the context. */
+val LocalShowContext = staticCompositionLocalOf<(String) -> Unit> { {} }
 
 /**
  * One label of a task: a rounded box with an optional key, such as `due:`, in front of the value.
@@ -50,12 +62,34 @@ fun Label(text: String, container: Color, content: Color, modifier: Modifier = M
  * All colors come from the theme, so that the labels follow light and dark mode.
  */
 // [impl->dsn~task-labels~1]
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskLabels(task: Task, today: LocalDate) {
     val colors = MaterialTheme.colorScheme
     val uriHandler = LocalUriHandler.current
     task.projects.forEach { ProjectLabel(it) }
-    task.contexts.forEach { ContextLabel(it) }
+    // [impl->dsn~context-hierarchy~1]
+    val showContext = LocalShowContext.current
+    task.contexts.forEach { context ->
+        val label = @Composable {
+            ContextLabel(
+                context,
+                Modifier.clip(RoundedCornerShape(percent = 50))
+                    .clickable(onClickLabel = "Show the tasks of this context", role = Role.Button) { showContext(context) }
+                    .pointerHoverIcon(PointerIcon.Hand)
+                    .testTag("label-context-$context"),
+            )
+        }
+        if (LEVEL_SEPARATOR in context) {
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                tooltip = { PlainTooltip { Text("@$context") } },
+                state = rememberTooltipState(),
+            ) { label() }
+        } else {
+            label()
+        }
+    }
     task.hashtags.forEach { HashtagLabel(it) }
     task.tags.forEach { (key, value) ->
         val overdue = key == Task.DUE && !task.completed && task.due.let { it != null && it < today }
@@ -86,9 +120,10 @@ fun ProjectLabel(project: String, modifier: Modifier = Modifier, suffix: String 
     Label("+$project$suffix", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, modifier)
 }
 
+/** @param path shows all levels of a hierarchical context instead of the last one */
 @Composable
-fun ContextLabel(context: String, modifier: Modifier = Modifier, suffix: String = "") {
-    Label("@$context$suffix", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, modifier)
+fun ContextLabel(context: String, modifier: Modifier = Modifier, suffix: String = "", path: Boolean = false) {
+    Label("@${if (path) context else context.lastLevel}$suffix", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, modifier)
 }
 
 // [impl->dsn~hashtags-in-ui~1]
