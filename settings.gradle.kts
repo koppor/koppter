@@ -21,3 +21,4 @@ rootProject.name = "koppter"
 
 include(":core")
 include(":app")
+include(":android")

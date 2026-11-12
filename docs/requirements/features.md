@@ -68,3 +68,5 @@ The application shows the tasks as a board with columns.
 `feat~platforms~1`
 
 The application runs on Android and on Windows and Linux desktops.
+
+Needs: req

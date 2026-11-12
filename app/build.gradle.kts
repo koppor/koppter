@@ -5,12 +5,20 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.compose.multiplatform)
+    alias(libs.plugins.android.kmp.library)
 }
 
 kotlin {
     jvmToolchain(21)
 
     jvm("desktop")
+
+    // [impl->dsn~android-shell~1]
+    android {
+        namespace = "io.github.koppor.koppter.ui"
+        compileSdk = 37
+        minSdk = 26
+    }
 
     sourceSets {
         commonMain.dependencies {

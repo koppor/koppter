@@ -21,6 +21,14 @@ private fun configDirectory(): Path {
     return (base?.let(::Path) ?: home.resolve(".config")).resolve("koppter")
 }
 
+/** Shows the file dialog of the operating system; a name typed there may be that of a file that does not exist yet. */
+// [impl->dsn~choose-file~1]
+private fun chooseFile(owner: java.awt.Frame): String? {
+    val dialog = java.awt.FileDialog(owner, "todo.txt file", java.awt.FileDialog.LOAD)
+    dialog.isVisible = true
+    return dialog.file?.let { Path(dialog.directory, it).toString() }
+}
+
 fun main() {
     val defaultTodoFile = Path(System.getProperty("user.home")).resolve("todo.txt")
     val settingsFile = SettingsFile(configDirectory().resolve("settings.properties"))
@@ -36,7 +44,7 @@ fun main() {
             title = "koppter",
             state = rememberWindowState(width = 1100.dp, height = 760.dp),
         ) {
-            App(controller, defaultTodoFile.toString())
+            App(controller, defaultTodoFile.toString(), chooseFile = { chooseFile(window) })
         }
     }
 }

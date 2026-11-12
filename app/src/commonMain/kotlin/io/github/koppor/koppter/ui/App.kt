@@ -59,10 +59,14 @@ private val WIDE = 840.dp
 
 private const val RELOAD_INTERVAL_MILLIS = 2_000L
 
+/**
+ * @param chooseFile lets the user pick the todo.txt file with the file dialog of the platform and returns its location,
+ *   or `null` if the user cancelled.
+ */
 @Composable
-fun App(controller: TodoController, defaultTodoFile: String) {
+fun App(controller: TodoController, defaultTodoFile: String, chooseFile: (suspend () -> String?)? = null) {
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
-        MainScreen(controller, defaultTodoFile)
+        MainScreen(controller, defaultTodoFile, chooseFile)
     }
 }
 
@@ -72,7 +76,7 @@ private data class Editing(val entry: Entry?)
 // [impl->dsn~main-screen~1]
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainScreen(controller: TodoController, defaultTodoFile: String) {
+private fun MainScreen(controller: TodoController, defaultTodoFile: String, chooseFile: (suspend () -> String?)?) {
     var editing by remember { mutableStateOf<Editing?>(null) }
     var showSettings by remember { mutableStateOf(false) }
     val drawer = rememberDrawerState(DrawerValue.Closed)
@@ -176,6 +180,7 @@ private fun MainScreen(controller: TodoController, defaultTodoFile: String) {
         SettingsDialog(
             settings = controller.settings,
             defaultTodoFile = defaultTodoFile,
+            chooseFile = chooseFile,
             onSave = {
                 controller.updateSettings(it)
                 showSettings = false

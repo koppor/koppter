@@ -11,6 +11,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,10 +29,18 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import io.github.koppor.koppter.storage.Settings
+import kotlinx.coroutines.launch
 
 // [impl->dsn~settings-dialog~1]
 @Composable
-fun SettingsDialog(settings: Settings, defaultTodoFile: String, onSave: (Settings) -> Unit, onDismiss: () -> Unit) {
+fun SettingsDialog(
+    settings: Settings,
+    defaultTodoFile: String,
+    chooseFile: (suspend () -> String?)?,
+    onSave: (Settings) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val scope = rememberCoroutineScope()
     var todoFile by remember { mutableStateOf(settings.todoFile) }
     var writeDates by remember { mutableStateOf(settings.writeDates) }
 
@@ -47,6 +57,11 @@ fun SettingsDialog(settings: Settings, defaultTodoFile: String, onSave: (Setting
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag("settings-file"),
                 )
+                if (chooseFile != null) {
+                    OutlinedButton(onClick = { scope.launch { chooseFile()?.let { todoFile = it } } }, modifier = Modifier.testTag("settings-choose-file")) {
+                        Text("Choose file")
+                    }
+                }
                 Row(
                     Modifier.fillMaxWidth().toggleable(value = writeDates, onValueChange = { writeDates = it }, role = Role.Checkbox)
                         .testTag("settings-write-dates"),

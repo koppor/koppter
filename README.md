@@ -22,8 +22,8 @@ The planned scope is tracked as requirements in [docs/requirements](docs/require
 
 ## Building
 
-Requirements: JDK 21.
-The Gradle wrapper downloads everything else.
+Requirements: JDK 21 and the Android SDK (`ANDROID_HOME`, or `sdk.dir` in `local.properties`).
+The Gradle wrapper downloads everything else, including the Android platform the build needs.
 
 ```shell
 ./gradlew build traceRequirements
@@ -40,6 +40,12 @@ The Gradle wrapper downloads everything else.
 
 starts the desktop application.
 It reads `todo.txt` in the home directory unless another file is set in the settings.
+
+```shell
+./gradlew :android:assembleDebug
+```
+
+builds the Android application as `android/build/outputs/apk/debug/android-debug.apk`.
 
 ## Project documents
 

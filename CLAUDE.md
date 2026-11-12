@@ -38,6 +38,9 @@
   `jvmMain`: file storage, settings file.
 * `:app` — Compose Multiplatform. `commonMain`: all screens and `TodoController` (state and operations).
   `desktopMain`: entry point. `desktopTest`: UI tests (`runComposeUiTest`, headless); `ScreenshotTest` writes `app/build/screenshots/`.
+  Android library target: compiled from the same `commonMain`.
+* `:android` — the Android application: `MainActivity`, `DocumentStorage` (file behind a `content:` URI).
+  Not run on a device or emulator in development sessions; say so when reporting Android changes.
 * UI elements carry a `testTag`; colors come from `MaterialTheme.colorScheme`, never from literals.
 * The file is the data store.
   A line that the user did not edit is written back unchanged.
