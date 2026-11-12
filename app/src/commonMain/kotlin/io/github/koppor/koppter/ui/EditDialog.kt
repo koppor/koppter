@@ -88,6 +88,7 @@ fun EditDialog(
     var threshold by remember { mutableStateOf(original.tag(Task.THRESHOLD).orEmpty()) }
     var recurrence by remember { mutableStateOf(original.tag(Task.RECURRENCE).orEmpty()) }
     var duration by remember { mutableStateOf(original.tag(Task.DURATION).orEmpty()) }
+    var at by remember { mutableStateOf(original.tag(Task.AT).orEmpty()) }
     var contextSwitcher by remember { mutableStateOf(original.tag(Task.CONTEXT_SWITCHER).orEmpty()) }
     var projects by remember { mutableStateOf(original.projects) }
     var contexts by remember { mutableStateOf(original.contexts) }
@@ -98,24 +99,26 @@ fun EditDialog(
     val thresholdValid = threshold.isBlank() || Task.parseDate(threshold.trim()) != null
     val recurrenceValid = recurrence.isBlank() || Recurrence.parse(recurrence.trim()) != null
     val durationValid = duration.isBlank() || Task.parseDuration(duration.trim()) != null
+    val atValid = at.isBlank() || Task.parseTime(at.trim()) != null
     val result = original
         .edit(description = description, priority = priority, projects = projects, contexts = contexts, hashtags = hashtags)
         .withTag(Task.DUE, due.trim())
         .withTag(Task.THRESHOLD, threshold.trim())
         .withTag(Task.RECURRENCE, recurrence.trim())
         .withTag(Task.DURATION, duration.trim())
+        .withTag(Task.AT, at.trim())
         // A link pasted into the description counts only while the field is empty.
         .withTag(Task.CONTEXT_SWITCHER, Task.contextSwitcherId(contextSwitcher))
         .let { if (contextSwitcher.isBlank()) it.withContextSwitcherTags() else it }
         // [impl->dsn~notes~1]
         .let { if (originalNote == null) it else it.withTag(Task.NOTE, if (note.isBlank()) null else original.tag(Task.NOTE) ?: newNoteName) }
-    val valid = dueValid && thresholdValid && recurrenceValid && durationValid && result.body.isNotBlank()
+    val valid = dueValid && thresholdValid && recurrenceValid && durationValid && atValid && result.body.isNotBlank()
 
     val descriptionFocus = remember { FocusRequester() }
     val keyboard = LocalKeyboard.current
     LaunchedEffect(Unit) { if (keyboard) descriptionFocus.requestFocus() }
 
-    val state = listOf(description, priority, due, threshold, recurrence, duration, contextSwitcher, projects, contexts, hashtags, note)
+    val state = listOf(description, priority, due, threshold, recurrence, duration, at, contextSwitcher, projects, contexts, hashtags, note)
     val initial = remember { state }
 
     GuardedDialog(changed = state != initial, onDismiss = onDismiss) {
@@ -168,9 +171,16 @@ fun EditDialog(
                         singleLine = true,
                         modifier = field.testTag("edit-recurrence"),
                     )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // [impl->dsn~fixed-time~1]
+                    OutlinedTextField(
+                        value = at,
+                        onValueChange = { at = it },
+                        label = { Text("Fixed time") },
+                        placeholder = { Text("12:00") },
+                        isError = !atValid,
+                        singleLine = true,
+                        modifier = field.testTag("edit-at"),
+                    )
                     // [impl->dsn~duration~1]
                     OutlinedTextField(
                         value = duration,
@@ -179,18 +189,19 @@ fun EditDialog(
                         placeholder = { Text("45m, 1h30m") },
                         isError = !durationValid,
                         singleLine = true,
-                        modifier = Modifier.width(165.dp).testTag("edit-duration"),
-                    )
-                    // [impl->dsn~context-switcher-tag~1]
-                    OutlinedTextField(
-                        value = contextSwitcher,
-                        onValueChange = { contextSwitcher = it },
-                        label = { Text("ContextSwitcher task") },
-                        placeholder = { Text("category/task or a copied link") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f).testTag("edit-cs"),
+                        modifier = field.testTag("edit-duration"),
                     )
                 }
+
+                // [impl->dsn~context-switcher-tag~1]
+                OutlinedTextField(
+                    value = contextSwitcher,
+                    onValueChange = { contextSwitcher = it },
+                    label = { Text("ContextSwitcher task") },
+                    placeholder = { Text("category/task or a copied link") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("edit-cs"),
+                )
 
                 NameList("Project", "+", projects, knownProjects, { projects = it }, "edit-project")
                 NameList("Context", "@", contexts, knownContexts, { contexts = it }, "edit-context")

@@ -7,6 +7,7 @@
 | "again two weeks after I did it", "every three months or so" | `rec:` on the task | The interval counts from the completion, and there is one open task at a time. |
 | "every Monday", "on the 1st and the 15th", "the last Friday of the month" | `ice_recur.txt` | The calendar decides, whether or not the last one is done. |
 | "every month on the 1st, but only once the last one is paid" | `rec:+1m` on the task | The `+` counts from the previous due date, not from the completion. |
+| "lunch at 12 on working days", "training every Tuesday at 18:30" | `ice_recur.txt`, with `at:` and `dur:` in the task | koppter keeps that time free on the days to come. |
 
 If it is not clear which one is meant, ask: "Does the next one start counting when you finish this one, or does it come on fixed days?"
 
@@ -58,6 +59,8 @@ The part after ` - ` is the task exactly as koppter adds it to the todo.txt file
 | `@2026-01-04 yearly - Renew the membership` | every year on 4 January |
 | `yearly ; month_of_year March, September - Change the tires` | on the 1st of March and of September |
 | `@2026-06-01 @@2026-08-31 daily - Water the garden` | every day from 1 June to 31 August 2026 |
+| `weekly ; day Monday, Tuesday, Wednesday, Thursday, Friday - Lunch at:12:00 dur:45m` | every working day, planned from 12:00 to 12:45 |
+| `weekly ; day Tuesday - Training @sport at:18:30 dur:1h30m` | every Tuesday, planned from 18:30 to 20:00 |
 
 Rules:
 
@@ -83,9 +86,10 @@ Rules:
 * **koppter runs the schedules once a day, while it is open.**
   An entry written today whose day is today may not give its task today.
   If the user expects the task now, also append it to the todo.txt file; koppter does not add it a second time.
-* **There is no time of day.**
-  "Lunch from 12:00 to 12:45 on working days" cannot be written as an entry that blocks that time.
-  Time that is to stay free belongs in the time maps of the plan dialog of koppter, or in the calendar.
+* **What recurs at a time of the day goes here, not to `rec:`.**
+  The tags `at:` and `dur:` in the task of an entry give it its time: "lunch from 12:00 to 12:45 on working days" is the entry in the table above.
+  koppter plans that time on the later days of the entry as well, which it cannot do for a task with `rec:`.
+  The time does not belong into the timing of the entry, which knows days only.
 
 ## Check
 

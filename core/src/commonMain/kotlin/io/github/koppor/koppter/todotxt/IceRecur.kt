@@ -153,6 +153,14 @@ fun iceRecurLines(schedule: String): List<IceRecurLine> = schedule.lines().mapIn
     if (line.isBlank() || line.trimStart().startsWith("#")) null else IceRecurLine(index + 1, line, IceRecurEntry.parse(line))
 }
 
+/** The tasks that the schedule adds on the days, whether or not such a task is open already. */
+// [impl->dsn~fixed-time~1]
+fun iceRecurOccurrences(schedule: String, days: ClosedRange<LocalDate>): List<Pair<LocalDate, Task>> {
+    val entries = schedule.lines().mapNotNull(IceRecurEntry::parse)
+    return generateSequence(days.start) { it.plus(DatePeriod(days = 1)) }.takeWhile { it <= days.endInclusive }
+        .flatMap { day -> entries.filter { it.occursOn(day) }.map { day to Task.parse(it.task) } }.toList()
+}
+
 // [impl->dsn~ice-recur-run~1]
 fun iceRecurTasks(schedule: String, days: ClosedRange<LocalDate>, existing: List<Task>): List<Pair<LocalDate, Task>> {
     val entries = schedule.lines().mapNotNull(IceRecurEntry::parse)

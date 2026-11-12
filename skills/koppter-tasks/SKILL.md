@@ -1,6 +1,6 @@
 ---
 name: koppter-tasks
-description: Add or change tasks in a todo.txt file that is used with koppter - todo.txt with contexts in levels, durations, dependencies, notes, recurrence and ice_recur.txt. Use this skill whenever the user wants something remembered, noted or scheduled as a task ("add a todo", "remind me to", "put this on my list", "neue Aufgabe", "trag das als TODO ein"), and whenever a task is to recur ("every Monday", "jeden Monat", "again two weeks after I did it"), even if koppter or todo.txt is not named but the user keeps their tasks in a todo.txt file.
+description: Add or change tasks in a todo.txt file that is used with koppter - todo.txt with contexts in levels, durations, dependencies, notes, recurrence and ice_recur.txt. Use this skill whenever the user wants something remembered, noted or scheduled as a task ("add a todo", "remind me to", "put this on my list", "neue Aufgabe", "Aufgabe eintragen"), and whenever a task is to recur ("every Monday", "jeden Monat", "again two weeks after I did it"), even if koppter or todo.txt is not named but the user keeps their tasks in a todo.txt file.
 ---
 
 # Tasks for koppter
@@ -47,6 +47,7 @@ koppter writes tasks in that order, so a line written the same way does not chan
 | `due:2026-12-01` | A deadline that someone else set | Not the day the user would like to do it: the plan finds that day. |
 | `t:2027-01-10` | The day from which the task is worth looking at | The task is hidden and not planned before. Use it for "not now" and "some day". |
 | `dur:1h30m` | The time the task takes | Without it, the plan assumes half an hour. Give it when the user states it or the task clearly takes longer. |
+| `at:14:00` | The time of the day at which the task takes place | Only for what has its time: an appointment, lunch, a training. The plan does not move the task. The day is `due:`, else `t:`, else today. |
 | `#hashtag` | A property shared across areas | `#money`, `#quick`. Starts with a letter. |
 | `id:1`, `p:1` | Order between tasks | The task with `id:1` waits for the tasks with `p:1`. Pick a value that the file does not use yet: `grep -o ' id:[^ ]*' todo.txt`. |
 | `note:k3f.md` | Details of several lines | Write them to `notes/k3f.md` (three characters, a name not in use) and name the file in the tag. |
@@ -58,8 +59,8 @@ koppter lists tasks without context in its inbox, where the user gives them one 
 
 Do not put a creation date in front of the description unless the other lines of the file have one: koppter reads that date from the git history.
 
-A task has no time of day.
-If the user states one ("at 14:00"), keep it in the description and say that koppter plans tasks into free times itself; an appointment belongs in the calendar.
+Give `at:` only when the time is part of the task ("dentist on Friday at 14:00"), together with `due:` for the day and `dur:` for the length.
+A time by which the user would like to have something done is no fixed time: koppter plans tasks into free times itself, and a task with `at:` is not moved when the day gets full.
 
 ## Recurring tasks
 
@@ -96,6 +97,12 @@ Send the reviewer the revised figures +FirstPaper @research>writing due:2026-12-
 
 ```text
 Look into a new bike #someday t:2027-01-01
+```
+
+"Dentist next Friday at two, takes an hour", said on 2026-11-13:
+
+```text
+Go to the dentist @errands>city due:2026-11-20 at:14:00 dur:1h
 ```
 
 "Book the flight once the talk is accepted", where the file has no ids yet:

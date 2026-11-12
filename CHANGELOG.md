@@ -43,6 +43,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - A planned block starts on a quarter of an hour after an event of a calendar.
 - Planning leaves out the times of the events of calendars that are named by the address of their iCalendar file, as Outlook and Google Calendar publish it.
 - *Agenda* shows the planned blocks of today and the six days after it with the tasks that are due but not planned for today, and *Week* shows the plan of a week as a calendar.
+- A task states the time of the day at which it takes place with the tag `at:12:00`; planning gives it that time, also on the later days of an entry of `ice_recur.txt`, and plans the other tasks around it.
 - *Inbox* lists the tasks without context; a click on a context gives it to the task.
 - Keyboard shortcuts: Ctrl+N for a new task, Ctrl+Enter to save the edit dialog, Ctrl+1 to Ctrl+6 for the views, Ctrl+Shift+A for the line that adds a task, Ctrl+E for a search through all tasks, Ctrl+Shift+F for the text of the filter, and Ctrl+Shift+L for the plan dialog.
 - A dialog with changes asks before Esc, a click beside it or the back button closes it, and offers to return to it.

@@ -29,6 +29,7 @@ import io.github.koppor.koppter.todotxt.ShareAction
 import io.github.koppor.koppter.todotxt.groupByColumns
 import io.github.koppor.koppter.todotxt.parseBoardColumns
 import io.github.koppor.koppter.todotxt.groupEntries
+import io.github.koppor.koppter.todotxt.iceRecurOccurrences
 import io.github.koppor.koppter.todotxt.iceRecurTasks
 import io.github.koppor.koppter.todotxt.Task
 import io.github.koppor.koppter.todotxt.hierarchyOrder
@@ -276,14 +277,17 @@ class TodoController(
             if (newConfig != config.orEmpty()) files.writeCompanion(ConfigFile.NAME, newConfig)
             val planConfig = ConfigFile.planConfig(newConfig)
             // A block does not start at an odd minute.
-            val plan = plan(file.entries, planConfig, busy, today(), (minuteOfDay() + 14) / 15 * 15)
+            // ponytail: a year ahead, as far as the widest named barrier; longer when a barrier with a date lies behind.
+            val upcoming = iceRecurOccurrences(files.readCompanion(ICE_RECUR_FILE).orEmpty(), today().plus(DatePeriod(days = 1))..today().plus(DatePeriod(days = 366)))
+            val plan = plan(file.entries, planConfig, busy, today(), (minuteOfDay() + 14) / 15 * 15, upcoming)
             files.writeCompanion(CalendarTxt.NAME, CalendarTxt.write(files.readCompanion(CalendarTxt.NAME).orEmpty(), plan.blocks, today()))
             // [impl->dsn~ics-export~1]
             files.writeCompanion(Ics.NAME, Ics.write(plan.blocks, today()))
             // The storage records the files next to the todo.txt file with a change of that file.
             storage.write(file.serialize(), "Update the plan")
             loadedVersion = storage.version()
-            val tasks = plan.blocks.map { it.entry }.distinct().size
+            // By the text, as each day of a schedule is a task of its own.
+            val tasks = plan.blocks.map { CalendarTxt.text(it.entry.task) }.distinct().size
             result = PlanResult(
                 if (plan.blocks.isEmpty()) "Nothing was planned." else "Planned $tasks tasks until ${plan.blocks.last().date}.",
                 problems + planConfig.problems + plan.problems,

@@ -130,6 +130,7 @@ The application understands the following extensions, which other todo.txt tools
 | `#urgent` | Hashtag: a third kind of label next to `+project` and `@context`, without a fixed meaning | *Add hashtag* in the edit dialog, or typed into the task. A hashtag starts with a letter: `#123` and `C#` stay words of the description ([decision 0014](docs/decisions/0014-hashtags-as-a-third-kind-of-label.md)). |
 | `@research>reading` | A context below another context, over any number of levels | Typed as the context. The label shows `@reading`, and the path when the pointer rests on it; a click on it shows the tasks of the context. A filter for `@research` includes the contexts below it, and the filter panel shows the contexts as a tree ([decision 0017](docs/decisions/0017-levels-of-a-context-separated-by-a-greater-than-sign.md)). |
 | `dur:1h30m` | The time the task is expected to take, in hours and minutes | Field *Duration* in the edit dialog, or typed into the task. [Planning](#planning) gives the task that much time ([decision 0018](docs/decisions/0018-tag-for-the-duration-of-a-task.md)). |
+| `at:12:00` | The time of the day at which the task takes place | Field *Fixed time* in the edit dialog, or typed into the task. [Planning](#fixed-times) gives the task that time and plans the others around it ([decision 0021](docs/decisions/0021-tag-for-the-fixed-time-of-a-task.md)). |
 | `id:1`, `p:1` | The task with `id:1` waits for the tasks with `p:1`, as topydo writes dependencies | Typed into the task. [Planning](#planning) gives the task its times after those it waits for ([decision 0020](docs/decisions/0020-dependencies-with-the-tags-of-topydo.md)). |
 | `cs:jabref/fix-npe` | The task of [ContextSwitcher](https://github.com/contextswitcher/contextswitcher) that holds the working context | Entered in the field *ContextSwitcher task* of the edit dialog or typed into the task, as the id or as the link that *Copy link* of ContextSwitcher gives, which becomes the tag. A click on the label switches to the task in ContextSwitcher, on a computer where it has registered its links ([decision 0016](docs/decisions/0016-tag-for-the-task-of-contextswitcher.md)). |
 | `pri:A` | The priority a completed task had | Written when a task with a priority is completed, as the format has no priority for completed tasks; reopening the task restores the priority. |
@@ -292,6 +293,25 @@ The lines of past days stay; the lines from today on are written anew by every p
 In a git repository, each plan is one commit ([decision 0019](docs/decisions/0019-the-plan-is-derived-and-kept-in-calendar-txt.md)).
 The plan is also written to `calendar.ics`, with tentative events, for import into a calendar program.
 
+### Fixed times
+
+A task with the tag `at:` is not moved by planning: it takes the time it states, for its duration, and the other tasks are planned around it.
+Use it for what has its time, such as lunch, a training or an appointment, so that the todo.txt file is the one place where it is written.
+
+| Line | Where | Planned |
+| --- | --- | --- |
+| `Dentist at:14:00 dur:1h due:2026-11-20` | todo.txt | on 20 November from 14:00 to 15:00 |
+| `Call the tax office at:9:30` | todo.txt | today from 9:30 to 10:00 |
+| `weekly ; day Monday, Tuesday, Wednesday, Thursday, Friday - Lunch at:12:00 dur:45m` | `ice_recur.txt` | on every working day from 12:00 to 12:45 |
+| `weekly ; day Tuesday - Training @sport at:18:30 dur:1h30m` | `ice_recur.txt` | on every Tuesday from 18:30 to 20:00 |
+
+* The day is the due date, else the threshold date, else today.
+* The time holds whatever the time maps and the calendars say: a training in the evening needs no time map for the evening.
+* For an entry of `ice_recur.txt`, the plan has the time on the later days as well, before the task of the day is added: for as long as tasks are planned, and for four weeks at least.
+* The task of the day is completed like any other task, which takes its block from the next plan.
+* A time that is over is not planned any more.
+* The time counts for a budget of the project and the contexts of the task.
+
 ### Agenda and week
 
 *Agenda* above the tasks shows the blocks of today and of the six days after it, each with its task, which is completed and opened there as in the list.
@@ -322,6 +342,11 @@ The application only reads the calendars and writes nothing to them.
 
 * A budget counts what is planned from now on: what was planned earlier in the running week is not counted.
 * A minimum is planned in the weeks up to the day on which the tasks of its context would be done without it; a week in which they have no time left gets nothing.
+* A task with a fixed time and without a date counts for today as long as it is open: a training of Tuesday that was not completed is planned again on Wednesday.
+  Complete or delete it when its day is over.
+* A task with `rec:` and a fixed time takes its time on its current due date only; the later ones follow when it is completed.
+  What recurs at a fixed time belongs in `ice_recur.txt`.
+* A fixed time is planned also where a calendar has an event or another task has a fixed time; nothing reports the overlap.
 * The task list does not tell which tasks wait for others, and it shows them all the same; the tags `id:` and `p:` are typed, and their values chosen, by hand.
 
 * In the last days of a quarter, little fits before the default barrier, and most tasks count as not planned.

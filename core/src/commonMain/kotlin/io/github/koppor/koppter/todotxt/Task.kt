@@ -64,6 +64,10 @@ data class Task(
     /** The time the task is expected to take. */
     val duration: Duration? get() = tag(DURATION)?.let(::parseDuration)
 
+    /** The minutes of the day at which the task takes place, for a task with a fixed time. */
+    // [impl->dsn~fixed-time~1]
+    val at: Int? get() = tag(AT)?.let(::parseTime)
+
     // [impl->dsn~task-serializer~1]
     fun toLine(): String = buildString {
         if (completed) append("x ")
@@ -180,10 +184,16 @@ data class Task(
         const val NOTE = "note"
         const val CONTEXT_SWITCHER = "cs"
         const val DURATION = "dur"
+        const val AT = "at"
 
         /** As topydo writes dependencies: a task with [ID] waits for the tasks whose [PARENT] has the same value. */
         const val ID = "id"
         const val PARENT = "p"
+
+        private val TIME = Regex("^([01]?\\d|2[0-3]):([0-5]\\d)$")
+
+        /** Reads a time of the day such as `9:30` or `12:00` as the minutes since midnight; `null` if the text is none. */
+        fun parseTime(text: String): Int? = TIME.matchEntire(text)?.destructured?.let { (hours, minutes) -> hours.toInt() * 60 + minutes.toInt() }
 
         /** Reads a duration such as `45m`, `2h` or `1h30m`; `null` if the text is none or not positive. */
         // [impl->dsn~duration~1]

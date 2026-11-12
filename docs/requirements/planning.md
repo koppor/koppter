@@ -69,6 +69,18 @@ Covers:
 
 Needs: dsn
 
+### Fixed times
+`req~fixed-time~1`
+
+A task can state the time of the day at which it takes place.
+Planning gives it that time and plans the other tasks around it, also on the later days of a task that a schedule adds.
+
+Covers:
+
+* `feat~planning~1`
+
+Needs: dsn
+
 ### Plan as a file
 `req~plan-file~1`
 
@@ -195,6 +207,22 @@ Covers:
 
 * `req~dependencies~1`
 * `adr~dependency-tags~1`
+
+Needs: impl, utest
+
+### Fixed times
+`dsn~fixed-time~1`
+
+The tag `at:` holds a time of the day as `H:MM` or `HH:MM`; `Task.at` reads it, and the edit dialog has a field for it that rejects what is no time.
+The planner gives an open task with that tag one block before it plans the others: on the due date, else on the threshold date, else today, from that time on for the duration of the task.
+The block ignores the time maps, the busy times, the barrier and the limits, but counts for the budgets of its project and contexts; a block whose end has passed is left out, and the task is not reported as not planned.
+`iceRecurOccurrences` gives the tasks that the entries of `ice_recur.txt` add on the days of a year after today; those with the tag get their block on their day, unless the list has a task with that text at that time already.
+The plan holds these blocks up to the last day on which a task is planned, and for four weeks at least.
+
+Covers:
+
+* `req~fixed-time~1`
+* `adr~fixed-time-tag~1`
 
 Needs: impl, utest
 

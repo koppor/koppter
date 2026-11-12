@@ -573,6 +573,37 @@ class AppTest {
         assertEquals(true, "Buy milk" in storage.text)
     }
 
+    // [utest->dsn~fixed-time~1]
+    @Test
+    fun aTaskWithATimeIsPlannedAtThatTimeAndOnTheLaterDaysOfItsSchedule() = runComposeUiTest {
+        storage.text = "Post signs dur:4h\nCall the dentist\n"
+        storage.companions["ice_recur.txt"] = "weekly ; day Thursday, Friday - Lunch at:12:15 dur:45m\n"
+        // A Thursday, at 09:00.
+        val controller = TodoController(Settings(), { storage }, today = { LocalDate(2026, 11, 12) }, minuteOfDay = { 9 * 60 })
+        setContent { App(controller, "todo.txt") }
+        mainClock.advanceTimeBy(2_500)
+        assertEquals("Lunch at:12:15 dur:45m", storage.text.trim().lines().last())
+
+        openTask("Call the dentist")
+        onNodeWithTag("edit-at").performScrollTo().performTextInput("noon")
+        onNodeWithTag("edit-save").performScrollTo().assertIsNotEnabled()
+        onNodeWithTag("edit-at").performScrollTo().performTextReplacement("10:00")
+        onNodeWithTag("edit-save").performScrollTo().performClick()
+        assertEquals("Call the dentist at:10:00", storage.text.lines()[1])
+
+        onNodeWithTag("open-plan").performClick()
+        onNodeWithTag("plan-update").performScrollTo().performClick()
+        waitForIdle()
+        onNodeWithTag("plan-summary").performScrollTo().assertTextEquals("Planned 3 tasks until 2026-12-04.")
+        val calendar = storage.companions.getValue("calendar.txt").trim().lines()
+        // The signs are posted around the call and the lunch of today.
+        assertEquals("2026-11-12 w46 Thu  09:00-10:00 Post signs. 10:00-10:30 Call the dentist. 10:30-12:15 Post signs. 12:15-13:00 Lunch. 13:00-14:15 Post signs", calendar[0])
+        // The lunch of the next days is in no task yet: the schedule tells it, for four weeks.
+        assertEquals("2026-11-13 w46 Fri  12:15-13:00 Lunch", calendar[1])
+        assertEquals("2026-12-04 w49 Fri  12:15-13:00 Lunch", calendar.last())
+        assertEquals(8, calendar.count { "Lunch" in it })
+    }
+
     // [utest->dsn~busy-times~1]
     @Test
     fun nothingIsPlannedIntoTheBusyTimesOfACalendar() = runComposeUiTest {

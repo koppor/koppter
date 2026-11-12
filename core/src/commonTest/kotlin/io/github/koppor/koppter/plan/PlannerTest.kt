@@ -242,6 +242,43 @@ class PlannerTest {
         assertEquals(emptyList(), plan.unplaced)
     }
 
+    // [utest->dsn~fixed-time~1]
+    @Test
+    fun aTaskWithATimeTakesThatTimeAlsoOnTheLaterDaysOfItsScheduleAndTheOthersArePlannedAroundIt() {
+        val todo = """
+            (A) Write the report dur:5h
+            Lunch at:13:00 dur:45m
+            Gym @sport at:19:00 dur:1h30m due:2026-11-13
+            Take the parcel to the post office at:6:30 dur:20m
+            x Breakfast at:8:00
+            """
+        val upcoming = listOf(
+            friday to Task.parse("Lunch at:13:00 dur:45m"),
+            // In the list already for that day.
+            friday to Task.parse("Gym @sport at:19:00 dur:1h30m"),
+            monday to Task.parse("Plan the week"),
+            monday to Task.parse("Lunch at:13:00 dur:45m"),
+        )
+        val plan = plan(TodoFile.parse(todo.trimIndent()).entries, PlanConfig(maps), emptyMap(), today, minutes("07:00"), upcoming)
+        assertEquals(
+            listOf(
+                "2026-11-12 8:00 240 Write the report",
+                // Not moved to a free time of the map, and the report goes on at its end.
+                "2026-11-12 13:00 45 Lunch",
+                "2026-11-12 13:45 60 Write the report",
+                "2026-11-13 13:00 45 Lunch",
+                // Outside the time map.
+                "2026-11-13 19:00 90 Gym",
+                "2026-11-16 13:00 45 Lunch",
+            ),
+            plan.lines(),
+        )
+        // A time that is over is not planned, and the task is not reported as one that does not fit.
+        assertEquals(emptyList(), plan.unplaced)
+        assertEquals(null, Task.parse("Lunch at:25:00").at)
+        assertEquals(null, Task.parse("Lunch at:noon").at)
+    }
+
     // [utest->dsn~dependencies~1]
     @Test
     fun aTaskIsPlannedAfterTheTasksItWaitsFor() {

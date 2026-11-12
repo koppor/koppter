@@ -36,7 +36,7 @@
 
 * `:core` — Kotlin Multiplatform, JVM target.
   `commonMain`: todo.txt model, parser, filter, sort, storage interface, settings.
-  `commonMain` `plan`: time maps, barriers, planner, `calendar.txt` and iCalendar writer (decision 0019); the todo.txt file leads and planning never changes it.
+  `commonMain` `plan`: time maps, barriers, planner (tasks with `at:` keep their time, decision 0021), `calendar.txt` and iCalendar writer (decision 0019); the todo.txt file leads and planning never changes it.
   `commonMain` `sync`: `mergeLines` (three-way line merge), `taskDates` (dates from history).
   `jvmMain`: file storage, settings file, `GitStorage` (JGit; used automatically when the file lies in a git working tree), `GitSetup` (SSH key, known hosts and clone for devices without `~/.ssh`).
   JGit types stay out of the public API of `:core`.

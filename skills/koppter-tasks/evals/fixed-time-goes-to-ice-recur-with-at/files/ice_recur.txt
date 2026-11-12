@@ -1,0 +1,2 @@
+# Work
+weekly ; day Friday - Send the status report +Work @work>admin

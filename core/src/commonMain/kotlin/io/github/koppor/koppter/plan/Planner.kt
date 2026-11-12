@@ -137,6 +137,25 @@ private const val GRID = 15
 
 private fun List<Span>.aligned(): List<Span> = map { Span((it.start + GRID - 1) / GRID * GRID, it.end) }.filter { it.length > 0 }
 
+/** The days for which the tasks of schedules are shown in the plan when no task is planned behind them. */
+private const val UPCOMING_DAYS = 27
+
+/**
+ * The blocks of the tasks that state a time: on the due date, else on the threshold date, else today.
+ * A block whose time is over is left out.
+ */
+// [impl->dsn~fixed-time~1]
+private fun fixedBlocks(open: List<Entry>, upcoming: List<Pair<LocalDate, Task>>, today: LocalDate, now: Int): List<Block> =
+    // What a schedule adds gets an index that no line of the file has.
+    (open.map { (it.task.due ?: it.task.threshold ?: today) to it } + upcoming.mapIndexed { index, (date, task) -> date to Entry(-1 - index, task) })
+        .mapNotNull { (date, entry) ->
+            val start = entry.task.at ?: return@mapNotNull null
+            val end = minOf(start + (entry.task.duration ?: DEFAULT_DURATION).inWholeMinutes.toInt(), 24 * 60)
+            Block(date, Span(start, end), entry).takeIf { date > today || (date == today && end > now) }
+        }
+        // A task that is in the list already for a later day is not planned a second time for its schedule.
+        .distinctBy { Triple(it.date, it.span, CalendarTxt.text(it.entry.task)) }
+
 private fun monday(date: LocalDate) = date.minus(DatePeriod(days = date.dayOfWeek.isoDayNumber - 1))
 
 private val MOMENTS = compareBy<Pair<LocalDate, Int>>({ it.first }, { it.second })
@@ -179,7 +198,14 @@ private class Dependencies(open: List<Entry>) {
 }
 
 /** One run of the planner: the times that are taken, and what is left of the tasks. */
-private class Planning(private val config: PlanConfig, busy: Map<LocalDate, List<Span>>, private val today: LocalDate, now: Int, private val dependencies: Dependencies) {
+private class Planning(
+    private val config: PlanConfig,
+    busy: Map<LocalDate, List<Span>>,
+    private val today: LocalDate,
+    now: Int,
+    private val dependencies: Dependencies,
+    fixed: List<Block>,
+) {
     private val busy = busy + (today to busy[today].orEmpty() + Span(0, now))
     private val taken = mutableMapOf<LocalDate, MutableList<Span>>()
     private val blocks = mutableMapOf<Entry, MutableList<Block>>()
@@ -193,11 +219,29 @@ private class Planning(private val config: PlanConfig, busy: Map<LocalDate, List
     private val usedDay = mutableMapOf<Pair<String, LocalDate>, Int>()
     private val usedWeek = mutableMapOf<Pair<String, LocalDate>, Int>()
 
-    private fun count(block: Block, sign: Int) {
+    /** The blocks of what a schedule adds on a later day: no task of the list stands behind them yet. */
+    private val upcoming = fixed.filter { it.entry !in left }
+
+    // [impl->dsn~fixed-time~1]
+    init {
+        for (block in fixed) {
+            taken.getOrPut(block.date) { mutableListOf() } += block.span
+            use(block, 1)
+            if (block.entry in left) blocks.getOrPut(block.entry) { mutableListOf() } += block
+        }
+        // A task with a time is not moved: nothing of it is left for a free time, also when its time is over.
+        dependencies.order.filter { it.task.at != null }.forEach { left[it] = 0 }
+    }
+
+    private fun use(block: Block, sign: Int) {
         for (limit in config.limitsOf(block.entry.task)) {
             usedDay[limit.key to block.date] = (usedDay[limit.key to block.date] ?: 0) + sign * block.span.length
             usedWeek[limit.key to monday(block.date)] = (usedWeek[limit.key to monday(block.date)] ?: 0) + sign * block.span.length
         }
+    }
+
+    private fun count(block: Block, sign: Int) {
+        use(block, sign)
         left[block.entry] = left.getValue(block.entry) - sign * block.span.length
     }
 
@@ -283,7 +327,10 @@ private class Planning(private val config: PlanConfig, busy: Map<LocalDate, List
                 unplaced += entry
             }
         }
-        return Plan(blocks.values.flatten().sortedWith(compareBy<Block> { it.date }.thenBy { it.span.start }), unplaced, dependencies.problems)
+        val planned = blocks.values.flatten()
+        // What a schedule adds is shown as far as the tasks are planned, and for four weeks at least.
+        val end = maxOf(planned.maxOfOrNull { it.date } ?: today, today.plus(DatePeriod(days = UPCOMING_DAYS)))
+        return Plan((planned + upcoming.filter { it.date <= end }).sortedWith(compareBy<Block> { it.date }.thenBy { it.span.start }), unplaced, dependencies.problems)
     }
 }
 
@@ -296,17 +343,28 @@ private class Planning(private val config: PlanConfig, busy: Map<LocalDate, List
  * A task is cut into parts if a free time is too short for it or a limit of its project or context allows no more on a day or in a week.
  * A limit with a time for each week gets that time first, in the weeks up to the day on which its tasks would be done without it.
  *
+ * A task with a time of the day is not moved: it takes that time, whatever the time maps and the calendars say, and the other tasks are planned around it.
+ *
  * @param busy the times that are taken, by day
  * @param now the minutes of today that have passed
+ * @param upcoming the tasks that schedules add on later days; those with a time of the day take that time
  */
 // [impl->dsn~planner~1]
-fun plan(entries: List<Entry>, config: PlanConfig, busy: Map<LocalDate, List<Span>>, today: LocalDate, now: Int): Plan {
+fun plan(
+    entries: List<Entry>,
+    config: PlanConfig,
+    busy: Map<LocalDate, List<Span>>,
+    today: LocalDate,
+    now: Int,
+    upcoming: List<Pair<LocalDate, Task>> = emptyList(),
+): Plan {
     val dependencies = Dependencies(entries.filterNot { it.task.completed })
-    val plain = Planning(config, busy, today, now, dependencies).run(emptyMap())
+    val fixed = fixedBlocks(dependencies.order, upcoming, today, now)
+    val plain = Planning(config, busy, today, now, dependencies, fixed).run(emptyMap())
     val reserveUntil = config.minimums.mapNotNull { limit ->
         val days = plain.blocks.filter { limit.names(it.entry.task) }.map { it.date } +
             plain.unplaced.filter { limit.names(it.task) }.map { config.barrierOf(it.task, today) }
         days.maxOrNull()?.let { limit.key to it }
     }.toMap()
-    return if (reserveUntil.isEmpty()) plain else Planning(config, busy, today, now, dependencies).run(reserveUntil)
+    return if (reserveUntil.isEmpty()) plain else Planning(config, busy, today, now, dependencies, fixed).run(reserveUntil)
 }
