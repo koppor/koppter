@@ -311,12 +311,13 @@ The application only reads the calendars and writes nothing to them.
 | Ctrl+Enter | In the edit dialog: save |
 | Esc | Close a dialog; if it holds changes, it asks first and offers to return to it |
 | Ctrl+Shift+A | Go to the line that adds a task |
-| Ctrl+E or Ctrl+Shift+F | Search: go to the text of the filter; from the agenda and the week, this shows the list |
+| Ctrl+E | Search all tasks: reset the filters, show the list with completed tasks and those before their threshold date, go to the text of the filter |
+| Ctrl+Shift+F | Go to the text of the filter and keep the other filters; from the agenda and the week, this shows the list |
 | Ctrl+1 to Ctrl+6 | List, board, overview, agenda, week, inbox |
 | Ctrl+Shift+O, Ctrl+Shift+Y, Ctrl+Shift+C | List, agenda, week, as in SkedPal outline, today list and calendar |
 | Ctrl+Shift+L | Plan dialog |
 
-The search looks through the tasks that the other filters let through: the completed ones only with *Done* selected.
+After a search with Ctrl+E, *Clear all filters* shows the open tasks again.
 On macOS, the command key takes the place of Ctrl.
 There is no key yet that acts on a task of the list, such as completing or deleting it: the list has no marked task.
 

@@ -541,11 +541,21 @@ class AppTest {
         onNodeWithTag("plan-dialog").assertExists()
         onNodeWithTag("plan-close").performScrollTo().performClick()
 
-        // The search is reached from a view that the filter does not apply to.
+        // The filter text is reached from a view that the filter does not apply to, and keeps the other filters.
+        onNodeWithTag("filter-context-phone").performClick()
         ctrl(Key.Five)
-        ctrl(Key.E)
+        ctrl(Key.F, shift = true)
         onNodeWithTag("week").assertDoesNotExist()
-        onNodeWithTag("filter-text").assertIsFocused()
+        onNodeWithTag("filter-text").assertIsFocused().performTextInput("mom")
+        onAllNodesWithTag("task").assertCountEquals(1)
+
+        // The search looks through every task: the other filters are reset, and completed tasks are found.
+        onNodeWithTag("top").performClick()
+        ctrl(Key.Three)
+        ctrl(Key.E)
+        onNodeWithTag("filter-text").assertIsFocused().performTextInput("mom")
+        onAllNodesWithTag("task").assertCountEquals(2)
+        onNodeWithTag("filter-clear").performClick()
 
         // A new task without the pointer: the description has the focus, Ctrl+Enter saves.
         ctrl(Key.N)
