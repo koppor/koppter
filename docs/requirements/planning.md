@@ -158,6 +158,7 @@ A free time that is too short for the task takes a part of it; no part is shorte
 Times that are passed in as busy and the blocks of the tasks planned before are not free.
 After a busy time, a block starts on a quarter of an hour; after another block, it starts at once.
 A task whose duration does not fit up to its barrier gets no block and is returned as not planned.
+A task whose threshold date lies behind its barrier is not due for planning: it and the tasks that wait for it are left out and not returned.
 
 Covers:
 
@@ -276,6 +277,7 @@ Needs: impl, utest
 
 `TodoController.planOf` looks a task up in the blocks of `calendar.txt` by the text of its block.
 `TaskLabels` shows a calendar icon in front of the labels of an open task once that file exists: green, yellow or red by the state, with the start of the plan or "Not planned" as a tooltip.
+A task without a block whose threshold date lies after today shows no icon.
 Green is the green of the palette, which `Theme.kt` provides beside the Material color scheme.
 
 Covers:

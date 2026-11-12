@@ -85,6 +85,12 @@ The screenshots above show Nord in its light variant.
 
 The planned scope is tracked as requirements in [docs/requirements](docs/requirements/README.md).
 
+## Organizing many tasks
+
+[docs/organizing.md](docs/organizing.md) describes a way to keep hundreds of tasks findable with what the application offers:
+contexts for the areas that stay, projects for what ends, threshold dates for what is not due yet, and a rhythm of inbox, agenda and plan.
+It also maps the terms of SkedPal to those of the application.
+
 ## Files
 
 | File | Content |
@@ -252,6 +258,7 @@ The todo.txt file leads: the plan is computed from it, and planning does not cha
 * A **barrier** is the day behind which a task is not planned: `week`, `month`, `quarter` (the default), `year` or a date.
   It is set in general (`default = year`), for a project (`+Thesis = 2027-03-31`) or for a context (`@research = year`); the earliest barrier of a task counts.
   A task that does not fit before its barrier is listed after planning instead of being planned later.
+  A task whose threshold date lies behind its barrier is not due yet: it is neither planned nor listed.
 * A **limit** states how much is planned for a project or a context, the contexts below it included, as rules separated by commas:
 
   | Rule | Effect |
@@ -426,6 +433,7 @@ The workflows build the release variant, signed with a key that is a secret of t
 | Document | Content |
 | --- | --- |
 | [CHANGELOG.md](CHANGELOG.md) | User-visible changes, [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, [CalVer](https://calver.org/) releases |
+| [docs/organizing.md](docs/organizing.md) | A way to organize many tasks with contexts, projects, dates and the plan |
 | [docs/requirements](docs/requirements/README.md) | Features, requirements and design, traced to code |
 | [docs/decisions](docs/decisions/README.md) | Architectural decisions as [MADR](https://adr.github.io/madr/) |
 | [CLAUDE.md](CLAUDE.md) | Conventions for development sessions with Claude Code |

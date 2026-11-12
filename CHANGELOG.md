@@ -37,6 +37,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Planning: *Plan* gives each open task the earliest free times of its time map and writes the plan to `calendar.txt` and, with tentative events, to `calendar.ics`; time maps may be restricted to other time maps and are given to contexts, a barrier keeps tasks from being planned behind the end of the quarter or another date, and a calendar icon on each task tells whether its plan meets its due date.
 - Limits for planning per project or context: a budget per day and per week (`max 5h/week`), a minimum per week that is planned first (`min 1h/week`), and the shortest part a task is cut into (`block 2h`, an hour by default).
 - Planning gives a task that waits for others its times after them; the tags `id:` and `p:` of topydo state the dependencies.
+- Planning leaves out a task whose threshold date lies behind its barrier, instead of listing it as not fitting.
+- Guide on organizing many tasks in `docs/organizing.md`.
 - A planned block starts on a quarter of an hour after an event of a calendar.
 - Planning leaves out the times of the events of calendars that are named by the address of their iCalendar file, as Outlook and Google Calendar publish it.
 - *Agenda* shows the planned blocks of today and the six days after it with the tasks that are due but not planned for today, and *Week* shows the plan of a week as a calendar.

@@ -272,6 +272,20 @@ class PlannerTest {
         assertEquals(listOf("\"Odder\" and \"Odd\" wait for each other"), plan.problems)
     }
 
+    // [utest->dsn~planner~1]
+    @Test
+    fun aTaskWhoseThresholdLiesBehindItsBarrierIsLeftOutWithTheTasksThatWaitForIt() {
+        val plan = plan(
+            """
+            Learn to sail t:2027-06-01 p:1
+            Buy a boat id:1
+            Call the landlord t:2026-11-16
+            """,
+        )
+        assertEquals(listOf("2026-11-16 8:00 30 Call the landlord"), plan.lines())
+        assertEquals(emptyList(), plan.unplaced)
+    }
+
     // [utest->dsn~dependencies~1]
     @Test
     fun aTaskThatWaitsForATaskThatDoesNotFitIsNotPlannedEither() {

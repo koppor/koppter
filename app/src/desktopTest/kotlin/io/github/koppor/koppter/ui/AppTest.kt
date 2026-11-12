@@ -359,7 +359,7 @@ class AppTest {
     // [utest->dsn~plan-state~1]
     @Test
     fun planningWritesTheCalendarAndMarksTheTasksWithTheStateOfTheirPlan() = runComposeUiTest {
-        storage.text = "(A) Thank Mom @phone dur:1h due:2026-11-12\nPost signs +GarageSale dur:2h\nPaint the fence @home dur:200h\n"
+        storage.text = "(A) Thank Mom @phone dur:1h due:2026-11-12\nPost signs +GarageSale dur:2h\nPaint the fence @home dur:200h\nLearn to sail t:2027-06-01\n"
         // A Thursday, at 09:05.
         val controller = TodoController(Settings(), { storage }, today = { LocalDate(2026, 11, 12) }, minuteOfDay = { 9 * 60 + 5 })
         setContent { App(controller, "todo.txt") }
@@ -386,8 +386,12 @@ class AppTest {
         assertEquals(true, storage.companions.getValue("koppter.yml").contains("time-maps:\n  \"General\": \"Mon-Fri 08:00-12:00 13:00-17:00\""))
         assertEquals(true, storage.companions.getValue("koppter.yml").contains("limits:\n  \"+GarageSale\": \"block 45m, max 1h/day\""))
         // The todo.txt file is not changed by planning.
-        assertEquals(3, storage.text.trim().lines().size)
+        assertEquals(4, storage.text.trim().lines().size)
         onNodeWithTag("plan-close").performClick()
+        // A task whose threshold date lies behind its barrier is neither planned nor reported, and carries no mark.
+        onNodeWithTag("filter-future").performClick()
+        onNodeWithText("Learn to sail").assertExists()
+        onAllNodesWithTag("plan-LATE", useUnmergedTree = true).assertCountEquals(1)
 
         // Due today and planned for today: tight. Without due date: fits. Not planned: late.
         onNodeWithTag("plan-TIGHT", useUnmergedTree = true).assertExists()

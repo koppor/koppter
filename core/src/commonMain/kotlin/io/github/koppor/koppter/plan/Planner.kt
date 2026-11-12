@@ -186,6 +186,9 @@ private class Planning(private val config: PlanConfig, busy: Map<LocalDate, List
     private val left = dependencies.order.associateWithTo(mutableMapOf()) { (it.task.duration ?: DEFAULT_DURATION).inWholeMinutes.toInt() }
     private val unplaced = mutableListOf<Entry>()
 
+    /** The tasks that are not to be planned yet: their threshold date lies behind their barrier, or they wait for such a task. */
+    private val later = mutableSetOf<Entry>()
+
     /** The minutes planned for the tasks of a limit on a day, and in the week that starts on the day. */
     private val usedDay = mutableMapOf<Pair<String, LocalDate>, Int>()
     private val usedWeek = mutableMapOf<Pair<String, LocalDate>, Int>()
@@ -264,7 +267,12 @@ private class Planning(private val config: PlanConfig, busy: Map<LocalDate, List
             week = week.plus(DatePeriod(days = 7))
         }
         for (entry in dependencies.order) {
-            start(entry)?.let { put(entry, left.getValue(entry), it, config.barrierOf(entry.task, today)) }
+            val barrier = config.barrierOf(entry.task, today)
+            if (entry.task.threshold.let { it != null && it > barrier } || dependencies.of[entry].orEmpty().any { it in later }) {
+                later += entry
+                continue
+            }
+            start(entry)?.let { put(entry, left.getValue(entry), it, barrier) }
             if (left.getValue(entry) > 0) {
                 // ponytail: the times that a task got for the minimum of a week stay free if the task does not fit as a whole;
                 // plan again without the task if that leaves too much free.
@@ -284,6 +292,7 @@ private class Planning(private val config: PlanConfig, busy: Map<LocalDate, List
  * so that a task with a higher priority is planned before the others. A task is planned after the tasks it waits for.
  *
  * A task is not planned before its threshold date, and not behind its barrier: if its duration does not fit before, it is not planned at all.
+ * A task whose threshold date lies behind its barrier is not due for planning: it is left out without being returned as not planned.
  * A task is cut into parts if a free time is too short for it or a limit of its project or context allows no more on a day or in a week.
  * A limit with a time for each week gets that time first, in the weeks up to the day on which its tasks would be done without it.
  *

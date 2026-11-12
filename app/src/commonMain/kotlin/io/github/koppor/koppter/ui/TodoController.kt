@@ -214,6 +214,8 @@ class TodoController(
     fun planOf(task: Task): Pair<PlanState, String>? {
         val plan = planned?.takeIf { !task.completed } ?: return null
         val own = plan[CalendarTxt.text(task)]
+        // A task that is not due for work yet is not late for not being planned.
+        if (own == null && task.threshold.let { it != null && it > today() }) return null
         return CalendarTxt.state(task, own) to (own?.let { "Planned for ${CalendarTxt.startText(it)}" } ?: "Not planned")
     }
 
