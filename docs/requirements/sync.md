@@ -62,6 +62,29 @@ Covers:
 
 Needs: dsn
 
+### SSH key of the device
+`req~ssh-key~1`
+
+On a device without an SSH configuration of its own, the application has its own SSH key pair and shows the public key, so that the user can register it with the git server.
+On the desktop, the application uses the SSH configuration of the user.
+
+Covers:
+
+* `feat~sync-git~1`
+
+Needs: dsn
+
+### Clone in the application
+`req~clone-in-app~1`
+
+On a device without a git program, the user enters the address of a repository, and the application clones it and uses its todo.txt file.
+
+Covers:
+
+* `feat~sync-git~1`
+
+Needs: dsn
+
 ## Design
 
 ### Detection of the repository
@@ -171,5 +194,57 @@ The controller starts a synchronization when it opens a file; the storage starts
 Covers:
 
 * `req~sync-status~1`
+
+Needs: impl, utest
+
+### SSH key
+`dsn~ssh-key~1`
+
+`GitSetup` keeps an ECDSA key pair (NIST P-256) in OpenSSH format in a directory of the application.
+The pair is created when the public key is first asked for.
+
+Covers:
+
+* `req~ssh-key~1`
+* `adr~ssh-key-in-app~1`
+
+Needs: impl, utest
+
+### Host keys
+`dsn~host-keys~1`
+
+The SSH directory of the application contains a `config` file with `StrictHostKeyChecking accept-new` and a `known_hosts` file.
+The key of a host is recorded on the first connection; a host that later presents another key is rejected.
+
+Covers:
+
+* `req~ssh-key~1`
+* `adr~ssh-key-in-app~1`
+
+Needs: impl, utest
+
+### Clone
+`dsn~clone~1`
+
+`GitSetup.clone` clones the repository into a directory of the application and returns the location of `todo.txt` in it.
+An existing clone of the same repository is kept, including changes that are not pushed yet; a clone of another repository is replaced.
+
+Covers:
+
+* `req~clone-in-app~1`
+
+Needs: impl, utest
+
+### Git section of the settings dialog
+`dsn~git-setup-dialog~1`
+
+Where the platform passes `GitSetupActions` to `App`, the settings dialog shows the public key of the device, a field for the address of the repository and a button that clones it.
+After a successful clone, the location of the todo.txt file of the repository is put into the file field.
+The Android application passes the actions; the desktop application does not.
+
+Covers:
+
+* `req~ssh-key~1`
+* `req~clone-in-app~1`
 
 Needs: impl, utest

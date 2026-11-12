@@ -22,5 +22,9 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+        jvmTest.dependencies {
+            // An SSH server that serves a git repository, for the test of the SSH transport.
+            implementation(libs.jgit.junit.ssh)
+        }
     }
 }

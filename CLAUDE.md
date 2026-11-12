@@ -36,7 +36,9 @@
 * `:core` — Kotlin Multiplatform, JVM target.
   `commonMain`: todo.txt model, parser, filter, sort, storage interface, settings.
   `commonMain` `sync`: `mergeLines` (three-way line merge), `taskDates` (dates from history).
-  `jvmMain`: file storage, settings file, `GitStorage` (JGit; used automatically when the file lies in a git working tree).
+  `jvmMain`: file storage, settings file, `GitStorage` (JGit; used automatically when the file lies in a git working tree), `GitSetup` (SSH key, known hosts and clone for devices without `~/.ssh`).
+  JGit types stay out of the public API of `:core`.
+  `KOPPTER_SSH_TEST_URL=git@github.com:owner/repo.git ./gradlew :core:jvmTest --tests '*SshRemoteTest*'` checks SSH against a real server.
 * `:app` — Compose Multiplatform. `commonMain`: all screens and `TodoController` (state and operations).
   `desktopMain`: entry point. `desktopTest`: UI tests (`runComposeUiTest`, headless); `ScreenshotTest` writes `app/build/screenshots/`.
   Android library target: compiled from the same `commonMain`.

@@ -24,6 +24,7 @@ compose-material-icons = { module = "org.jetbrains.compose.material:material-ico
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
 jgit-ssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
+jgit-junit-ssh = { module = "org.eclipse.jgit:org.eclipse.jgit.junit.ssh", version.ref = "jgit" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

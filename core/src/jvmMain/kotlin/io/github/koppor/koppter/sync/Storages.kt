@@ -8,9 +8,10 @@ import java.nio.file.Path
 /**
  * The storage for a todo.txt file in the file system:
  * synchronized through git if the file lies in the working tree of a repository, a plain file otherwise.
- *
- * @param ssh the SSH configuration for the remote repository; `null` uses the configuration of the user (`~/.ssh`)
+ * SSH uses the configuration of the user (`~/.ssh`).
  */
+fun storageForFile(file: Path): TodoStorage = storageForFile(file, null)
+
 // [impl->dsn~git-detection~1]
-fun storageForFile(file: Path, ssh: SshSessionFactory? = null): TodoStorage =
+internal fun storageForFile(file: Path, ssh: SshSessionFactory?): TodoStorage =
     GitStorage.repositoryOf(file)?.let { GitStorage(file, it, ssh) } ?: FileStorage(file)

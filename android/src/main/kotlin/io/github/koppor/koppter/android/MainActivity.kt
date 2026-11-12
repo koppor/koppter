@@ -10,10 +10,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SettingsFile
 import io.github.koppor.koppter.storage.TodoStorage
-import io.github.koppor.koppter.sync.storageForFile
+import io.github.koppor.koppter.sync.GitSetup
 import io.github.koppor.koppter.ui.App
+import io.github.koppor.koppter.ui.GitSetupActions
 import io.github.koppor.koppter.ui.TodoController
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 
 class MainActivity : ComponentActivity() {
@@ -39,11 +42,20 @@ class MainActivity : ComponentActivity() {
         return result.await()
     }
 
+    private val gitSetup by lazy { GitSetup(filesDir.toPath().resolve("git")) }
+
+    // [impl->dsn~git-setup-dialog~1]
+    private val gitActions = object : GitSetupActions {
+        override fun publicKey(): String = gitSetup.publicKey()
+
+        override suspend fun clone(url: String): String = withContext(Dispatchers.IO) { gitSetup.clone(url).toString() }
+    }
+
     // [impl->dsn~android-locations~1]
     private fun storageFor(settings: Settings): TodoStorage = when {
-        settings.todoFile.isBlank() -> storageForFile(filesDir.toPath().resolve("todo.txt"))
+        settings.todoFile.isBlank() -> gitSetup.storageFor(filesDir.toPath().resolve("todo.txt"))
         settings.todoFile.startsWith("content:") -> DocumentStorage(contentResolver, Uri.parse(settings.todoFile))
-        else -> storageForFile(java.nio.file.Paths.get(settings.todoFile))
+        else -> gitSetup.storageFor(java.nio.file.Paths.get(settings.todoFile))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +68,6 @@ class MainActivity : ComponentActivity() {
             saveSettings = settingsFile::save,
             today = { java.time.LocalDate.now().let { LocalDate(it.year, it.monthValue, it.dayOfMonth) } },
         )
-        setContent { App(controller, "todo.txt in the storage of the application", chooseFile = ::chooseFile) }
+        setContent { App(controller, "todo.txt in the storage of the application", chooseFile = ::chooseFile, git = gitActions) }
     }
 }

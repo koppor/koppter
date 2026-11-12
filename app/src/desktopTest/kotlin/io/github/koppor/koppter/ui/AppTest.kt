@@ -16,7 +16,7 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
-import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.input.key.Key
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SyncState
@@ -231,5 +231,27 @@ class AppTest {
     fun aPlainFileHasNoSynchronizationStatus() = runComposeUiTest {
         start()
         onNodeWithTag("sync-status").assertDoesNotExist()
+    }
+
+    // [utest->dsn~git-setup-dialog~1]
+    @Test
+    fun theSettingsShowThePublicKeyAndCloneARepository() = runComposeUiTest {
+        val git = object : GitSetupActions {
+            override fun publicKey() = "ecdsa-sha2-nistp256 AAAA koppter"
+            override suspend fun clone(url: String) = if (url == "git@example.org:todo.git") "/data/repository/todo.txt" else error("no such repository")
+        }
+        val controller = TodoController(Settings(), { storage }, today = { LocalDate(2026, 11, 12) })
+        setContent { App(controller, "todo.txt", git = git) }
+
+        onNodeWithTag("open-settings").performClick()
+        onNodeWithTag("settings-public-key").assertTextEquals("ecdsa-sha2-nistp256 AAAA koppter")
+        onNodeWithTag("settings-git-url").performTextInput("git@example.org:other.git")
+        onNodeWithTag("settings-clone").performClick()
+        onNodeWithTag("settings-clone-message").assertTextEquals("Not cloned: no such repository")
+
+        onNodeWithTag("settings-git-url").performTextReplacement("git@example.org:todo.git")
+        onNodeWithTag("settings-clone").performClick()
+        onNodeWithTag("settings-save").performClick()
+        assertEquals("/data/repository/todo.txt", controller.settings.todoFile)
     }
 }

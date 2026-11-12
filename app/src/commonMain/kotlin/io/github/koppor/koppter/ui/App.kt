@@ -67,11 +67,17 @@ private const val RELOAD_INTERVAL_MILLIS = 2_000L
 /**
  * @param chooseFile lets the user pick the todo.txt file with the file dialog of the platform and returns its location,
  *   or `null` if the user cancelled.
+ * @param git offered in the settings on platforms where the application has to bring its own git access
  */
 @Composable
-fun App(controller: TodoController, defaultTodoFile: String, chooseFile: (suspend () -> String?)? = null) {
+fun App(
+    controller: TodoController,
+    defaultTodoFile: String,
+    chooseFile: (suspend () -> String?)? = null,
+    git: GitSetupActions? = null,
+) {
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
-        MainScreen(controller, defaultTodoFile, chooseFile)
+        MainScreen(controller, defaultTodoFile, chooseFile, git)
     }
 }
 
@@ -81,7 +87,12 @@ private data class Editing(val entry: Entry?)
 // [impl->dsn~main-screen~1]
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainScreen(controller: TodoController, defaultTodoFile: String, chooseFile: (suspend () -> String?)?) {
+private fun MainScreen(
+    controller: TodoController,
+    defaultTodoFile: String,
+    chooseFile: (suspend () -> String?)?,
+    git: GitSetupActions?,
+) {
     var editing by remember { mutableStateOf<Editing?>(null) }
     var showSettings by remember { mutableStateOf(false) }
     val drawer = rememberDrawerState(DrawerValue.Closed)
@@ -188,6 +199,7 @@ private fun MainScreen(controller: TodoController, defaultTodoFile: String, choo
             settings = controller.settings,
             defaultTodoFile = defaultTodoFile,
             chooseFile = chooseFile,
+            git = git,
             onSave = {
                 controller.updateSettings(it)
                 showSettings = false

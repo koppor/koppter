@@ -11,6 +11,7 @@ Architectural decisions are recorded as [Markdown Architectural Decision Records
 | [0004](0004-metadata-after-description-on-edit.md) | Metadata is written after the description when a task is edited |
 | [0005](0005-dates-from-the-git-history.md) | Creation and completion dates come from the git history |
 | [0006](0006-jgit-for-git-access.md) | JGit for git access |
+| [0007](0007-ssh-key-created-in-the-application.md) | SSH key created in the application on devices without SSH configuration |
 
 ## Conventions
 
