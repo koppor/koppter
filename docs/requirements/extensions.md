@@ -360,6 +360,7 @@ Needs: impl, utest
 The tag `cs:` holds the id of a task of ContextSwitcher as its links have it.
 `TaskLabels` shows the tag as a label that opens the link `contextswitcher://switch/<id>` through the platform; `App` reports a link that the platform cannot open.
 `Task.withContextSwitcherTags` replaces links of the forms `contextswitcher://task/<id>` and `contextswitcher://switch/<id>` by the tag; the quick add line and the edit dialog apply it.
+The edit dialog has a field for the tag, which takes the id or such a link (`Task.contextSwitcherId`); emptying the field removes the tag.
 
 Covers:
 

@@ -183,6 +183,11 @@ data class Task(
         // [impl->dsn~context-switcher-tag~1]
         fun contextSwitcherLink(id: String) = "contextswitcher://switch/$id"
 
+        /** The value of the tag `cs:` for what the user entered: the id itself or a link of ContextSwitcher. */
+        // [impl->dsn~context-switcher-tag~1]
+        fun contextSwitcherId(input: String): String =
+            input.trim().let { CONTEXT_SWITCHER_LINK.matchEntire(it)?.groupValues?.get(1) ?: it }.replace(WHITESPACE, "%20")
+
         private val CONTEXT_SWITCHER_LINK = Regex("^contextswitcher://(?:task|switch)/(.+)$")
 
         private val WHITESPACE = Regex("\\s+")

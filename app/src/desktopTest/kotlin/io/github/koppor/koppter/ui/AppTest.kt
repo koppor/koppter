@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -137,7 +138,7 @@ class AppTest {
         onNodeWithTag("edit-project-suggest-Family").performClick()
         onNodeWithTag("edit-line").assertTextEquals("(B) Thank Mom for the meatballs +Family @phone due:2026-11-20")
 
-        onNodeWithTag("edit-save").performClick()
+        onNodeWithTag("edit-save").performScrollTo().performClick()
         assertEquals("(B) Thank Mom for the meatballs +Family @phone due:2026-11-20", storage.text.lines()[2])
         onNodeWithTag("edit-dialog").assertDoesNotExist()
     }
@@ -148,7 +149,7 @@ class AppTest {
         storage.text = "Call  +Family Mom   @phone\n"
         start()
         openTask("Call Mom")
-        onNodeWithTag("edit-save").performClick()
+        onNodeWithTag("edit-save").performScrollTo().performClick()
         assertEquals("Call  +Family Mom   @phone\n", storage.text)
     }
 
@@ -160,7 +161,7 @@ class AppTest {
         onNodeWithTag("edit-due").performTextInput("tomorrow")
         onNodeWithTag("edit-save").assertIsNotEnabled()
         onNodeWithTag("edit-due").performTextReplacement("2026-11-30")
-        onNodeWithTag("edit-save").performClick()
+        onNodeWithTag("edit-save").performScrollTo().performClick()
         assertEquals("Post signs +GarageSale due:2026-11-30", storage.text.lines()[1])
     }
 
@@ -169,7 +170,7 @@ class AppTest {
     fun deletesATaskFromTheDialog() = runComposeUiTest {
         start()
         openTask("Post signs")
-        onNodeWithTag("edit-delete").performClick()
+        onNodeWithTag("edit-delete").performScrollTo().performClick()
         assertEquals(3, storage.text.trim().lines().size)
         onNodeWithText("Post signs").assertDoesNotExist()
     }
@@ -182,7 +183,7 @@ class AppTest {
         onNodeWithTag("edit-save").assertIsNotEnabled()
         onNodeWithTag("edit-description").performTextInput("Water plants")
         onNodeWithTag("edit-context-add").performTextInput("home ")
-        onNodeWithTag("edit-save").performClick()
+        onNodeWithTag("edit-save").performScrollTo().performClick()
         assertEquals("Water plants @home", storage.text.trim().lines().last())
     }
 
@@ -246,6 +247,20 @@ class AppTest {
         assertEquals(listOf("contextswitcher://switch/jabref/fix-npe"), opened)
         // The click on the label does not open the task.
         onNodeWithTag("edit-dialog").assertDoesNotExist()
+
+        // The edit dialog has a field for the task; it takes the id or a link and removes the tag when emptied.
+        openTask("Review the comments")
+        onNodeWithTag("edit-cs").assertTextContains("jabref/fix-npe")
+        onNodeWithTag("edit-cs").performTextReplacement("contextswitcher://task/jabref/review")
+        onNodeWithTag("edit-save").performScrollTo().performClick()
+        assertEquals("Review the comments +JabRef cs:jabref/review", storage.text.trim().lines().last())
+        openTask("Review the comments")
+        onNodeWithTag("edit-cs").performTextReplacement("")
+        onNodeWithTag("edit-save").performScrollTo().performClick()
+        assertEquals("Review the comments +JabRef", storage.text.trim().lines().last())
+        openTask("Review the comments")
+        onNodeWithTag("edit-cs").performTextReplacement("jabref/fix-npe")
+        onNodeWithTag("edit-save").performScrollTo().performClick()
 
         controller.add("Call cs:missing")
         onAllNodesWithTag("label-cs", useUnmergedTree = true)[1].performClick()
@@ -372,8 +387,8 @@ class AppTest {
     fun aNoteIsKeptInAFileNamedByATag() = runComposeUiTest {
         start()
         openTask("Post signs")
-        onNodeWithTag("edit-note").performTextInput("Ask the neighbors first")
-        onNodeWithTag("edit-save").performClick()
+        onNodeWithTag("edit-note").performScrollTo().performTextInput("Ask the neighbors first")
+        onNodeWithTag("edit-save").performScrollTo().performClick()
 
         val line = storage.text.lines()[1]
         val name = Regex("^Post signs \\+GarageSale note:([0-9a-z]{3}\\.txt)$").matchEntire(line)!!.groupValues[1]
@@ -381,8 +396,8 @@ class AppTest {
 
         openTask("Post signs")
         onNodeWithTag("edit-note").assertTextEquals("Note", "Ask the neighbors first")
-        onNodeWithTag("edit-note").performTextReplacement("Ask the neighbors first, then the school")
-        onNodeWithTag("edit-save").performClick()
+        onNodeWithTag("edit-note").performScrollTo().performTextReplacement("Ask the neighbors first, then the school")
+        onNodeWithTag("edit-save").performScrollTo().performClick()
         assertEquals(line, storage.text.lines()[1])
         assertEquals("Ask the neighbors first, then the school", storage.companions["notes/$name"])
         assertEquals("Edit note: Post signs", storage.changes.last())

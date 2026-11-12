@@ -221,5 +221,7 @@ class TaskTest {
         assertEquals("contextswitcher://switch/jabref/fix-npe", Task.contextSwitcherLink(task.tag(Task.CONTEXT_SWITCHER)!!))
         assertEquals(task, task.withContextSwitcherTags())
         assertEquals(null, Task.parse("Review cs: https://example.org/x").withContextSwitcherTags().tag(Task.CONTEXT_SWITCHER))
+        assertEquals("jabref/fix-npe", Task.contextSwitcherId(" contextswitcher://switch/jabref/fix-npe "))
+        assertEquals("My%20Category/task", Task.contextSwitcherId("My Category/task"))
     }
 }

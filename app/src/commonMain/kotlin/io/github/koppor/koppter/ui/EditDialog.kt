@@ -78,6 +78,7 @@ fun EditDialog(
     var due by remember { mutableStateOf(original.tag(Task.DUE).orEmpty()) }
     var threshold by remember { mutableStateOf(original.tag(Task.THRESHOLD).orEmpty()) }
     var recurrence by remember { mutableStateOf(original.tag(Task.RECURRENCE).orEmpty()) }
+    var contextSwitcher by remember { mutableStateOf(original.tag(Task.CONTEXT_SWITCHER).orEmpty()) }
     var projects by remember { mutableStateOf(original.projects) }
     var contexts by remember { mutableStateOf(original.contexts) }
     var hashtags by remember { mutableStateOf(original.hashtags) }
@@ -91,7 +92,9 @@ fun EditDialog(
         .withTag(Task.DUE, due.trim())
         .withTag(Task.THRESHOLD, threshold.trim())
         .withTag(Task.RECURRENCE, recurrence.trim())
-        .withContextSwitcherTags()
+        // A link pasted into the description counts only while the field is empty.
+        .withTag(Task.CONTEXT_SWITCHER, Task.contextSwitcherId(contextSwitcher))
+        .let { if (contextSwitcher.isBlank()) it.withContextSwitcherTags() else it }
         // [impl->dsn~notes~1]
         .let { if (originalNote == null) it else it.withTag(Task.NOTE, if (note.isBlank()) null else original.tag(Task.NOTE) ?: newNoteName) }
     val valid = dueValid && thresholdValid && recurrenceValid && result.body.isNotBlank()
@@ -141,6 +144,16 @@ fun EditDialog(
                         modifier = field.testTag("edit-recurrence"),
                     )
                 }
+
+                // [impl->dsn~context-switcher-tag~1]
+                OutlinedTextField(
+                    value = contextSwitcher,
+                    onValueChange = { contextSwitcher = it },
+                    label = { Text("ContextSwitcher task") },
+                    placeholder = { Text("category/task or a copied link") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("edit-cs"),
+                )
 
                 NameList("Project", "+", projects, knownProjects, { projects = it }, "edit-project")
                 NameList("Context", "@", contexts, knownContexts, { contexts = it }, "edit-context")

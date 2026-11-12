@@ -42,7 +42,7 @@ Needs: dsn
 `req~edit-dialog~1`
 
 The edit dialog shows the description without metadata in its first field.
-Below it, the dialog has fields for priority, due date, threshold date, recurrence, projects, contexts and hashtags.
+Below it, the dialog has fields for priority, due date, threshold date, recurrence, the task of ContextSwitcher, projects, contexts and hashtags.
 Below these fields, the dialog shows the line as it will be written to the todo.txt file, in a monospaced font.
 
 Covers:

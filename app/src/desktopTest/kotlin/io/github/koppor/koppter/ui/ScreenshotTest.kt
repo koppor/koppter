@@ -7,6 +7,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import io.github.koppor.koppter.storage.Appearance
@@ -56,7 +57,7 @@ class ScreenshotTest {
         override var onStatus: (SyncStatus) -> Unit = {}
         override fun sync() = Unit
         override fun dates() = mapOf(
-            "(B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 note:k3f.txt" to TaskDates(added = LocalDate(2026, 11, 5)),
+            "(B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 cs:work/team-meeting note:k3f.txt" to TaskDates(added = LocalDate(2026, 11, 5)),
         )
 
         override fun readCompanion(path: String) = companions[path]
@@ -66,7 +67,7 @@ class ScreenshotTest {
             (A) Call the landlord about the heating @phone due:2026-11-12
             (A) Submit the travel expense report +Work @computer #money due:2026-11-10
             (B) Schedule Goodwill pickup +GarageSale @phone due:2026-11-14
-            (B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 note:k3f.txt
+            (B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 cs:work/team-meeting note:k3f.txt
             (C) Post signs around the neighborhood +GarageSale @errands
             (C) Renew the library card @errands #someday due:2026-11-20
             Water the plants @home due:2026-11-12 rec:1w
@@ -91,7 +92,7 @@ class ScreenshotTest {
     }
 
     @Test
-    fun rendersListAndDialogs() = runDesktopComposeUiTest(width = 1100, height = 980) {
+    fun rendersListAndDialogs() = runDesktopComposeUiTest(width = 1100, height = 1060) {
         start()
         save("list.png")
         onNodeWithTag("filter-project-GarageSale").performClick()
@@ -101,13 +102,13 @@ class ScreenshotTest {
         onNodeWithTag("filter-clear").performClick()
         onNodeWithText("Prepare the slides for the team meeting").performClick()
         save("edit.png")
-        onNodeWithTag("edit-cancel").performClick()
+        onNodeWithTag("edit-cancel").performScrollTo().performClick()
         onNodeWithTag("open-settings").performClick()
         save("settings.png")
     }
 
     @Test
-    fun rendersSchedule() = runDesktopComposeUiTest(width = 1100, height = 980) {
+    fun rendersSchedule() = runDesktopComposeUiTest(width = 1100, height = 1060) {
         start()
         onNodeWithTag("open-schedule").performClick()
         save("schedule.png")
