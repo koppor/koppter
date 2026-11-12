@@ -56,6 +56,7 @@ It reads `todo.txt` in the home directory unless another file is set in the sett
 ```
 
 builds the Android application as `android/build/outputs/apk/debug/android-debug.apk`.
+The build workflow publishes the release variant, signed with a key that is a secret of the repository ([decision 0010](docs/decisions/0010-signing-key-as-repository-secret.md)), as the artifact `koppter-android`.
 
 ## Project documents
 

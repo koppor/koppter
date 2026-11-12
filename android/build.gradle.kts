@@ -18,6 +18,28 @@ android {
         versionName = "0"
     }
 
+    // The key of the published APK is not in the repository (decision 0010).
+    // Without it, as on a developer machine, the release APK stays unsigned and the debug APK is the one to install.
+    // [impl->adr~signing-key-as-secret~1]
+    val keystoreFile = providers.environmentVariable("KOPPTER_KEYSTORE_FILE").orNull
+    if (keystoreFile != null) {
+        val password = providers.environmentVariable("KOPPTER_KEYSTORE_PASSWORD").get()
+        signingConfigs {
+            create("published") {
+                storeFile = file(keystoreFile)
+                storeType = "PKCS12"
+                storePassword = password
+                keyAlias = "koppter"
+                keyPassword = password
+            }
+        }
+        buildTypes {
+            getByName("release") {
+                signingConfig = signingConfigs.getByName("published")
+            }
+        }
+    }
+
     buildFeatures {
         compose = true
     }
