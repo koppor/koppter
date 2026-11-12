@@ -9,11 +9,15 @@ A feature without a `Needs:` line is not yet refined into requirements.
 The application reads and writes a file in the [todo.txt format](https://github.com/todotxt/todo.txt).
 The file remains usable with other todo.txt tools at any time.
 
+Needs: req
+
 ## Task list
 `feat~task-list~1`
 
 The application shows the tasks as a list.
 Projects, contexts, due date and priority of a task are shown as labels at the top right of the task.
+
+Needs: req
 
 ## Task editing
 `feat~task-editing~1`
@@ -21,10 +25,14 @@ Projects, contexts, due date and priority of a task are shown as labels at the t
 The user adds, edits, completes and deletes tasks.
 The edit dialog separates the description from the metadata and shows the resulting todo.txt line.
 
+Needs: req
+
 ## Filtering
 `feat~filtering~1`
 
 The user restricts the list by completion state, text, priorities, projects and contexts.
+
+Needs: req
 
 ## Synchronization through git
 `feat~sync-git~1`
@@ -46,6 +54,8 @@ The todo.txt file lives in the user's OneDrive.
 `feat~extensions~1`
 
 The application supports recurring tasks (`rec:`, `ice_recur`), threshold dates (`t:`), notes attached to tasks (`note:`) and a view of the top tasks.
+
+Needs: req
 
 ## Kanban board
 `feat~kanban~1`

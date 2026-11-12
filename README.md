@@ -35,7 +35,7 @@ The Gradle wrapper downloads everything else.
 ## Project documents
 
 | Document | Content |
-|----------|---------|
+| --- | --- |
 | [CHANGELOG.md](CHANGELOG.md) | User-visible changes, [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, [CalVer](https://calver.org/) releases |
 | [docs/requirements](docs/requirements/README.md) | Features, requirements and design, traced to code |
 | [docs/decisions](docs/decisions/README.md) | Architectural decisions as [MADR](https://adr.github.io/madr/) |

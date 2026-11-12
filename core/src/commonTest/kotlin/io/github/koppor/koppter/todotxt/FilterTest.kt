@@ -1,0 +1,66 @@
+package io.github.koppor.koppter.todotxt
+
+import kotlinx.datetime.LocalDate
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class FilterTest {
+    private val today = LocalDate(2026, 11, 12)
+    private val file = TodoFile.parse(
+        """
+        (B) Schedule pickup +GarageSale @phone
+        Post signs +GarageSale
+        (A) Thank Mom @phone due:2026-11-20
+        x Call Mom +Family @phone
+        Plan holiday t:2026-12-01
+        (A) Pay bill due:2026-11-13
+        """.trimIndent(),
+    )
+
+    private fun descriptions(filter: Filter) =
+        file.entries.filter { filter.matches(it.task, today) }.map { it.task.description }
+
+    // [utest->dsn~filter~1]
+    @Test
+    fun theDefaultShowsOpenTasksThatAreNotInTheFuture() {
+        assertEquals(listOf("Schedule pickup", "Post signs", "Thank Mom", "Pay bill"), descriptions(Filter()))
+    }
+
+    // [utest->dsn~filter~1]
+    @Test
+    fun filtersByCompletion() {
+        assertEquals(listOf("Call Mom"), descriptions(Filter(completion = Completion.COMPLETED)))
+        assertEquals(6, descriptions(Filter(completion = Completion.ALL, hideFuture = false)).size)
+    }
+
+    // [utest->dsn~filter~1]
+    @Test
+    fun criteriaAreCombinedWithAndValuesWithOr() {
+        assertEquals(
+            listOf("Schedule pickup", "Thank Mom"),
+            descriptions(Filter(contexts = setOf("phone"), priorities = setOf('A', 'B'))),
+        )
+        assertEquals(listOf("Schedule pickup"), descriptions(Filter(contexts = setOf("phone"), projects = setOf("GarageSale"))))
+    }
+
+    // [utest->dsn~filter~1]
+    @Test
+    fun textMatchesTheWholeLineIgnoringCase() {
+        assertEquals(listOf("Schedule pickup", "Post signs"), descriptions(Filter(text = "garagesale")))
+    }
+
+    // [utest->dsn~filter~1]
+    @Test
+    fun futureTasksAreShownOnRequest() {
+        assertEquals(listOf("Plan holiday"), descriptions(Filter(text = "holiday", hideFuture = false)))
+    }
+
+    // [utest->dsn~sort-order~1]
+    @Test
+    fun ordersByCompletionPriorityDueDateAndPosition() {
+        assertEquals(
+            listOf("Pay bill", "Thank Mom", "Schedule pickup", "Post signs", "Plan holiday", "Call Mom"),
+            file.entries.sortedWith(listOrder).map { it.task.description },
+        )
+    }
+}
