@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: fixed-days-go-to-ice-recur
+expected_outcome: |
+  ice_recur.txt has two new entries, weekly on Monday and every second Thursday with the start date 2026-11-19; the tasks carry existing contexts; no rec: tag is used.
+context:
+  scaffold_script: place-files.sh

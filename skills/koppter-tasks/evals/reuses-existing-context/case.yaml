@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: reuses-existing-context
+expected_outcome: |
+  todo.txt has one new last line for renewing the passport with the existing context @errands>city, due:2027-01-15 and dur:1h; all other lines are unchanged.
+context:
+  scaffold_script: place-files.sh

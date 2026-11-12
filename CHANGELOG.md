@@ -39,6 +39,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Planning gives a task that waits for others its times after them; the tags `id:` and `p:` of topydo state the dependencies.
 - Planning leaves out a task whose threshold date lies behind its barrier, instead of listing it as not fitting.
 - Guide on organizing many tasks in `docs/organizing.md`.
+- Skill `koppter-tasks` for agents that add tasks to the todo.txt file, with guidance on recurring tasks.
 - A planned block starts on a quarter of an hour after an event of a calendar.
 - Planning leaves out the times of the events of calendars that are named by the address of their iCalendar file, as Outlook and Google Calendar publish it.
 - *Agenda* shows the planned blocks of today and the six days after it with the tasks that are due but not planned for today, and *Week* shows the plan of a week as a calendar.

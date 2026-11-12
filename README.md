@@ -85,6 +85,15 @@ The screenshots above show Nord in its light variant.
 
 The planned scope is tracked as requirements in [docs/requirements](docs/requirements/README.md).
 
+## Skills for agents
+
+[skills/koppter-tasks](skills/koppter-tasks/SKILL.md) is a skill for Claude and other agents that read skills: it tells how to write a task into the todo.txt file so that it fits what the application does with it, and how to choose between `rec:` and `ice_recur.txt` for a recurring task.
+To use it in Claude Code, link the directory into the skills of the user:
+
+```sh
+ln -s "$PWD/skills/koppter-tasks" ~/.claude/skills/koppter-tasks
+```
+
 ## Organizing many tasks
 
 [docs/organizing.md](docs/organizing.md) describes a way to keep hundreds of tasks findable with what the application offers:

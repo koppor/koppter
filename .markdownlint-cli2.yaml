@@ -8,4 +8,6 @@ config:
   blanks-around-headings: false
 ignores:
   - PLAN.md
+  # Test cases of skills: prompts and assertions in the layout of "claude plugin eval", without headings.
+  - "skills/*/evals/**"
   - "**/build/**"
