@@ -262,6 +262,19 @@ Such an address lets everyone who has it read the calendar.
 It is therefore kept in the settings of the device and not in `koppter.yml`; each device needs it entered once.
 The application only reads the calendars and writes nothing to them.
 
+### Limits of planning
+
+* In the last days of a quarter, little fits before the default barrier, and most tasks count as not planned.
+  `default = year` or a date moves the barrier.
+* A block refers to its task by the text of the task.
+  After the text, a project or a context of a task is edited, the task counts as not planned until the next plan.
+* A time zone that the platform does not know by its name, as Outlook writes them (`W. Europe Standard Time`), counts as the time zone of the device.
+  Events of a calendar that is kept in another time zone than that of the device are then read at the wrong time.
+* An occurrence of a repeating event that was moved counts as busy at its old and at its new time.
+* Whether a calendar program replaces the events of an earlier import of `calendar.ics` or adds them again has not been tried.
+  The events carry the same id in every export, and the application leaves its own events out when it reads a calendar they were imported into.
+* Reading calendars and the import of `calendar.ics` have been tried with files written for the tests, not with the calendars of Outlook or Google.
+
 ## Sharing to koppter on Android
 
 A text that another application shares to koppter, such as the link of an article, becomes a task at once; no screen opens.
