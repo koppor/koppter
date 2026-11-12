@@ -76,6 +76,18 @@ Covers:
 
 Needs: dsn
 
+### Moving a task on the board
+`req~board-move~1`
+
+The user moves a task to another column of the board by dragging it there.
+The task then has the value of that column: its priority, its project, its context or a due date in its range.
+
+Covers:
+
+* `feat~kanban~1`
+
+Needs: dsn
+
 ## Design
 
 ### Recurrence on completion
@@ -140,6 +152,36 @@ The columns contain the task cards of the list, with the same operations.
 Covers:
 
 * `req~board~1`
+
+Needs: impl, utest
+
+### Move between groups
+`dsn~board-move~1`
+
+`moveToGroup` returns the task as it is after a move from one group to another.
+For priorities, the task gets the priority of the target group, or none.
+For projects and contexts, the value of the source group is replaced by that of the target group; the other projects and contexts of the task stay.
+For due dates, the group *today* sets today, the group *later* tomorrow, and the group without due date removes the date.
+A move within a group or into the group of overdue tasks changes nothing.
+
+Covers:
+
+* `req~board-move~1`
+* `adr~board-columns-by-attribute~1`
+
+Needs: impl, utest
+
+### Dragging on the board
+`dsn~board-drag~1`
+
+A task card is dragged with the mouse, or with the finger after a long press, as a plain drag with the finger scrolls.
+While a card is dragged, its description follows the pointer and the column under the pointer is marked.
+Dropping the card on another column applies the move as one change, with a message that names the column.
+Only the columns that are shown can be a target, so a value that no visible task has is set in the edit dialog.
+
+Covers:
+
+* `req~board-move~1`
 
 Needs: impl, utest
 

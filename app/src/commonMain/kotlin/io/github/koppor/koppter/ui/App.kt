@@ -171,7 +171,7 @@ private fun MainScreen(
                         ViewOptions(controller)
                         val emptyText = if (controller.file.entries.isEmpty()) "No tasks" else "No task matches the filter"
                         if (controller.board) {
-                            Board(controller.groups, controller.today(), controller::toggle, { editing = Editing(it) }, emptyText)
+                            Board(controller.groups, controller.today(), controller::toggle, { editing = Editing(it) }, controller::move, emptyText)
                         } else {
                             TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, emptyText)
                         }

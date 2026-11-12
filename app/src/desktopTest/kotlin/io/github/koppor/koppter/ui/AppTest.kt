@@ -13,10 +13,13 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performMouseInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import io.github.koppor.koppter.storage.CompanionFiles
 import io.github.koppor.koppter.storage.Settings
@@ -341,5 +344,44 @@ class AppTest {
         onAllNodesWithTag("task-done")[0].performClick()
         mainClock.advanceTimeBy(2_500)
         assertEquals(1, storage.text.lines().count { "Check mail" in it })
+    }
+
+    // [utest->dsn~board-drag~1]
+    @Test
+    fun draggingACardToAnotherColumnChangesTheTask() = runComposeUiTest {
+        start()
+        onNodeWithTag("board-switch").performClick()
+        // The columns are A, B and "No priority", 328 pixels apart; the card of column B goes to column A.
+        onNodeWithText("Schedule pickup").performMouseInput {
+            moveTo(center)
+            press()
+            moveBy(Offset(-30f, 0f))
+            moveBy(Offset(-300f, 0f))
+        }
+        onNodeWithTag("board-dragged").assertExists()
+        // The description now exists twice, in the card and at the pointer, so the board takes the release.
+        onNodeWithTag("board").performMouseInput { release() }
+
+        assertEquals("(A) Schedule pickup +GarageSale @phone", storage.text.lines()[0])
+        assertEquals("Move task to A: Schedule pickup", storage.changes.last())
+        onNodeWithText("A (2)").assertExists()
+        onNodeWithTag("board-dragged").assertDoesNotExist()
+        onNodeWithTag("edit-dialog").assertDoesNotExist()
+    }
+
+    // [utest->dsn~board-drag~1]
+    @Test
+    fun aCardIsDraggedWithTheFingerAfterALongPress() = runComposeUiTest {
+        start()
+        onNodeWithTag("board-switch").performClick()
+        onNodeWithText("Schedule pickup").performTouchInput {
+            down(center)
+            advanceEventTime(1000)
+            moveBy(Offset(-330f, 0f))
+            up()
+        }
+
+        assertEquals("(A) Schedule pickup +GarageSale @phone", storage.text.lines()[0])
+        onNodeWithTag("edit-dialog").assertDoesNotExist()
     }
 }

@@ -19,6 +19,7 @@ import io.github.koppor.koppter.todotxt.iceRecurTasks
 import io.github.koppor.koppter.todotxt.Task
 import io.github.koppor.koppter.todotxt.TodoFile
 import io.github.koppor.koppter.todotxt.listOrder
+import io.github.koppor.koppter.todotxt.moveToGroup
 import kotlinx.datetime.LocalDate
 import kotlin.random.Random
 
@@ -186,6 +187,14 @@ class TodoController(
         // A changed note alone is a change to record, although the todo.txt file stays the same.
         if (new == file && noteChanged) guarded { storage.write(file.serialize(), "Edit note: ${task.description}") }
         write(new, "Edit task: ${task.description}")
+    }
+
+    /** Applies the move of a task from one column of the board to another. */
+    // [impl->dsn~board-move~1]
+    fun move(entry: Entry, from: Group, to: Group) {
+        val task = moveToGroup(entry.task, groupKey, from, to, today()) ?: return
+        val index = locate(entry) ?: return
+        write(file.replace(index, task), "Move task to ${to.title}: ${task.description}")
     }
 
     fun delete(entry: Entry) {
