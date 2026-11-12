@@ -114,7 +114,8 @@ The application understands the following extensions, which other todo.txt tools
 | `note:k3f.txt` | A note for the task, kept in the file `notes/k3f.txt` | *Note* in the edit dialog; the application names the file. As in the [note add-on](https://github.com/mgarrido/todo.txt-cli/tree/note/todo.actions.d). |
 | `#urgent` | Hashtag: a third kind of label next to `+project` and `@context`, without a fixed meaning | *Add hashtag* in the edit dialog, or typed into the task. A hashtag starts with a letter: `#123` and `C#` stay words of the description ([decision 0014](docs/decisions/0014-hashtags-as-a-third-kind-of-label.md)). |
 | `@research>reading` | A context below another context, over any number of levels | Typed as the context. The label shows `@reading`, and the path when the pointer rests on it; a click on it shows the tasks of the context. A filter for `@research` includes the contexts below it, and the filter panel shows the contexts as a tree ([decision 0017](docs/decisions/0017-levels-of-a-context-separated-by-a-greater-than-sign.md)). |
-| `dur:1h30m` | The time the task is expected to take, in hours and minutes | Field *Duration* in the edit dialog, or typed into the task. Nothing is computed from it yet ([decision 0018](docs/decisions/0018-tag-for-the-duration-of-a-task.md)). |
+| `dur:1h30m` | The time the task is expected to take, in hours and minutes | Field *Duration* in the edit dialog, or typed into the task. [Planning](#planning) gives the task that much time ([decision 0018](docs/decisions/0018-tag-for-the-duration-of-a-task.md)). |
+| `id:1`, `p:1` | The task with `id:1` waits for the tasks with `p:1`, as topydo writes dependencies | Typed into the task. [Planning](#planning) gives the task its times after those it waits for ([decision 0020](docs/decisions/0020-dependencies-with-the-tags-of-topydo.md)). |
 | `cs:jabref/fix-npe` | The task of [ContextSwitcher](https://github.com/contextswitcher/contextswitcher) that holds the working context | Entered in the field *ContextSwitcher task* of the edit dialog or typed into the task, as the id or as the link that *Copy link* of ContextSwitcher gives, which becomes the tag. A click on the label switches to the task in ContextSwitcher, on a computer where it has registered its links ([decision 0016](docs/decisions/0016-tag-for-the-task-of-contextswitcher.md)). |
 | `pri:A` | The priority a completed task had | Written when a task with a priority is completed, as the format has no priority for completed tasks; reopening the task restores the priority. |
 
@@ -239,7 +240,10 @@ The todo.txt file leads: the plan is computed from it, and planning does not cha
 
 * A task with a higher priority is planned first, and every task gets the earliest free times, so that tasks without dates are planned soon as well.
 * A task takes its duration (`dur:`), half an hour without one, and is not planned before its threshold date (`t:`).
-  A free time that is too short takes a part of the task.
+  A free time that is too short takes a part of the task, but no part is shorter than an hour, the **block**; a task that is shorter is not cut.
+* A task follows the task before it without a gap; after an event of a calendar, it starts on a quarter of an hour.
+* A task that waits for others is planned after them: `Send the paper id:1` waits for `Write the paper p:1`.
+  The tasks it waits for come as early as the task itself would.
 * A **time map** names times of the week: `General = Mon-Fri 08:00-12:00 13:00-18:00`.
   A map that starts with the name of another one is restricted to its times: `Morning-Focus = General 08:00-11:00`.
   The first map is for tasks whose contexts name none.
@@ -248,6 +252,16 @@ The todo.txt file leads: the plan is computed from it, and planning does not cha
 * A **barrier** is the day behind which a task is not planned: `week`, `month`, `quarter` (the default), `year` or a date.
   It is set in general (`default = year`), for a project (`+Thesis = 2027-03-31`) or for a context (`@research = year`); the earliest barrier of a task counts.
   A task that does not fit before its barrier is listed after planning instead of being planned later.
+* A **limit** states how much is planned for a project or a context, the contexts below it included, as rules separated by commas:
+
+  | Rule | Effect |
+  | --- | --- |
+  | `@chores = max 90m/day, max 5h/week` | Budget: not more is planned on a day or in a week, which starts on Monday. |
+  | `@paper = min 1h/week` | Minimum: this much is planned in each week before the tasks with a higher priority get their times. |
+  | `+Thesis = block 2h` | The shortest part its tasks are cut into; of several, the longest counts. |
+  | `default = block 30m, max 6h/day` | For the tasks without a block of their own, and a budget for all tasks together. |
+
+  A paper that is finished one day is a project in a context that stays, `+FirstPaper @paper`: the limits of `@paper` then hold for every paper, and `+FirstPaper` gets its barrier.
 
 After the first plan, each open task carries a calendar icon: green if its plan ends before its due date or it has none, yellow if it ends on the due date, red if it ends later or the task is not planned.
 The pointer on the icon shows the start of the plan.
@@ -289,6 +303,10 @@ It is therefore kept in the settings of the device and not in `koppter.yml`; eac
 The application only reads the calendars and writes nothing to them.
 
 ### Limits of planning
+
+* A budget counts what is planned from now on: what was planned earlier in the running week is not counted.
+* A minimum is planned in the weeks up to the day on which the tasks of its context would be done without it; a week in which they have no time left gets nothing.
+* The task list does not tell which tasks wait for others, and it shows them all the same; the tags `id:` and `p:` are typed, and their values chosen, by hand.
 
 * In the last days of a quarter, little fits before the default barrier, and most tasks count as not planned.
   `default = year` or a date moves the barrier.

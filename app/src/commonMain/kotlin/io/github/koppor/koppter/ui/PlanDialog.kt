@@ -29,8 +29,8 @@ import io.github.koppor.koppter.plan.CalendarTxt
 import io.github.koppor.koppter.storage.ConfigFile
 import kotlinx.coroutines.launch
 
-/** The three parts of the configuration for planning, each as lines of the form `name = value`. */
-data class PlanSettings(val timeMaps: String, val contextMaps: String, val barriers: String)
+/** The parts of the configuration for planning, each as lines of the form `name = value`. */
+data class PlanSettings(val timeMaps: String, val contextMaps: String, val barriers: String, val limits: String = "")
 
 /** What a run of the planner did, as texts for the user. */
 data class PlanResult(val summary: String, val problems: List<String>, val unplaced: List<String>)
@@ -51,6 +51,7 @@ fun PlanDialog(
     var timeMaps by remember { mutableStateOf(settings.timeMaps) }
     var contextMaps by remember { mutableStateOf(settings.contextMaps) }
     var barriers by remember { mutableStateOf(settings.barriers) }
+    var limits by remember { mutableStateOf(settings.limits) }
     var addresses by remember { mutableStateOf(calendars) }
     var result by remember { mutableStateOf<PlanResult?>(null) }
     var running by remember { mutableStateOf(false) }
@@ -69,7 +70,7 @@ fun PlanDialog(
         )
     }
 
-    val state = listOf(timeMaps, contextMaps, barriers, addresses)
+    val state = listOf(timeMaps, contextMaps, barriers, limits, addresses)
     // Planning saves what the fields hold.
     var saved by remember { mutableStateOf(state) }
 
@@ -99,6 +100,14 @@ fun PlanDialog(
                     "The day behind which a task is not planned: week, month, quarter, year or a date. " +
                         "One per line: default = quarter, +Thesis = 2027-03-31, @research = year. The earliest barrier of a task counts.",
                     "plan-barriers",
+                )
+                // [impl->dsn~plan-limits~1]
+                field(
+                    "Limits", limits, { limits = it },
+                    "How much is planned for a project or a context, rules separated by commas: @chores = max 5h/week, block 30m. " +
+                        "max with /day or /week: not more is planned. min with /week: this much is planned first in each week: @paper = min 1h/week. " +
+                        "block: a task is not cut into shorter parts; an hour unless stated, also as default = block 2h.",
+                    "plan-limits",
                 )
                 // [impl->dsn~busy-times~1]
                 addresses?.let {
@@ -130,7 +139,7 @@ fun PlanDialog(
                             saved = state
                             scope.launch {
                                 try {
-                                    result = onPlan(PlanSettings(timeMaps, contextMaps, barriers), addresses)
+                                    result = onPlan(PlanSettings(timeMaps, contextMaps, barriers, limits), addresses)
                                 } finally {
                                     running = false
                                 }

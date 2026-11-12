@@ -76,10 +76,10 @@ class PlannerTest {
         )
         assertEquals(
             listOf(
-                // Not before the time of today that has passed; priority A first, then the order of the file.
-                "2026-11-12 9:10 30 Call the landlord",
-                "2026-11-12 9:40 120 Write the report",
-                // A task without duration takes half an hour; the 20 minutes before noon are too short for it.
+                // Not before the time of today that has passed, and on the quarter of an hour; priority A first, then the order of the file.
+                "2026-11-12 9:15 30 Call the landlord",
+                "2026-11-12 9:45 120 Write the report",
+                // A task without duration takes half an hour; the 15 minutes before noon are too short for it.
                 "2026-11-12 13:00 30 Answer the mail",
                 // Not before its threshold date.
                 "2026-11-16 8:00 60 Review the paper",
@@ -145,6 +145,146 @@ class PlannerTest {
         assertEquals(LocalDate(2026, 11, 30), PlanConfig.barrierDate("month", today))
         assertEquals(listOf("+Odd: \"soon\" is no barrier"), config.problems)
         assertEquals(listOf("@home: there is no time map \"Gone\""), PlanConfig(maps, mapOf("home" to "Gone")).problems)
+    }
+
+    // [utest->dsn~plan-limits~1]
+    @Test
+    fun aTaskIsNotCutIntoPartsShorterThanTheBlockOfItsProjectOrContext() {
+        val config = PlanConfig(maps, limits = listOf("default" to "block 2h", "@chores" to "block 30m", "+Thesis" to "block 3h", "@odd" to "block soon, max 1h, 2h"))
+        val plan = plan(
+            """
+            (A) Write the chapter +Thesis dur:7h
+            (B) Sort the mail dur:3h
+            (C) Tidy the desk @chores>office dur:1h
+            (D) Think dur:3h
+            """,
+            config,
+            // Free today: 08:00-09:30, 10:00-12:00 and the afternoon.
+            busy = mapOf(today to listOf(span("09:30", "10:00"))),
+        )
+        assertEquals(
+            listOf(
+                "2026-11-12 8:00 60 Tidy the desk",
+                // Three hours at a stretch are free in the afternoon only; four of the five hours, so that a block of three is left.
+                "2026-11-12 13:00 240 Write the chapter",
+                "2026-11-13 8:00 180 Write the chapter",
+                // Without a block of its own, the default one of two hours: three hours are not cut into two and one.
+                "2026-11-13 13:00 180 Sort the mail",
+                "2026-11-16 8:00 180 Think",
+            ),
+            plan.lines(),
+        )
+        assertEquals(60, PlanConfig().blockOf(Task.parse("Anything")))
+        // Of several blocks, the longest counts.
+        assertEquals(180, config.blockOf(Task.parse("Write +Thesis @chores")))
+        assertEquals(listOf("@odd: \"block soon\" is no limit", "@odd: \"max 1h\" is no limit", "@odd: \"2h\" is no limit"), config.problems)
+    }
+
+    // [utest->dsn~planner~1]
+    @Test
+    fun afterAMeetingABlockStartsOnTheQuarterOfAnHourAndAfterABlockAtOnce() {
+        val plan = plan(
+            """
+            (A) Call the landlord dur:50m
+            (B) Answer the mail dur:20m
+            """,
+            busy = mapOf(today to listOf(span("08:00", "09:55"))),
+        )
+        assertEquals(listOf("2026-11-12 10:00 50 Call the landlord", "2026-11-12 10:50 20 Answer the mail"), plan.lines())
+    }
+
+    // [utest->dsn~plan-limits~1]
+    @Test
+    fun notMoreThanTheBudgetOfADayAndAWeekIsPlanned() {
+        val config = PlanConfig(maps, limits = listOf("@chores" to "max 90m/day, max 2h/week", "default" to "max 4h/day"))
+        val plan = plan(
+            """
+            (A) Clean the bike @chores dur:3h
+            (B) Sort the mail @chores>office dur:2h
+            (C) Write the report dur:6h
+            """,
+            config,
+        )
+        assertEquals(
+            listOf(
+                // An hour and a half of chores a day.
+                "2026-11-12 8:00 90 Clean the bike",
+                // Four hours a day in all.
+                "2026-11-12 9:30 150 Write the report",
+                // Two hours of chores a week: the half hour that is left of them on Friday is shorter than a block.
+                "2026-11-13 8:00 210 Write the report",
+                "2026-11-16 8:00 90 Clean the bike",
+                // The context below counts as well, so the mail waits for the week after; an hour each day, as half an hour would be left otherwise.
+                "2026-11-23 8:00 60 Sort the mail",
+                "2026-11-24 8:00 60 Sort the mail",
+            ),
+            plan.lines(),
+        )
+    }
+
+    // [utest->dsn~plan-limits~1]
+    @Test
+    fun theMinimumOfAWeekIsPlannedBeforeTasksWithAHigherPriority() {
+        val todo = """
+            (A) Write the report dur:20h
+            (B) Prepare the course dur:20h
+            Outline the paper @paper>first dur:3h
+        """
+        // Without a minimum, the paper waits until the others are planned: 18 hours fit into the first week.
+        assertEquals("2026-11-18", plan(todo, PlanConfig(maps, barriers = listOf("default" to "year"))).blocks.first { it.entry.task.description == "Outline the paper" }.date.toString())
+
+        val plan = plan(todo, PlanConfig(maps, barriers = listOf("default" to "year"), limits = listOf("@paper" to "min 1h/week")))
+        assertEquals(
+            // An hour in each week, up to the week in which the paper would have been done anyway; there, it is done.
+            listOf("2026-11-12 8:00 60 Outline the paper", "2026-11-16 8:00 60 Outline the paper", "2026-11-18 15:00 60 Outline the paper"),
+            plan.lines().filter { it.endsWith("Outline the paper") },
+        )
+        assertEquals(emptyList(), plan.unplaced)
+    }
+
+    // [utest->dsn~dependencies~1]
+    @Test
+    fun aTaskIsPlannedAfterTheTasksItWaitsFor() {
+        val plan = plan(
+            """
+            (A) Send the paper id:1 dur:30m
+            Write the paper p:1 dur:2h id:2
+            Collect the data p:2 dur:1h
+            x Find the venue p:1
+            (B) Call the landlord dur:1h
+            Odd id:7 p:8
+            Odder id:8 p:7
+            """,
+        )
+        assertEquals(
+            listOf(
+                // The tasks that the first one waits for come with it, in the order of their dependencies; a completed one is not waited for.
+                "2026-11-12 8:00 60 Collect the data",
+                "2026-11-12 9:00 120 Write the paper",
+                "2026-11-12 11:00 30 Send the paper",
+                // Tasks that wait for each other are planned all the same; the half hour before noon is too short for the call.
+                "2026-11-12 11:30 30 Odder",
+                "2026-11-12 13:00 60 Call the landlord",
+                "2026-11-12 14:00 30 Odd",
+            ),
+            plan.lines(),
+        )
+        assertEquals(listOf("\"Odder\" and \"Odd\" wait for each other"), plan.problems)
+    }
+
+    // [utest->dsn~dependencies~1]
+    @Test
+    fun aTaskThatWaitsForATaskThatDoesNotFitIsNotPlannedEither() {
+        val plan = plan(
+            """
+            Send the thesis id:1 dur:30m
+            Write the thesis p:1 dur:200h +Thesis
+            Review the thesis p:1 dur:1h t:2026-11-16
+            """,
+            PlanConfig(maps, barriers = listOf("+Thesis" to "2026-11-20")),
+        )
+        assertEquals(listOf("Write the thesis", "Send the thesis"), plan.unplaced.map { it.task.description })
+        assertEquals(listOf("2026-11-16 8:00 60 Review the thesis"), plan.lines())
     }
 
     // [utest->dsn~calendar-txt~1]

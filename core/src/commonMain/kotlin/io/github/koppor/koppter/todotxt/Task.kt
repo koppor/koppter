@@ -181,6 +181,10 @@ data class Task(
         const val CONTEXT_SWITCHER = "cs"
         const val DURATION = "dur"
 
+        /** As topydo writes dependencies: a task with [ID] waits for the tasks whose [PARENT] has the same value. */
+        const val ID = "id"
+        const val PARENT = "p"
+
         /** Reads a duration such as `45m`, `2h` or `1h30m`; `null` if the text is none or not positive. */
         // [impl->dsn~duration~1]
         fun parseDuration(text: String): Duration? = Duration.parseOrNull(text)?.takeIf { it.isPositive() && it.isFinite() }

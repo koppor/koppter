@@ -224,6 +224,7 @@ class TodoController(
                 ConfigFile.toLines(ConfigFile.entries(text, ConfigFile.TIME_MAPS)),
                 ConfigFile.toLines(ConfigFile.entries(text, ConfigFile.CONTEXT_TIME_MAPS)),
                 ConfigFile.toLines(ConfigFile.entries(text, ConfigFile.BARRIERS)),
+                ConfigFile.toLines(ConfigFile.entries(text, ConfigFile.LIMITS)),
             )
         }
 
@@ -268,6 +269,7 @@ class TodoController(
                 ConfigFile.TIME_MAPS to settings.timeMaps,
                 ConfigFile.CONTEXT_TIME_MAPS to settings.contextMaps,
                 ConfigFile.BARRIERS to settings.barriers,
+                ConfigFile.LIMITS to settings.limits,
             ).fold(config.orEmpty()) { text, (key, lines) -> ConfigFile.withEntries(text, key, ConfigFile.parseLines(lines)) }
             if (newConfig != config.orEmpty()) files.writeCompanion(ConfigFile.NAME, newConfig)
             val planConfig = ConfigFile.planConfig(newConfig)
@@ -282,7 +284,7 @@ class TodoController(
             val tasks = plan.blocks.map { it.entry }.distinct().size
             result = PlanResult(
                 if (plan.blocks.isEmpty()) "Nothing was planned." else "Planned $tasks tasks until ${plan.blocks.last().date}.",
-                problems + planConfig.problems,
+                problems + planConfig.problems + plan.problems,
                 plan.unplaced.map { entry ->
                     "${entry.task.description}${entry.task.contexts.firstOrNull()?.let { " @$it" }.orEmpty()} (barrier ${planConfig.barrierOf(entry.task, today())})"
                 },

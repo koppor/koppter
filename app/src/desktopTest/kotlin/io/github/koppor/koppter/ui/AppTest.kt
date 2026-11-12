@@ -370,17 +370,21 @@ class AppTest {
         onNodeWithTag("plan-time-maps").performTextInput("General = Mon-Fri 08:00-12:00 13:00-17:00\nEvenings = General 15:00-17:00 Noday")
         onNodeWithTag("plan-context-maps").performTextInput("@home = Evenings")
         onNodeWithTag("plan-barriers").performScrollTo().performTextInput("default = year\n@home = week")
+        onNodeWithTag("plan-limits").performScrollTo().performTextInput("+GarageSale = block 45m, max 1h/day")
         onNodeWithTag("plan-update").performScrollTo().performClick()
 
-        onNodeWithTag("plan-summary").performScrollTo().assertTextEquals("Planned 2 tasks until 2026-11-12.")
+        onNodeWithTag("plan-summary").performScrollTo().assertTextEquals("Planned 2 tasks until 2026-11-13.")
         onNodeWithTag("plan-problem").assertTextEquals("Evenings: \"Noday\" is neither days nor times")
         onNodeWithTag("plan-unplaced").assertTextEquals("Paint the fence @home (barrier 2026-11-15)")
         assertEquals(
-            "2026-11-12 w46 Thu  09:15-10:15 Thank Mom @phone. 10:15-12:00 Post signs +GarageSale. 13:00-13:15 Post signs +GarageSale\n",
+            // An hour of the garage sale a day.
+            "2026-11-12 w46 Thu  09:15-10:15 Thank Mom @phone. 10:15-11:15 Post signs +GarageSale\n" +
+                "2026-11-13 w46 Fri  08:00-09:00 Post signs +GarageSale\n",
             storage.companions.getValue("calendar.txt"),
         )
         assertEquals("Update the plan", storage.changes.last())
         assertEquals(true, storage.companions.getValue("koppter.yml").contains("time-maps:\n  \"General\": \"Mon-Fri 08:00-12:00 13:00-17:00\""))
+        assertEquals(true, storage.companions.getValue("koppter.yml").contains("limits:\n  \"+GarageSale\": \"block 45m, max 1h/day\""))
         // The todo.txt file is not changed by planning.
         assertEquals(3, storage.text.trim().lines().size)
         onNodeWithTag("plan-close").performClick()

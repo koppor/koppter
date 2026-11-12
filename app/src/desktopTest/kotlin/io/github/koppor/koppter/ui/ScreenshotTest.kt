@@ -49,6 +49,9 @@ class ScreenshotTest {
                 barriers:
                   default: quarter
                   "+Vacation": 2026-11-30
+                limits:
+                  "@errands": max 2h/week
+                  "+Work": min 1h/week, block 90m
             """.trimIndent(),
             // As "Save and plan" writes it on the day of the screenshots at noon; the bike and the present were added afterwards.
             "calendar.txt" to """

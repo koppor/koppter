@@ -31,6 +31,7 @@ object ConfigFile {
     const val TIME_MAPS = "time-maps:"
     const val CONTEXT_TIME_MAPS = "context-time-maps:"
     const val BARRIERS = "barriers:"
+    const val LIMITS = "limits:"
     private const val HEADER = "# Configuration of koppter for the todo.txt file in this directory"
 
     /** The columns in the order of the file. */
@@ -50,7 +51,7 @@ object ConfigFile {
     /** The time maps, the time maps of the contexts and the barriers; see [PlanConfig]. */
     // [impl->dsn~plan-configuration~1]
     fun planConfig(config: String): PlanConfig =
-        PlanConfig(TimeMaps(entries(config, TIME_MAPS)), entries(config, CONTEXT_TIME_MAPS).toMap(), entries(config, BARRIERS))
+        PlanConfig(TimeMaps(entries(config, TIME_MAPS)), entries(config, CONTEXT_TIME_MAPS).toMap(), entries(config, BARRIERS), entries(config, LIMITS))
 
     /** The entries below the key, in the order of the file. */
     fun entries(config: String, key: String): List<Pair<String, String>> = block(config, key)

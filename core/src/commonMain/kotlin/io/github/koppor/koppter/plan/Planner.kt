@@ -13,22 +13,68 @@ import kotlinx.datetime.plus
 import kotlin.time.Duration.Companion.minutes
 
 /**
+ * What the user set for the time that is planned for the tasks of a project or a context, or for all tasks with the key `default`.
+ * The times are minutes.
+ *
+ * @param block a task is not cut into parts shorter than this
+ * @param maxDay not more than this is planned on a day
+ * @param maxWeek not more than this is planned in a week, which starts on Monday
+ * @param minWeek this much is planned in a week before the tasks get their times in the order of their priority
+ */
+class Limit(val key: String, val block: Int? = null, val maxDay: Int? = null, val maxWeek: Int? = null, val minWeek: Int? = null) {
+    fun names(task: Task): Boolean = key == PlanConfig.DEFAULT || key.names(task)
+}
+
+/** Whether the key, `+project` or `@context`, names a project of the task or a context that a context of the task is within. */
+private fun String.names(task: Task): Boolean = when {
+    startsWith("+") -> substring(1) in task.projects
+    startsWith("@") -> task.contexts.any { it.isWithin(substring(1)) }
+    else -> false
+}
+
+/**
  * What the user configured for planning.
  *
  * @param contextMaps the time map of a context, which holds for the contexts below it unless they name their own
  * @param barriers the date behind which no task falls: `default`, `+project` or `@context` to `week`, `month`, `quarter`, `year` or a date
+ * @param limits `default`, `+project` or `@context` to rules separated by commas: `block 1h`, `max 2h/day`, `max 5h/week`, `min 1h/week`
  */
 // [impl->dsn~plan-configuration~1]
 class PlanConfig(
     val maps: TimeMaps = TimeMaps(emptyList()),
     private val contextMaps: Map<String, String> = emptyMap(),
     private val barriers: List<Pair<String, String>> = emptyList(),
+    limits: List<Pair<String, String>> = emptyList(),
 ) {
+    private val limitProblems = mutableListOf<String>()
+
+    // [impl->dsn~plan-limits~1]
+    private val limits: List<Limit> = limits.map { (key, text) ->
+        var block: Int? = null
+        var maxDay: Int? = null
+        var maxWeek: Int? = null
+        var minWeek: Int? = null
+        for (rule in text.split(',').map(String::trim).filter(String::isNotEmpty)) {
+            val (kind, time, period) = RULE.matchEntire(rule.lowercase())?.groupValues?.drop(1) ?: listOf("", "", "")
+            val minutes = Task.parseDuration(time)?.inWholeMinutes?.toInt()
+            when {
+                minutes == null -> limitProblems += "$key: \"$rule\" is no limit"
+                kind == "block" && period.isEmpty() -> block = minutes
+                kind == "max" && period == "day" -> maxDay = minutes
+                kind == "max" && period == "week" -> maxWeek = minutes
+                kind == "min" && period == "week" -> minWeek = minutes
+                else -> limitProblems += "$key: \"$rule\" is no limit"
+            }
+        }
+        Limit(key, block, maxDay, maxWeek, minWeek)
+    }
+
     /** What was not understood, as texts for the user. */
     val problems: List<String>
         get() = maps.problems +
             contextMaps.filterValues { it !in maps }.map { (context, map) -> "@${context.removePrefix("@")}: there is no time map \"$map\"" } +
-            barriers.filter { (_, spec) -> barrierDate(spec, LocalDate(2000, 1, 1)) == null }.map { (key, spec) -> "$key: \"$spec\" is no barrier" }
+            barriers.filter { (_, spec) -> barrierDate(spec, LocalDate(2000, 1, 1)) == null }.map { (key, spec) -> "$key: \"$spec\" is no barrier" } +
+            limitProblems
 
     /** The time map of the first context of the task that has one, the nearest context above it included. */
     fun mapOf(task: Task): String? = task.contexts.firstNotNullOfOrNull { context ->
@@ -37,18 +83,28 @@ class PlanConfig(
 
     /** The last day on which the task may be planned: the earliest barrier of its projects and contexts, else the default one. */
     fun barrierOf(task: Task, today: LocalDate): LocalDate {
-        val own = barriers.filter { (key, _) ->
-            when {
-                key.startsWith("+") -> key.substring(1) in task.projects
-                key.startsWith("@") -> task.contexts.any { it.isWithin(key.substring(1)) }
-                else -> false
-            }
-        }.mapNotNull { (_, spec) -> barrierDate(spec, today) }
+        val own = barriers.filter { (key, _) -> key.names(task) }.mapNotNull { (_, spec) -> barrierDate(spec, today) }
         return own.minOrNull() ?: barrierDate(barriers.firstOrNull { it.first == DEFAULT }?.second ?: "quarter", today) ?: barrierDate("quarter", today)!!
     }
 
+    /** The shortest part the task is cut into: the longest that its projects and contexts state, else the default one, else an hour. */
+    // [impl->dsn~plan-limits~1]
+    fun blockOf(task: Task): Int = limits.filter { it.key != DEFAULT && it.names(task) }.mapNotNull { it.block }.maxOrNull()
+        ?: limits.firstOrNull { it.key == DEFAULT }?.block ?: DEFAULT_BLOCK
+
+    /** The limits that count the time of the task. */
+    fun limitsOf(task: Task): List<Limit> = limits.filter { it.names(task) }
+
+    /** The limits that state a time to plan in each week. */
+    val minimums: List<Limit> get() = limits.filter { it.minWeek != null }
+
     companion object {
         const val DEFAULT = "default"
+
+        /** A task is not cut into parts shorter than this many minutes; a task that is shorter is not cut. */
+        const val DEFAULT_BLOCK = 60
+
+        private val RULE = Regex("^(block|max|min)\\s+([^/\\s]+)(?:\\s*/\\s*(day|week))?$")
 
         /** The date a barrier names on the given day; `null` if the text names none. */
         fun barrierDate(spec: String, today: LocalDate): LocalDate? = when (spec.trim().lowercase()) {
@@ -66,55 +122,182 @@ class PlanConfig(
 /** A time in which a task is to be worked on. */
 data class Block(val date: LocalDate, val span: Span, val entry: Entry)
 
-/** @param unplaced the tasks that do not fit before their barrier */
-data class Plan(val blocks: List<Block>, val unplaced: List<Entry>)
+/**
+ * @param unplaced the tasks that do not fit before their barrier
+ * @param problems what was not understood of the tasks, as texts for the user
+ */
+data class Plan(val blocks: List<Block>, val unplaced: List<Entry>, val problems: List<String> = emptyList())
 
 /** The duration of a task that states none. */
 // ponytail: a constant; a setting when half an hour does not fit the tasks without duration.
 val DEFAULT_DURATION = 30.minutes
 
-/** A task is not cut into parts shorter than this, unless what is left of it is shorter. */
-private const val SHORTEST_PART = 30
+/** A block does not start between these minutes after a time that is taken by something else than a task. */
+private const val GRID = 15
+
+private fun List<Span>.aligned(): List<Span> = map { Span((it.start + GRID - 1) / GRID * GRID, it.end) }.filter { it.length > 0 }
+
+private fun monday(date: LocalDate) = date.minus(DatePeriod(days = date.dayOfWeek.isoDayNumber - 1))
+
+private val MOMENTS = compareBy<Pair<LocalDate, Int>>({ it.first }, { it.second })
+
+/**
+ * The order in which the tasks get their times: that of the task list, but a task after the tasks it waits for.
+ * As topydo writes it, a task with the tag `id:` waits for the tasks whose tag `p:` has the same value.
+ */
+// [impl->dsn~dependencies~1]
+private class Dependencies(open: List<Entry>) {
+    val problems = mutableListOf<String>()
+
+    /** The open tasks a task waits for. */
+    val of = mutableMapOf<Entry, List<Entry>>()
+    val order: List<Entry>
+
+    init {
+        val sorted = open.sortedWith(listOrder)
+        val parts = sorted.flatMap { entry -> entry.task.tags.filter { it.first == Task.PARENT }.map { it.second to entry } }.groupBy({ it.first }, { it.second })
+        val result = LinkedHashSet<Entry>()
+        val visiting = mutableSetOf<Entry>()
+
+        fun visit(entry: Entry) {
+            if (entry in result) return
+            visiting += entry
+            val waitsFor = entry.task.tags.filter { it.first == Task.ID }.flatMap { parts[it.second].orEmpty() }.distinct().filter { it != entry }.filter { other ->
+                // Tasks that wait for each other are planned as if the one that closes the circle did not wait.
+                (other !in visiting).also { fine ->
+                    if (!fine) problems += "\"${entry.task.description}\" and \"${other.task.description}\" wait for each other"
+                }
+            }
+            of[entry] = waitsFor
+            waitsFor.forEach(::visit)
+            visiting -= entry
+            result += entry
+        }
+        sorted.forEach(::visit)
+        order = result.toList()
+    }
+}
+
+/** One run of the planner: the times that are taken, and what is left of the tasks. */
+private class Planning(private val config: PlanConfig, busy: Map<LocalDate, List<Span>>, private val today: LocalDate, now: Int, private val dependencies: Dependencies) {
+    private val busy = busy + (today to busy[today].orEmpty() + Span(0, now))
+    private val taken = mutableMapOf<LocalDate, MutableList<Span>>()
+    private val blocks = mutableMapOf<Entry, MutableList<Block>>()
+    private val left = dependencies.order.associateWithTo(mutableMapOf()) { (it.task.duration ?: DEFAULT_DURATION).inWholeMinutes.toInt() }
+    private val unplaced = mutableListOf<Entry>()
+
+    /** The minutes planned for the tasks of a limit on a day, and in the week that starts on the day. */
+    private val usedDay = mutableMapOf<Pair<String, LocalDate>, Int>()
+    private val usedWeek = mutableMapOf<Pair<String, LocalDate>, Int>()
+
+    private fun count(block: Block, sign: Int) {
+        for (limit in config.limitsOf(block.entry.task)) {
+            usedDay[limit.key to block.date] = (usedDay[limit.key to block.date] ?: 0) + sign * block.span.length
+            usedWeek[limit.key to monday(block.date)] = (usedWeek[limit.key to monday(block.date)] ?: 0) + sign * block.span.length
+        }
+        left[block.entry] = left.getValue(block.entry) - sign * block.span.length
+    }
+
+    /** The first moment at which the task may be worked on; `null` while a task it waits for is not planned completely. */
+    private fun start(entry: Entry): Pair<LocalDate, Int>? {
+        var start = maxOf(today, entry.task.threshold ?: today) to 0
+        for (other in dependencies.of[entry].orEmpty()) {
+            if (left.getValue(other) > 0 || other in unplaced) return null
+            val end = blocks[other].orEmpty().map { it.date to it.span.end }.maxWithOrNull(MOMENTS) ?: continue
+            if (MOMENTS.compare(end, start) > 0) start = end
+        }
+        return start
+    }
+
+    /** Gives the task the earliest free times from the moment on up to the day, up to the wanted minutes. */
+    private fun put(entry: Entry, wanted: Int, from: Pair<LocalDate, Int>, until: LocalDate) {
+        val task = entry.task
+        val limits = config.limitsOf(task)
+        val block = config.blockOf(task)
+        val map = config.mapOf(task)
+        var missing = wanted
+        var date = from.first
+        while (missing > 0 && left.getValue(entry) > 0 && date <= until) {
+            // After a meeting, a block starts on the grid; after another block, it starts at once.
+            for (free in config.maps.spans(map, date).without(busy[date].orEmpty()).aligned().without(taken[date].orEmpty())) {
+                val rest = left.getValue(entry)
+                if (missing <= 0 || rest == 0) break
+                val start = if (date == from.first) maxOf(free.start, from.second) else free.start
+                val allowed = limits.minOfOrNull { limit ->
+                    minOf(
+                        (limit.maxDay ?: Int.MAX_VALUE) - (usedDay[limit.key to date] ?: 0),
+                        (limit.maxWeek ?: Int.MAX_VALUE) - (usedWeek[limit.key to monday(date)] ?: 0),
+                    )
+                } ?: Int.MAX_VALUE
+                val shortest = minOf(block, rest)
+                var length = minOf(free.end - start, maxOf(missing, shortest), rest, allowed)
+                // What stays of the task for later is a whole block as well.
+                if (rest - length in 1 until block) length = rest - block
+                if (length < shortest) continue
+                val part = Block(date, Span(start, start + length), entry)
+                blocks.getOrPut(entry) { mutableListOf() } += part
+                taken.getOrPut(date) { mutableListOf() } += part.span
+                count(part, 1)
+                missing -= length
+            }
+            date = date.plus(DatePeriod(days = 1))
+        }
+    }
+
+    /**
+     * @param reserveUntil for the key of a limit with a time to plan in each week, the last day up to which that time is planned first
+     */
+    fun run(reserveUntil: Map<String, LocalDate>): Plan {
+        // [impl->dsn~plan-limits~1]
+        var week = monday(today)
+        while (reserveUntil.values.any { week <= it }) {
+            for (limit in config.minimums) {
+                val until = reserveUntil[limit.key] ?: continue
+                for (entry in dependencies.order) {
+                    val missing = limit.minWeek!! - (usedWeek[limit.key to week] ?: 0)
+                    if (missing <= 0) break
+                    if (!limit.names(entry.task) || left.getValue(entry) == 0) continue
+                    val start = start(entry) ?: continue
+                    put(entry, missing, if (start.first < week) week to 0 else start, minOf(week.plus(DatePeriod(days = 6)), until, config.barrierOf(entry.task, today)))
+                }
+            }
+            week = week.plus(DatePeriod(days = 7))
+        }
+        for (entry in dependencies.order) {
+            start(entry)?.let { put(entry, left.getValue(entry), it, config.barrierOf(entry.task, today)) }
+            if (left.getValue(entry) > 0) {
+                // ponytail: the times that a task got for the minimum of a week stay free if the task does not fit as a whole;
+                // plan again without the task if that leaves too much free.
+                blocks.remove(entry).orEmpty().forEach {
+                    taken.getValue(it.date) -= it.span
+                    count(it, -1)
+                }
+                unplaced += entry
+            }
+        }
+        return Plan(blocks.values.flatten().sortedWith(compareBy<Block> { it.date }.thenBy { it.span.start }), unplaced, dependencies.problems)
+    }
+}
 
 /**
  * Plans the open tasks: each gets the earliest free times of its time map, in the order of the task list,
- * so that a task with a higher priority is planned before the others.
+ * so that a task with a higher priority is planned before the others. A task is planned after the tasks it waits for.
  *
  * A task is not planned before its threshold date, and not behind its barrier: if its duration does not fit before, it is not planned at all.
- * A task is cut into parts if a free time is too short for it.
+ * A task is cut into parts if a free time is too short for it or a limit of its project or context allows no more on a day or in a week.
+ * A limit with a time for each week gets that time first, in the weeks up to the day on which its tasks would be done without it.
  *
  * @param busy the times that are taken, by day
  * @param now the minutes of today that have passed
  */
 // [impl->dsn~planner~1]
 fun plan(entries: List<Entry>, config: PlanConfig, busy: Map<LocalDate, List<Span>>, today: LocalDate, now: Int): Plan {
-    val taken = busy.mapValuesTo(mutableMapOf()) { it.value.toMutableList() }
-    taken.getOrPut(today) { mutableListOf() } += Span(0, now)
-    val blocks = mutableListOf<Block>()
-    val unplaced = mutableListOf<Entry>()
-    for (entry in entries.filterNot { it.task.completed }.sortedWith(listOrder)) {
-        val task = entry.task
-        var left = (task.duration ?: DEFAULT_DURATION).inWholeMinutes.toInt()
-        val parts = mutableListOf<Block>()
-        var date = maxOf(today, task.threshold ?: today)
-        val barrier = config.barrierOf(task, today)
-        val map = config.mapOf(task)
-        while (left > 0 && date <= barrier) {
-            for (free in config.maps.spans(map, date).without(taken[date].orEmpty())) {
-                if (left == 0) break
-                if (free.length < minOf(SHORTEST_PART, left)) continue
-                val part = Span(free.start, free.start + minOf(free.length, left))
-                parts += Block(date, part, entry)
-                left -= part.length
-            }
-            date = date.plus(DatePeriod(days = 1))
-        }
-        if (left > 0) {
-            unplaced += entry
-        } else {
-            blocks += parts
-            parts.forEach { taken.getOrPut(it.date) { mutableListOf() } += it.span }
-        }
-    }
-    return Plan(blocks.sortedWith(compareBy<Block> { it.date }.thenBy { it.span.start }), unplaced)
+    val dependencies = Dependencies(entries.filterNot { it.task.completed })
+    val plain = Planning(config, busy, today, now, dependencies).run(emptyMap())
+    val reserveUntil = config.minimums.mapNotNull { limit ->
+        val days = plain.blocks.filter { limit.names(it.entry.task) }.map { it.date } +
+            plain.unplaced.filter { limit.names(it.task) }.map { config.barrierOf(it.task, today) }
+        days.maxOrNull()?.let { limit.key to it }
+    }.toMap()
+    return if (reserveUntil.isEmpty()) plain else Planning(config, busy, today, now, dependencies).run(reserveUntil)
 }

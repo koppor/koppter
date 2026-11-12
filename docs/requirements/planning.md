@@ -46,6 +46,29 @@ Covers:
 
 Needs: dsn
 
+### Limits
+`req~plan-limits~1`
+
+The user limits the time that is planned for the tasks of a project or a context: not more than a time per day or per week, and at least a time per week, which is then planned before tasks with a higher priority.
+The user states the shortest part a task of a project or a context is cut into; without that, it is an hour.
+
+Covers:
+
+* `feat~planning~1`
+
+Needs: dsn
+
+### Dependencies
+`req~dependencies~1`
+
+A task that waits for other tasks is planned after them.
+
+Covers:
+
+* `feat~planning~1`
+
+Needs: dsn
+
 ### Plan as a file
 `req~plan-file~1`
 
@@ -114,7 +137,7 @@ Needs: impl, utest
 ### Configuration of planning
 `dsn~plan-configuration~1`
 
-`koppter.yml` holds the time maps under the key `time-maps`, the time maps of contexts under `context-time-maps` and the barriers under `barriers`, each as a map of names to values.
+`koppter.yml` holds the time maps under the key `time-maps`, the time maps of contexts under `context-time-maps`, the barriers under `barriers` and the limits under `limits`, each as a map of names to values.
 `PlanConfig.mapOf` gives the time map of the first context of a task that has one, where a context has the map of the nearest context above it unless it has its own.
 `PlanConfig.barrierOf` gives the earliest barrier among those of the projects and contexts of a task, else the one of the key `default`, else the end of the quarter.
 A barrier is `week`, `month`, `quarter`, `year` or a date; the first four name the end of the current one.
@@ -131,14 +154,46 @@ Needs: impl, utest
 
 `plan` goes through the open tasks in the order of the task list and gives each the earliest free times of its time map, from now or from its threshold date on.
 A task takes its duration, half an hour without one.
-A free time that is too short for the task takes a part of it, of at least half an hour or what is left of the task.
+A free time that is too short for the task takes a part of it; no part is shorter than the block of the task, so that a task shorter than two blocks is not cut.
 Times that are passed in as busy and the blocks of the tasks planned before are not free.
+After a busy time, a block starts on a quarter of an hour; after another block, it starts at once.
 A task whose duration does not fit up to its barrier gets no block and is returned as not planned.
 
 Covers:
 
 * `req~plan~1`
 * `req~barriers~1`
+
+Needs: impl, utest
+
+### Limits
+`dsn~plan-limits~1`
+
+A limit is a line of `koppter.yml` under the key `limits`: `default`, `+project` or `@context`, which includes the contexts below it, to rules separated by commas.
+`block 1h` states the shortest part: `PlanConfig.blockOf` gives the longest of the projects and contexts of a task, else the one of `default`, else an hour.
+`max 2h/day` and `max 5h/week` state a budget: the planner counts the minutes it plans for the tasks of the key per day and per week from Monday and gives a task on a day what all its limits still allow.
+`min 1h/week` states a minimum: before the tasks get their times in their order, the tasks of the key get that time in each week, the highest in the order first.
+So that the minimum does not spread the tasks over more weeks than they need, `plan` first plans without minimums and reserves the minimum only up to the last day of the tasks of the key in that plan, or up to their barrier if one of them does not fit.
+A rule that is not understood is reported.
+
+Covers:
+
+* `req~plan-limits~1`
+
+Needs: impl, utest
+
+### Dependencies
+`dsn~dependencies~1`
+
+As topydo writes it, a task with the tag `id:` waits for the open tasks whose tag `p:` has the same value.
+The planner takes the tasks in the order of the task list, but each after the tasks it waits for, which thereby come as early as the task that waits.
+A task starts at the end of the last block of the tasks it waits for, and is not planned if one of them is not.
+Tasks that wait for each other are reported and planned as if the one that closes the circle did not wait.
+
+Covers:
+
+* `req~dependencies~1`
+* `adr~dependency-tags~1`
 
 Needs: impl, utest
 
@@ -189,9 +244,9 @@ Needs: impl, utest
 ### Plan dialog
 `dsn~plan-dialog~1`
 
-`PlanDialog` edits the time maps, the time maps of contexts and the barriers as lines of the form `name = value`.
+`PlanDialog` edits the time maps, the time maps of contexts, the barriers and the limits as lines of the form `name = value`.
 *Save and plan* makes `TodoController.plan` save them, plan from the current time rounded up to a quarter of an hour, and write `calendar.txt` and `calendar.ics` as one change of the storage.
-The dialog then tells how many tasks were planned and until when, what of the configuration was not understood, and the tasks that do not fit before their barrier.
+The dialog then tells how many tasks were planned and until when, what of the configuration and of the dependencies was not understood, and the tasks that do not fit before their barrier.
 A switch above the tasks opens the dialog if the storage keeps files next to the todo.txt file.
 
 Covers:
