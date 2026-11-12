@@ -354,6 +354,18 @@ class AppTest {
         assertEquals(1, storage.text.lines().count { "Check mail" in it })
     }
 
+    // [utest->dsn~ice-recur-run~1]
+    @Test
+    fun scheduledTasksOfDaysWithoutARunAreAdded() = runComposeUiTest {
+        // Today is Thursday; the last run was on Sunday.
+        storage.companions["ice_recur.txt"] = "weekly ; day Monday - Plan the week\nweekly ; day Saturday - Clean the kitchen\n"
+        start(Settings(iceRecurLastRun = "2026-11-08", writeDates = true))
+        mainClock.advanceTimeBy(2_500)
+
+        assertEquals("2026-11-09 Plan the week", storage.text.trim().lines().last())
+        assertEquals(0, storage.text.lines().count { "kitchen" in it })
+    }
+
     // [utest->dsn~board-drag~1]
     @Test
     fun draggingACardToAnotherColumnChangesTheTask() = runComposeUiTest {

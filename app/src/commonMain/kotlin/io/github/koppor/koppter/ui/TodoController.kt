@@ -25,7 +25,9 @@ import io.github.koppor.koppter.todotxt.Task
 import io.github.koppor.koppter.todotxt.TodoFile
 import io.github.koppor.koppter.todotxt.listOrder
 import io.github.koppor.koppter.todotxt.moveToGroup
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import kotlin.random.Random
 
 /**
@@ -165,8 +167,8 @@ class TodoController(
     }
 
     /**
-     * Adds the tasks that `ice_recur.txt` schedules for today, once per day and device.
-     * It waits for a running synchronization, so that tasks another device added today are known.
+     * Adds the tasks that `ice_recur.txt` schedules for today and for the days since the last run, once per day and device.
+     * It waits for a running synchronization, so that tasks another device added in the meantime are known.
      */
     // [impl->dsn~ice-recur-run~1]
     private fun addScheduledTasks() {
@@ -174,12 +176,14 @@ class TodoController(
         if (settings.iceRecurLastRun == today.toString() || syncStatus?.state == SyncState.RUNNING) return
         guarded {
             val schedule = (storage as? CompanionFiles)?.readCompanion(ICE_RECUR_FILE) ?: return@guarded
-            // A task that was added today counts as present even if it is completed already.
-            val addedToday = (storage as? SyncingStorage)?.dates().orEmpty().filterValues { it.added == today }.keys
-            val existing = file.lines.filter { it.isNotBlank() }.map { line -> Task.parse(line).let { if (line in addedToday) it.reopen() else it } }
-            val tasks = iceRecurTasks(schedule, today, existing)
+            // The days since the last run, so that the tasks of a day on which the application was not open are not lost.
+            val from = Task.parseDate(settings.iceRecurLastRun)?.plus(DatePeriod(days = 1))?.takeIf { it <= today } ?: today
+            // A task that was added on these days, by any device, counts as present even if it is completed already.
+            val addedSince = (storage as? SyncingStorage)?.dates().orEmpty().filterValues { it.added.let { added -> added != null && added >= from } }.keys
+            val existing = file.lines.filter { it.isNotBlank() }.map { line -> Task.parse(line).let { if (line in addedSince) it.reopen() else it } }
+            val tasks = iceRecurTasks(schedule, from..today, existing)
             if (tasks.isNotEmpty()) {
-                write(tasks.fold(file) { current, task -> current.add(task.created(today, settings.writeDates)) }, "Add recurring tasks")
+                write(tasks.fold(file) { current, (day, task) -> current.add(task.created(day, settings.writeDates)) }, "Add recurring tasks")
             }
             updateSettings(settings.copy(iceRecurLastRun = today.toString()))
         }

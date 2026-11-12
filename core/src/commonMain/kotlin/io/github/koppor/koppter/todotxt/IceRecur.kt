@@ -128,16 +128,30 @@ data class IceRecurEntry(
     }
 }
 
+// What changes in the life of a task: the add-on leaves it out when it looks for a task that exists already.
+private val CHANGING_TAG = Regex("^(?:(?:t|due):\\d{4}-\\d{2}-\\d{2}|note:\\S+)$")
+
+private fun comparableText(task: Task) = task.body.split(' ').filter { it.isNotEmpty() && !CHANGING_TAG.matches(it) }.joinToString(" ")
+
 /**
- * The tasks that the schedules add on the given day: those of the entries that occur on it,
- * unless an open task with the same text exists already.
+ * The tasks that the schedules add on the given days, each with the day it is added for:
+ * those of the entries that occur on a day, unless an open task with the same text exists already.
+ *
+ * As in the add-on, two tasks have the same text if they differ at most in priority, dates,
+ * and the tags `t:`, `due:` and `note:`. Several days are given after days on which the schedules were not run.
  */
 // [impl->dsn~ice-recur-run~1]
-fun iceRecurTasks(schedule: String, today: LocalDate, existing: List<Task>): List<Task> {
-    val open = existing.filterNot { it.completed }.map { it.copy(creationDate = null).toLine() }.toSet()
-    return schedule.lines().mapNotNull(IceRecurEntry::parse)
-        .filter { it.occursOn(today) }
-        .map { Task.parse(it.task) }
-        .filter { it.toLine() !in open }
-        .distinct()
+fun iceRecurTasks(schedule: String, days: ClosedRange<LocalDate>, existing: List<Task>): List<Pair<LocalDate, Task>> {
+    val entries = schedule.lines().mapNotNull(IceRecurEntry::parse)
+    val present = existing.filterNot { it.completed }.map(::comparableText).toMutableSet()
+    val added = mutableListOf<Pair<LocalDate, Task>>()
+    var day = days.start
+    while (day <= days.endInclusive) {
+        for (entry in entries) {
+            val task = Task.parse(entry.task)
+            if (entry.occursOn(day) && present.add(comparableText(task))) added += day to task
+        }
+        day = day.plus(DatePeriod(days = 1))
+    }
+    return added
 }

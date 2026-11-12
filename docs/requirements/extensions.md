@@ -54,8 +54,8 @@ Needs: dsn
 ### Scheduled tasks
 `req~scheduled-tasks~1`
 
-The application adds the tasks that the file `ice_recur.txt` next to the todo.txt file schedules for the current day, in the format of the `ice_recur` add-on.
-A task is not added while an open task with the same text exists.
+The application adds the tasks that the file `ice_recur.txt` next to the todo.txt file schedules for the current day and for the days since it last did so, in the format of the `ice_recur` add-on.
+A task is not added while an open task with the same text exists; as in the add-on, priority, dates and the tags `t:`, `due:` and `note:` are not part of that text.
 
 Covers:
 
@@ -363,9 +363,10 @@ Needs: impl, utest
 ### Run of ice_recur
 `dsn~ice-recur-run~1`
 
-`iceRecurTasks` returns the tasks of the entries that occur today and have no open task with the same text.
-`TodoController` adds them once per day and device; the day of the last run is kept in the settings.
-With a synchronizing storage, the run waits for a running synchronization, and a task that the history shows as added today counts as present even if it is completed.
+`iceRecurTasks` returns, for a range of days, the tasks of the entries that occur on a day and have no open task with the same text, each with its day; a task is returned once.
+`TodoController` adds them once per day and device, for the days after the last run up to today; the day of the last run is kept in the settings.
+The day of an added task is its creation date if dates are written.
+With a synchronizing storage, the run waits for a running synchronization, and a task that the history shows as added since the last run counts as present even if it is completed.
 
 Covers:
 
