@@ -421,4 +421,28 @@ class AppTest {
         onNodeWithTag("group-FILTER").performClick()
         onNodeWithText("Phone (2)").assertExists()
     }
+
+    // [utest->dsn~board-move-to-filter~1]
+    @Test
+    fun draggingACardToAColumnDefinedByAFilterMakesTheTaskMatchTheFilter() = runComposeUiTest {
+        storage.companions["todo.txt-config.yml"] = "board-columns:\n  Phone: \"@phone\"\n  Garage: +GarageSale\n"
+        start()
+        onNodeWithTag("board-switch").performClick()
+        onNodeWithTag("group-FILTER").performClick()
+        onNodeWithText("Garage (2)").assertExists()
+
+        onNodeWithText("Thank Mom").performMouseInput {
+            moveTo(center)
+            press()
+            moveBy(Offset(30f, 0f))
+            moveBy(Offset(300f, 0f))
+        }
+        onNodeWithTag("board").performMouseInput { release() }
+
+        assertEquals("(A) Thank Mom +GarageSale @phone due:2026-11-20", storage.text.lines()[2])
+        assertEquals("Move task to Garage: Thank Mom", storage.changes.last())
+        onNodeWithText("Garage (3)").assertExists()
+        // The task matches the filter of its former column as before.
+        onNodeWithText("Phone (2)").assertExists()
+    }
 }

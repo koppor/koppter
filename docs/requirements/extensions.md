@@ -92,6 +92,7 @@ Needs: dsn
 
 The user moves a task to another column of the board by dragging it there.
 The task then has the value of that column: its priority, its project, its context or a due date in its range.
+For a column defined by a filter, the task then matches the filter.
 
 Covers:
 
@@ -207,7 +208,6 @@ The controller reads the configuration file again when it looks for changes of t
 `groupByColumns` distributes the visible tasks over these columns, in the order of their definition.
 A task appears in every column whose expression it matches, and a column without tasks stays on the board.
 The view options offer these columns once at least one is defined.
-Tasks are not dragged between them.
 
 Covers:
 
@@ -232,12 +232,31 @@ Covers:
 
 Needs: impl, utest
 
+### Move to a column defined by a filter
+`dsn~board-move-to-filter~1`
+
+`Query.applyTo` returns the task with the smallest change that makes it match the expression.
+A term that the task matches changes nothing.
+Otherwise, `+project` and `@context` add the project or context, and `key:value` sets the tag; negated, they remove it.
+A priority term sets the nearest priority that matches, and its negation removes the priority.
+A comparison of a tag with a date sets the nearest date that matches.
+A word, a negated comparison, and a comparison with a value that is not a date cannot be established; the column then does not take the task.
+Projects, contexts and tags that the expression does not name stay, so the task may still match the filter of its former column.
+
+Covers:
+
+* `req~board-move~1`
+* `adr~smallest-change-on-drop~1`
+
+Needs: impl, utest
+
 ### Dragging on the board
 `dsn~board-drag~1`
 
 A task card is dragged with the mouse, or with the finger after a long press, as a plain drag with the finger scrolls.
 While a card is dragged, its description follows the pointer and the column under the pointer is marked.
-Dropping the card on another column applies the move as one change, with a message that names the column.
+Only a column that can take the card is marked.
+Dropping the card on such a column applies the move as one change, with a message that names the column.
 Only the columns that are shown can be a target, so a value that no visible task has is set in the edit dialog.
 
 Covers:

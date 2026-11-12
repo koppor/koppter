@@ -16,6 +16,7 @@ import io.github.koppor.koppter.todotxt.Filter
 import io.github.koppor.koppter.todotxt.Group
 import io.github.koppor.koppter.todotxt.BoardColumn
 import io.github.koppor.koppter.todotxt.GroupKey
+import io.github.koppor.koppter.todotxt.Query
 import io.github.koppor.koppter.todotxt.groupByColumns
 import io.github.koppor.koppter.todotxt.parseBoardColumns
 import io.github.koppor.koppter.todotxt.groupEntries
@@ -233,10 +234,25 @@ class TodoController(
         write(new, "Edit task: ${task.description}")
     }
 
-    /** Applies the move of a task from one column of the board to another. */
+    /**
+     * The task as it is after a move from one column of the board to another; `null` if that move is not possible.
+     * For a column the user defined, the task is changed as little as possible so that it matches the filter of the column.
+     */
     // [impl->dsn~board-move~1]
+    // [impl->dsn~board-move-to-filter~1]
+    fun moved(entry: Entry, from: Group, to: Group): Task? {
+        val key = groupKey
+        val task = when {
+            key != null -> moveToGroup(entry.task, key, from, to, today())
+            from.title == to.title -> null
+            else -> boardColumns.firstOrNull { it.title == to.title }?.let { Query.parse(it.expression).applyTo(entry.task, today()) }
+        }
+        return task?.takeIf { it != entry.task }
+    }
+
+    /** Applies the move of a task from one column of the board to another. */
     fun move(entry: Entry, from: Group, to: Group) {
-        val task = moveToGroup(entry.task, groupKey ?: return, from, to, today()) ?: return
+        val task = moved(entry, from, to) ?: return
         val index = locate(entry) ?: return
         write(file.replace(index, task), "Move task to ${to.title}: ${task.description}")
     }

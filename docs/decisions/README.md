@@ -17,6 +17,7 @@ Architectural decisions are recorded as [Markdown Architectural Decision Records
 | [0010](0010-signing-key-as-repository-secret.md) | Signing key of the Android application as a repository secret |
 | [0011](0011-onedrive-through-the-platform.md) | OneDrive through the file access of the platform |
 | [0012](0012-board-columns-by-filter-in-a-file.md) | Board columns defined by filters are kept in a configuration file next to the todo.txt file |
+| [0013](0013-smallest-change-on-drop-on-a-filter-column.md) | A task dropped on a column defined by a filter gets the smallest change that makes it match |
 
 ## Conventions
 

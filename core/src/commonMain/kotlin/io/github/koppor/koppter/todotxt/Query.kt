@@ -18,8 +18,95 @@ import kotlinx.datetime.plus
  * * Any other word: the line contains it, ignoring case.
  */
 // [impl->dsn~query~1]
-class Query private constructor(private val terms: List<(Task, LocalDate) -> Boolean>) {
-    fun matches(task: Task, today: LocalDate): Boolean = terms.all { it(task, today) }
+class Query private constructor(private val terms: List<Term>) {
+    fun matches(task: Task, today: LocalDate): Boolean = terms.all { it.matches(task, today) }
+
+    /**
+     * The task with the smallest change that makes it match: each term that it does not match adds or removes
+     * a project, a context, the priority or a tag. Nothing else of the task changes.
+     *
+     * @return `null` if a term cannot be established that way: a word, a negated comparison,
+     *   or a comparison of a tag with a value that is not a date
+     */
+    // [impl->dsn~board-move-to-filter~1]
+    fun applyTo(task: Task, today: LocalDate): Task? {
+        var result = task
+        for (term in terms) {
+            if (!term.matches(result, today)) result = term.establish(result, today) ?: return null
+        }
+        // Terms that contradict each other undo each other.
+        return result.takeIf { matches(it, today) }
+    }
+
+    private sealed interface Term {
+        fun matches(task: Task, today: LocalDate): Boolean
+
+        /** The task changed so that it matches the term; `null` if no change achieves that. */
+        fun establish(task: Task, today: LocalDate): Task?
+
+        /** The task changed so that it does not match the term; `null` if no change achieves that. */
+        fun revoke(task: Task): Task?
+    }
+
+    private class Not(val term: Term) : Term {
+        override fun matches(task: Task, today: LocalDate) = !term.matches(task, today)
+        override fun establish(task: Task, today: LocalDate) = term.revoke(task)
+        override fun revoke(task: Task): Task? = null
+    }
+
+    private class Project(val name: String) : Term {
+        override fun matches(task: Task, today: LocalDate) = name in task.projects
+        override fun establish(task: Task, today: LocalDate) = task.edit(projects = task.projects + name)
+        override fun revoke(task: Task) = task.edit(projects = task.projects - name)
+    }
+
+    private class Context(val name: String) : Term {
+        override fun matches(task: Task, today: LocalDate) = name in task.contexts
+        override fun establish(task: Task, today: LocalDate) = task.edit(contexts = task.contexts + name)
+        override fun revoke(task: Task) = task.edit(contexts = task.contexts - name)
+    }
+
+    private class Priority(val operator: String, val letter: Char) : Term {
+        // A is the highest priority, so the order of the letters is reversed.
+        override fun matches(task: Task, today: LocalDate) = task.priority?.let { compare(letter.compareTo(it), operator) } ?: false
+
+        // The priority nearest to the one of the term.
+        override fun establish(task: Task, today: LocalDate): Task? = when (operator) {
+            ">" -> (letter - 1).takeIf { it >= 'A' }
+            "<" -> (letter + 1).takeIf { it <= 'Z' }
+            else -> letter
+        }?.let { task.edit(priority = it) }
+
+        override fun revoke(task: Task) = task.edit(priority = null)
+    }
+
+    private class Tag(val key: String, val operator: String, val value: String) : Term {
+        override fun matches(task: Task, today: LocalDate): Boolean {
+            val actual = task.tag(key) ?: return false
+            val date = date(value, today)
+            val actualDate = Task.parseDate(actual)
+            return if (date != null && actualDate != null) compare(actualDate.compareTo(date), operator) else compare(actual.compareTo(value), operator)
+        }
+
+        // The date nearest to the one of the term; text has no nearest value before or after it.
+        override fun establish(task: Task, today: LocalDate): Task? {
+            val date = date(value, today)
+            return when (operator) {
+                "<" -> date?.minus(DatePeriod(days = 1))?.toString()
+                ">" -> date?.plus(DatePeriod(days = 1))?.toString()
+                else -> date?.toString() ?: value
+            }?.let { task.withTag(key, it) }
+        }
+
+        // Only for equality: removing the due date to leave "due before today" would lose more than the move says.
+        override fun revoke(task: Task) = if (operator.isEmpty() || operator == "=") task.withTag(key, null) else null
+    }
+
+    private class Word(val word: String) : Term {
+        override fun matches(task: Task, today: LocalDate) = task.toLine().contains(word, ignoreCase = true)
+        override fun establish(task: Task, today: LocalDate): Task? = null
+        override fun revoke(task: Task): Task? = null
+    }
 
     companion object {
         private val PRIORITY = Regex("^\\((<=|>=|<|>|=)?([A-Z])\\)$")
@@ -27,32 +114,17 @@ class Query private constructor(private val terms: List<(Task, LocalDate) -> Boo
 
         fun parse(expression: String): Query = Query(expression.split(Regex("\\s+")).filter(String::isNotEmpty).map(::term))
 
-        private fun term(word: String): (Task, LocalDate) -> Boolean {
-            if (word.length > 1 && word.startsWith("-")) {
-                val negated = term(word.substring(1))
-                return { task, today -> !negated(task, today) }
-            }
-            if (word.length > 1 && word.startsWith("+")) return { task, _ -> word.substring(1) in task.projects }
-            if (word.length > 1 && word.startsWith("@")) return { task, _ -> word.substring(1) in task.contexts }
-            PRIORITY.matchEntire(word)?.let { match ->
-                val (operator, letter) = match.destructured
-                // A is the highest priority, so the order of the letters is reversed.
-                return { task, _ -> task.priority?.let { compare(letter.single().compareTo(it), operator) } ?: false }
-            }
-            TAG.matchEntire(word)?.let { match ->
-                val (key, operator, value) = match.destructured
-                return { task, today ->
-                    val actual = task.tag(key)
-                    val date = date(value, today)
-                    val actualDate = actual?.let(Task::parseDate)
-                    when {
-                        actual == null -> false
-                        date != null && actualDate != null -> compare(actualDate.compareTo(date), operator)
-                        else -> compare(actual.compareTo(value), operator)
-                    }
+        private fun term(word: String): Term {
+            if (word.length > 1) {
+                when (word[0]) {
+                    '-' -> return Not(term(word.substring(1)))
+                    '+' -> return Project(word.substring(1))
+                    '@' -> return Context(word.substring(1))
                 }
             }
-            return { task, _ -> task.toLine().contains(word, ignoreCase = true) }
+            PRIORITY.matchEntire(word)?.let { return Priority(it.groupValues[1], it.groupValues[2].single()) }
+            TAG.matchEntire(word)?.let { return Tag(it.groupValues[1], it.groupValues[2], it.groupValues[3]) }
+            return Word(word)
         }
 
         private fun compare(order: Int, operator: String): Boolean = when (operator) {

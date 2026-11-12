@@ -56,6 +56,10 @@ Important = (>C)
 | `-term` | that does not match the term |
 | any other word | whose line contains it |
 
+Dragging a task to such a column changes the task as little as possible so that it matches the filter ([decision 0013](docs/decisions/0013-smallest-change-on-drop-on-a-filter-column.md)): projects, contexts and tags are added or, for negated terms, removed, and a priority or date is set to the nearest value that matches.
+Nothing else is removed, so the task stays in its former column as well unless the filter of the new column excludes that.
+A column whose filter contains a word or a negated comparison does not take tasks.
+
 ## Building
 
 Requirements: JDK 21 and the Android SDK (`ANDROID_HOME`, or `sdk.dir` in `local.properties`).

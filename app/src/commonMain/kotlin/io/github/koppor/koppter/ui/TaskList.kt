@@ -122,7 +122,8 @@ fun TaskCard(entry: Entry, today: LocalDate, onToggle: () -> Unit, onOpen: () ->
  * as a plain drag with the finger scrolls. While a card is dragged, its description follows the pointer
  * and the column under the pointer is marked.
  *
- * @param onMove called when a card is dropped on another column; `null` if cards cannot be moved
+ * @param canMove whether a card can be dropped on a column
+ * @param onMove called when a card is dropped on a column that takes it
  */
 // [impl->dsn~board~1]
 // [impl->dsn~board-drag~1]
@@ -132,7 +133,8 @@ fun Board(
     today: LocalDate,
     onToggle: (Entry) -> Unit,
     onOpen: (Entry) -> Unit,
-    onMove: ((Entry, from: Group, to: Group) -> Unit)?,
+    canMove: (Entry, from: Group, to: Group) -> Boolean,
+    onMove: (Entry, from: Group, to: Group) -> Unit,
     emptyText: String,
     modifier: Modifier = Modifier,
 ) {
@@ -150,7 +152,7 @@ fun Board(
     val columnBounds = remember { mutableStateMapOf<Int, Rect>() }
     fun columnUnderPointer(): Group? =
         currentGroups.indices.firstOrNull { columnBounds[it]?.contains(pointer) == true }?.let(currentGroups::get)
-    val target = dragged?.let { (_, from) -> columnUnderPointer()?.takeIf { it.value != from.value } }
+    val target = dragged?.let { (entry, from) -> columnUnderPointer()?.takeIf { canMove(entry, from, it) } }
 
     Box(modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot() }) {
         Row(
@@ -178,27 +180,23 @@ fun Board(
                     ) {
                         items(group.entries, key = { it.index }) { entry ->
                             var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
-                            val drag = if (onMove == null) {
-                                Modifier
-                            } else {
-                                Modifier.onGloballyPositioned { coordinates = it }.pointerInput(entry, group) {
-                                    awaitEachGesture {
-                                        val down = awaitFirstDown(requireUnconsumed = false)
-                                        val start = if (down.type == PointerType.Mouse) {
-                                            awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
-                                        } else {
-                                            awaitLongPressOrCancellation(down.id)
-                                        } ?: return@awaitEachGesture
-                                        pointer = coordinates?.localToRoot(start.position) ?: return@awaitEachGesture
-                                        dragged = entry to group
-                                        val dropped = drag(start.id) { change ->
-                                            pointer += change.positionChange()
-                                            change.consume()
-                                        }
-                                        val to = columnUnderPointer()
-                                        dragged = null
-                                        if (dropped && to != null && to.value != group.value) onMove(entry, group, to)
+                            val drag = Modifier.onGloballyPositioned { coordinates = it }.pointerInput(entry, group) {
+                                awaitEachGesture {
+                                    val down = awaitFirstDown(requireUnconsumed = false)
+                                    val start = if (down.type == PointerType.Mouse) {
+                                        awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                                    } else {
+                                        awaitLongPressOrCancellation(down.id)
+                                    } ?: return@awaitEachGesture
+                                    pointer = coordinates?.localToRoot(start.position) ?: return@awaitEachGesture
+                                    dragged = entry to group
+                                    val dropped = drag(start.id) { change ->
+                                        pointer += change.positionChange()
+                                        change.consume()
                                     }
+                                    val to = columnUnderPointer()
+                                    dragged = null
+                                    if (dropped && to != null && canMove(entry, group, to)) onMove(entry, group, to)
                                 }
                             }
                             Box(drag) {

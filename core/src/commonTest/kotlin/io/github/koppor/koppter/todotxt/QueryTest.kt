@@ -60,6 +60,41 @@ class QueryTest {
         assertEquals("", matching("status:done"))
     }
 
+    private fun applied(expression: String, line: String): String? = Query.parse(expression).applyTo(Task.parse(line), today)?.toLine()
+
+    // [utest->dsn~board-move-to-filter~1]
+    @Test
+    fun applyingAddsAndRemovesProjectsContextsAndTags() {
+        assertEquals("Call Mom +Family @phone @waiting", applied("@waiting", "Call Mom +Family @phone"))
+        assertEquals("Call Mom +Family @waiting status:doing", applied("+Family status:doing -@phone -status:todo", "Call Mom @phone @waiting status:todo"))
+        // What matches already stays as it is, also in its place in the line.
+        assertEquals("Call @phone Mom", applied("@phone -@waiting", "Call @phone Mom"))
+    }
+
+    // [utest->dsn~board-move-to-filter~1]
+    @Test
+    fun applyingSetsTheNearestPriorityAndDate() {
+        assertEquals("(B) Call Mom", applied("(>C)", "(D) Call Mom"))
+        assertEquals("(C) Call Mom", applied("(<=C)", "(A) Call Mom"))
+        assertEquals("Call Mom", applied("-(A)", "(A) Call Mom"))
+        assertEquals("Call Mom due:2026-11-12", applied("due:<=today", "Call Mom due:2026-11-20"))
+        assertEquals("Call Mom due:2026-11-18", applied("due:<1w", "Call Mom"))
+        assertEquals("Call Mom due:2026-11-13", applied("due:>today", "Call Mom due:2026-11-01"))
+        // A date in the range stays.
+        assertEquals("Call Mom due:2026-11-15", applied("due:<1w", "Call Mom due:2026-11-15"))
+    }
+
+    // [utest->dsn~board-move-to-filter~1]
+    @Test
+    fun applyingFailsForTermsThatNoChangeOfMetadataEstablishes() {
+        assertEquals(null, applied("milk", "Call Mom"))
+        assertEquals(null, applied("-mom", "Call Mom"))
+        assertEquals(null, applied("-due:<=today", "Call Mom due:2026-11-01"))
+        assertEquals(null, applied("status:>doing", "Call Mom"))
+        assertEquals(null, applied("(>A)", "Call Mom"))
+        assertEquals(null, applied("@phone -@phone", "Call Mom"))
+    }
+
     // [utest->dsn~board-defined-columns~1]
     @Test
     fun columnsAreReadFromLinesWithTitleAndExpression() {
