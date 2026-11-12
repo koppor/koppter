@@ -15,6 +15,7 @@ Architectural decisions are recorded as [Markdown Architectural Decision Records
 | [0008](0008-board-columns-by-attribute.md) | Board columns are the values of an attribute |
 | [0009](0009-no-notation-for-most-important-tasks.md) | No separate notation for most important tasks |
 | [0010](0010-signing-key-as-repository-secret.md) | Signing key of the Android application as a repository secret |
+| [0011](0011-onedrive-through-the-platform.md) | OneDrive through the file access of the platform |
 
 ## Conventions
 

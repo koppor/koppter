@@ -28,6 +28,17 @@ Covers:
 
 Needs: dsn
 
+### File in OneDrive
+`req~onedrive-file~1`
+
+The user uses a todo.txt file that is stored in OneDrive: on Android by choosing it in the document picker, on the desktop by choosing it in the folder that the OneDrive client synchronizes.
+
+Covers:
+
+* `feat~sync-onedrive~1`
+
+Needs: dsn
+
 ## Design
 
 ### Shared UI as an Android library
@@ -66,6 +77,8 @@ Covers:
 
 * `req~document-provider-file~1`
 * `req~external-changes~1`
+* `req~onedrive-file~1`
+* `adr~onedrive-through-platform~1`
 
 Needs: impl
 
@@ -80,5 +93,7 @@ Covers:
 
 * `req~document-provider-file~1`
 * `req~choose-file~1`
+* `req~onedrive-file~1`
+* `adr~onedrive-through-platform~1`
 
 Needs: impl

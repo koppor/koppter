@@ -30,6 +30,8 @@ The planned scope is tracked as requirements in [docs/requirements](docs/require
 
 If these files lie in a git repository, the application commits every change and synchronizes with the remote repository.
 
+A file in OneDrive, or in another storage service, is used through the platform ([decision 0011](docs/decisions/0011-onedrive-through-the-platform.md)): on Android, choose it with *Choose file* in the settings; on the desktop, choose it in the synchronized folder.
+
 ## Building
 
 Requirements: JDK 21 and the Android SDK (`ANDROID_HOME`, or `sdk.dir` in `local.properties`).
