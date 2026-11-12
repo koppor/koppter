@@ -89,6 +89,7 @@ fun EditDialog(
     var recurrence by remember { mutableStateOf(original.tag(Task.RECURRENCE).orEmpty()) }
     var duration by remember { mutableStateOf(original.tag(Task.DURATION).orEmpty()) }
     var at by remember { mutableStateOf(original.tag(Task.AT).orEmpty()) }
+    var by by remember { mutableStateOf(original.tag(Task.BY).orEmpty()) }
     var contextSwitcher by remember { mutableStateOf(original.tag(Task.CONTEXT_SWITCHER).orEmpty()) }
     var projects by remember { mutableStateOf(original.projects) }
     var contexts by remember { mutableStateOf(original.contexts) }
@@ -100,9 +101,11 @@ fun EditDialog(
     val recurrenceValid = recurrence.isBlank() || Recurrence.parse(recurrence.trim()) != null
     val durationValid = duration.isBlank() || Task.parseDuration(duration.trim()) != null
     val atValid = at.isBlank() || Task.parseTime(at.trim()) != null
+    val byValid = by.isBlank() || Task.parseTime(by.trim()) != null
     val result = original
         .edit(description = description, priority = priority, projects = projects, contexts = contexts, hashtags = hashtags)
         .withTag(Task.DUE, due.trim())
+        .withTag(Task.BY, by.trim())
         .withTag(Task.THRESHOLD, threshold.trim())
         .withTag(Task.RECURRENCE, recurrence.trim())
         .withTag(Task.DURATION, duration.trim())
@@ -112,13 +115,13 @@ fun EditDialog(
         .let { if (contextSwitcher.isBlank()) it.withContextSwitcherTags() else it }
         // [impl->dsn~notes~1]
         .let { if (originalNote == null) it else it.withTag(Task.NOTE, if (note.isBlank()) null else original.tag(Task.NOTE) ?: newNoteName) }
-    val valid = dueValid && thresholdValid && recurrenceValid && durationValid && atValid && result.body.isNotBlank()
+    val valid = dueValid && thresholdValid && recurrenceValid && durationValid && atValid && byValid && result.body.isNotBlank()
 
     val descriptionFocus = remember { FocusRequester() }
     val keyboard = LocalKeyboard.current
     LaunchedEffect(Unit) { if (keyboard) descriptionFocus.requestFocus() }
 
-    val state = listOf(description, priority, due, threshold, recurrence, duration, at, contextSwitcher, projects, contexts, hashtags, note)
+    val state = listOf(description, priority, due, threshold, recurrence, duration, at, by, contextSwitcher, projects, contexts, hashtags, note)
     val initial = remember { state }
 
     GuardedDialog(changed = state != initial, onDismiss = onDismiss) {
@@ -161,6 +164,16 @@ fun EditDialog(
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     val field = Modifier.width(165.dp)
                     DateField("Due date", due, { due = it }, dueValid, field.testTag("edit-due"))
+                    // [impl->dsn~due-time~1]
+                    OutlinedTextField(
+                        value = by,
+                        onValueChange = { by = it },
+                        label = { Text("Due time") },
+                        placeholder = { Text("14:00") },
+                        isError = !byValid,
+                        singleLine = true,
+                        modifier = field.testTag("edit-by"),
+                    )
                     DateField("Threshold", threshold, { threshold = it }, thresholdValid, field.testTag("edit-threshold"))
                     OutlinedTextField(
                         value = recurrence,

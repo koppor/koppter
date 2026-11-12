@@ -130,6 +130,7 @@ The application understands the following extensions, which other todo.txt tools
 | `#urgent` | Hashtag: a third kind of label next to `+project` and `@context`, without a fixed meaning | *Add hashtag* in the edit dialog, or typed into the task. A hashtag starts with a letter: `#123` and `C#` stay words of the description ([decision 0014](docs/decisions/0014-hashtags-as-a-third-kind-of-label.md)). |
 | `@research>reading` | A context below another context, over any number of levels | Typed as the context. The label shows `@reading`, and the path when the pointer rests on it; a click on it shows the tasks of the context. A filter for `@research` includes the contexts below it, and the filter panel shows the contexts as a tree ([decision 0017](docs/decisions/0017-levels-of-a-context-separated-by-a-greater-than-sign.md)). |
 | `dur:1h30m` | The time the task is expected to take, in hours and minutes | Field *Duration* in the edit dialog, or typed into the task. [Planning](#planning) gives the task that much time ([decision 0018](docs/decisions/0018-tag-for-the-duration-of-a-task.md)). |
+| `by:14:00` | The time of the due date by which the task has to be done | Field *Due time* in the edit dialog, or typed into the task next to `due:`. Among the tasks of a day, the earlier time comes first, and the icon of the [plan](#planning) is red if the task is planned to end later ([decision 0022](docs/decisions/0022-tag-for-the-time-by-which-a-task-is-due.md)). |
 | `at:12:00` | The time of the day at which the task takes place | Field *Fixed time* in the edit dialog, or typed into the task. [Planning](#fixed-times) gives the task that time and plans the others around it ([decision 0021](docs/decisions/0021-tag-for-the-fixed-time-of-a-task.md)). |
 | `id:1`, `p:1` | The task with `id:1` waits for the tasks with `p:1`, as topydo writes dependencies | Typed into the task. [Planning](#planning) gives the task its times after those it waits for ([decision 0020](docs/decisions/0020-dependencies-with-the-tags-of-topydo.md)). |
 | `cs:jabref/fix-npe` | The task of [ContextSwitcher](https://github.com/contextswitcher/contextswitcher) that holds the working context | Entered in the field *ContextSwitcher task* of the edit dialog or typed into the task, as the id or as the link that *Copy link* of ContextSwitcher gives, which becomes the tag. A click on the label switches to the task in ContextSwitcher, on a computer where it has registered its links ([decision 0016](docs/decisions/0016-tag-for-the-task-of-contextswitcher.md)). |
@@ -281,6 +282,7 @@ The todo.txt file leads: the plan is computed from it, and planning does not cha
   A paper that is finished one day is a project in a context that stays, `+FirstPaper @paper`: the limits of `@paper` then hold for every paper, and `+FirstPaper` gets its barrier.
 
 After the first plan, each open task carries a calendar icon: green if its plan ends before its due date or it has none, yellow if it ends on the due date, red if it ends later or the task is not planned.
+For a task that is due at a time of the day, such as `due:2026-11-16 by:14:00`, red also tells that the plan ends on that day after that time.
 The pointer on the icon shows the start of the plan.
 
 `calendar.txt` has the [format of calendar.txt](https://terokarvinen.com/2021/calendar-txt/), one line per day:
@@ -342,6 +344,9 @@ The application only reads the calendars and writes nothing to them.
 
 * A budget counts what is planned from now on: what was planned earlier in the running week is not counted.
 * A minimum is planned in the weeks up to the day on which the tasks of its context would be done without it; a week in which they have no time left gets nothing.
+* A due date, with or without a time, does not move a task forward in the plan: the order of the task list decides, and the icon tells when the plan ends too late.
+  A higher priority gives the task earlier times.
+* The list marks a task as overdue from the day after its due date on, not from the time by which it was due.
 * A task with a fixed time and without a date counts for today as long as it is open: a training of Tuesday that was not completed is planned again on Wednesday.
   Complete or delete it when its day is over.
 * A task with `rec:` and a fixed time takes its time on its current due date only; the later ones follow when it is completed.

@@ -200,7 +200,7 @@ Needs: impl, utest
 ### Sort order
 `dsn~sort-order~1`
 
-`listOrder` compares by completion, priority (none last), due date (none last) and line index.
+`listOrder` compares by completion, priority (none last), due date (none last), the time by which the task is due on that day (none last) and line index.
 
 Covers:
 

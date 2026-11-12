@@ -180,6 +180,19 @@ class AppTest {
         assertEquals("Post signs +GarageSale dur:1h30m", storage.text.lines()[1])
     }
 
+    // [utest->dsn~due-time~1]
+    @Test
+    fun theDialogSetsTheTimeByWhichATaskIsDue() = runComposeUiTest {
+        start()
+        openTask("Post signs")
+        onNodeWithTag("edit-due").performTextInput("2026-11-16")
+        onNodeWithTag("edit-by").performTextInput("2 pm")
+        onNodeWithTag("edit-save").performScrollTo().assertIsNotEnabled()
+        onNodeWithTag("edit-by").performScrollTo().performTextReplacement("14:00")
+        onNodeWithTag("edit-save").performScrollTo().performClick()
+        assertEquals("Post signs +GarageSale due:2026-11-16 by:14:00", storage.text.lines()[1])
+    }
+
     // [utest->dsn~edit-dialog~1]
     @Test
     fun deletesATaskFromTheDialog() = runComposeUiTest {

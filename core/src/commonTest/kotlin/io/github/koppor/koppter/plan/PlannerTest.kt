@@ -367,7 +367,7 @@ class PlannerTest {
 
         val planned = CalendarTxt.planned(calendar, today)
         assertEquals(setOf("Call the landlord @phone", "Read the survey. Twice +Reading @research>reading", "Review the paper"), planned.keys)
-        assertEquals(Planned(monday, 8 * 60, monday), planned["Review the paper"])
+        assertEquals(Planned(monday, 8 * 60, monday, 9 * 60), planned["Review the paper"])
         assertEquals("Mon 2026-11-16 08:00", CalendarTxt.startText(planned.getValue("Review the paper")))
 
         // The blocks of all days, for the views of the plan.
@@ -382,6 +382,11 @@ class PlannerTest {
         assertEquals(PlanState.FITS, CalendarTxt.state(Task.parse("Review the paper"), planned["Review the paper"]))
         assertEquals(PlanState.LATE, CalendarTxt.state(Task.parse("Review the paper due:2026-11-13"), planned["Review the paper"]))
         assertEquals(PlanState.LATE, CalendarTxt.state(Task.parse("New task"), planned["New task"]))
+        // [utest->dsn~due-time~1]
+        // The call is planned from 08:00 to 08:30: in time for 08:30, too late for 08:15.
+        assertEquals(PlanState.TIGHT, CalendarTxt.state(Task.parse("Call the landlord @phone due:2026-11-12 by:8:30"), planned[CalendarTxt.text(landlord)]))
+        assertEquals(PlanState.LATE, CalendarTxt.state(Task.parse("Call the landlord @phone due:2026-11-12 by:08:15"), planned[CalendarTxt.text(landlord)]))
+        assertEquals(PlanState.FITS, CalendarTxt.state(Task.parse("Call the landlord @phone due:2026-11-13 by:08:15"), planned[CalendarTxt.text(landlord)]))
 
         assertEquals(53, CalendarTxt.week(LocalDate(2027, 1, 1)))
         assertEquals(1, CalendarTxt.week(LocalDate(2024, 12, 30)))

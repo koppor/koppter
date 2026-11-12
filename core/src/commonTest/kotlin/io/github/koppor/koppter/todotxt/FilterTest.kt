@@ -69,6 +69,13 @@ class FilterTest {
         assertEquals(listOf("a", "a>b", "a1"), listOf("a1", "a>b", "a").sortedWith(hierarchyOrder))
     }
 
+    // [utest->dsn~due-time~1]
+    @Test
+    fun onTheSameDueDateTheTaskThatIsDueAtAnEarlierTimeComesFirst() {
+        val tasks = TodoFile.parse("Pack due:2026-11-16\nPrepare the slides due:2026-11-16 by:14:00\nPrint the agenda due:2026-11-16 by:9:00\nBook a room due:2026-11-15")
+        assertEquals(listOf("Book a room", "Print the agenda", "Prepare the slides", "Pack"), tasks.entries.sortedWith(listOrder).map { it.task.description })
+    }
+
     // [utest->dsn~sort-order~1]
     @Test
     fun ordersByCompletionPriorityDueDateAndPosition() {

@@ -45,6 +45,7 @@ koppter writes tasks in that order, so a line written the same way does not chan
 | `+Project` | An outcome that ends | Only if the task serves one. Not for areas. |
 | `(A)` | What has to happen this week | `(B)` for what should. Most tasks have none; ask rather than guess. |
 | `due:2026-12-01` | A deadline that someone else set | Not the day the user would like to do it: the plan finds that day. |
+| `by:14:00` | The time of the due date by which the task has to be done | Only next to `due:`: "the slides have to be ready for the call on Monday at 14:00". |
 | `t:2027-01-10` | The day from which the task is worth looking at | The task is hidden and not planned before. Use it for "not now" and "some day". |
 | `dur:1h30m` | The time the task takes | Without it, the plan assumes half an hour. Give it when the user states it or the task clearly takes longer. |
 | `at:14:00` | The time of the day at which the task takes place | Only for what has its time: an appointment, lunch, a training. The plan does not move the task. The day is `due:`, else `t:`, else today. |
@@ -60,7 +61,7 @@ koppter lists tasks without context in its inbox, where the user gives them one 
 Do not put a creation date in front of the description unless the other lines of the file have one: koppter reads that date from the git history.
 
 Give `at:` only when the time is part of the task ("dentist on Friday at 14:00"), together with `due:` for the day and `dur:` for the length.
-A time by which the user would like to have something done is no fixed time: koppter plans tasks into free times itself, and a task with `at:` is not moved when the day gets full.
+A time by which something has to be done is no fixed time but a deadline, `due:` with `by:`: koppter plans such a task into free times itself, whereas a task with `at:` is not moved when the day gets full.
 
 ## Recurring tasks
 
@@ -103,6 +104,12 @@ Look into a new bike #someday t:2027-01-01
 
 ```text
 Go to the dentist @errands>city due:2026-11-20 at:14:00 dur:1h
+```
+
+"The slides have to be ready for the call on Monday at 14:00, two hours of work", said on 2026-11-13:
+
+```text
+Prepare the slides for the call @work due:2026-11-16 by:14:00 dur:2h
 ```
 
 "Book the flight once the talk is accepted", where the file has no ids yet:

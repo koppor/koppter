@@ -68,6 +68,10 @@ data class Task(
     // [impl->dsn~fixed-time~1]
     val at: Int? get() = tag(AT)?.let(::parseTime)
 
+    /** The minutes of the due date by which the task is due, for a task that is due at a time of that day. */
+    // [impl->dsn~due-time~1]
+    val by: Int? get() = tag(BY)?.let(::parseTime)
+
     // [impl->dsn~task-serializer~1]
     fun toLine(): String = buildString {
         if (completed) append("x ")
@@ -185,6 +189,7 @@ data class Task(
         const val CONTEXT_SWITCHER = "cs"
         const val DURATION = "dur"
         const val AT = "at"
+        const val BY = "by"
 
         /** As topydo writes dependencies: a task with [ID] waits for the tasks whose [PARENT] has the same value. */
         const val ID = "id"

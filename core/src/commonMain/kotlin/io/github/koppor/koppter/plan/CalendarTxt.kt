@@ -6,8 +6,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.plus
 
-/** When a task is planned: the start of its first block and the day of its last one. */
-data class Planned(val date: LocalDate, val start: Int, val lastDate: LocalDate)
+/** When a task is planned: the start of its first block, and the day and the end of its last one. */
+data class Planned(val date: LocalDate, val start: Int, val lastDate: LocalDate, val lastEnd: Int)
 
 /** A block as the file has it: a time of a day and the text of the task. */
 data class TextBlock(val date: LocalDate, val span: Span, val text: String)
@@ -66,7 +66,7 @@ object CalendarTxt {
     fun planned(blocks: List<TextBlock>, today: LocalDate): Map<String, Planned> {
         val result = mutableMapOf<String, Planned>()
         for (block in blocks.filter { it.date >= today }) {
-            result[block.text] = result[block.text]?.copy(lastDate = block.date) ?: Planned(block.date, block.span.start, block.date)
+            result[block.text] = result[block.text]?.copy(lastDate = block.date, lastEnd = block.span.end) ?: Planned(block.date, block.span.start, block.date, block.span.end)
         }
         return result
     }
@@ -79,13 +79,14 @@ object CalendarTxt {
     /** A day as a text, such as `Mon 2026-11-16`. */
     fun dayText(date: LocalDate): String = "${WEEKDAYS[date.dayOfWeek.isoDayNumber - 1]} $date"
 
-    /** The state of an open task in a plan: late if it is not planned at all or its last block lies behind its due date. */
+    /** The state of an open task in a plan: late if it is not planned at all or its last block ends behind its due date, or behind the time by which it is due on that day. */
+    // [impl->dsn~due-time~1]
     fun state(task: Task, planned: Planned?): PlanState {
         val due = task.due
         return when {
             planned == null -> PlanState.LATE
             due == null || planned.lastDate < due -> PlanState.FITS
-            planned.lastDate == due -> PlanState.TIGHT
+            planned.lastDate == due && planned.lastEnd <= (task.by ?: (24 * 60)) -> PlanState.TIGHT
             else -> PlanState.LATE
         }
     }

@@ -55,11 +55,13 @@ data class Filter(
 
 /**
  * The order of the task list: open before completed, then by priority (none last),
- * then by due date (none last), then by position in the file.
+ * then by due date (none last) and the time by which they are due on that day (none last), then by position in the file.
  */
 // [impl->dsn~sort-order~1]
 val listOrder: Comparator<Entry> =
     compareBy<Entry> { it.task.completed }
         .thenBy { it.task.priority ?: Char.MAX_VALUE }
         .thenBy { it.task.due ?: LocalDate(9999, 12, 31) }
+        // [impl->dsn~due-time~1]
+        .thenBy { it.task.by ?: (24 * 60) }
         .thenBy { it.index }
