@@ -9,6 +9,7 @@ import io.github.koppor.koppter.plan.Ics
 import io.github.koppor.koppter.plan.PlanState
 import io.github.koppor.koppter.plan.Planned
 import io.github.koppor.koppter.plan.Span
+import io.github.koppor.koppter.plan.busyTimes
 import io.github.koppor.koppter.plan.plan
 import io.github.koppor.koppter.storage.ConfigFile
 import io.github.koppor.koppter.storage.Settings
@@ -36,6 +37,7 @@ import io.github.koppor.koppter.todotxt.listOrder
 import io.github.koppor.koppter.todotxt.moveToGroup
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlin.random.Random
 
@@ -52,6 +54,8 @@ class TodoController(
     val today: () -> LocalDate,
     /** The minutes of today that have passed. */
     private val minuteOfDay: () -> Int = { 0 },
+    /** Reads the file at an address of the web; `null` if the platform cannot. */
+    private val fetch: (suspend (String) -> String)? = null,
 ) {
     var settings by mutableStateOf(settings)
         private set
@@ -195,6 +199,32 @@ class TodoController(
             )
         }
 
+    /** The addresses of the calendars with busy times; `null` if the platform cannot read them. */
+    val calendars: String? get() = settings.calendars.takeIf { fetch != null }
+
+    /**
+     * Saves the addresses of the calendars, reads their busy times for a year from today and plans with them, see [plan].
+     * A calendar that cannot be read is reported and left out.
+     */
+    // [impl->dsn~busy-times~1]
+    suspend fun planWithCalendars(settings: PlanSettings, calendars: String?): PlanResult? {
+        val fetch = fetch
+        if (calendars == null || fetch == null) return plan(settings)
+        updateSettings(this.settings.copy(calendars = calendars.trim()))
+        val busy = mutableMapOf<LocalDate, List<Span>>()
+        val problems = mutableListOf<String>()
+        for (address in calendars.lines().map(String::trim).filter(String::isNotEmpty)) {
+            try {
+                busyTimes(fetch(address), today(), today().plus(DatePeriod(years = 1)), TimeZone.currentSystemDefault())
+                    .forEach { (date, spans) -> busy[date] = busy[date].orEmpty() + spans }
+            } catch (e: Exception) {
+                // The address is a secret: only its host is shown.
+                problems += "Calendar of ${address.substringAfter("://").substringBefore('/')} was not read: ${e.message ?: e}"
+            }
+        }
+        return plan(settings, busy, problems)
+    }
+
     /**
      * Saves the configuration for planning, plans the open tasks from now on and writes the plan to `calendar.txt`.
      * The todo.txt file is not changed: the plan is derived from it.
@@ -202,7 +232,7 @@ class TodoController(
      * @param busy the times that are taken, by day
      */
     // [impl->dsn~plan-dialog~1]
-    fun plan(settings: PlanSettings, busy: Map<LocalDate, List<Span>> = emptyMap()): PlanResult? {
+    fun plan(settings: PlanSettings, busy: Map<LocalDate, List<Span>> = emptyMap(), problems: List<String> = emptyList()): PlanResult? {
         var result: PlanResult? = null
         guarded {
             val files = storage as? CompanionFiles ?: return@guarded
@@ -224,7 +254,7 @@ class TodoController(
             val tasks = plan.blocks.map { it.entry }.distinct().size
             result = PlanResult(
                 if (plan.blocks.isEmpty()) "Nothing was planned." else "Planned $tasks tasks until ${plan.blocks.last().date}.",
-                planConfig.problems,
+                problems + planConfig.problems,
                 plan.unplaced.map { entry ->
                     "${entry.task.description}${entry.task.contexts.firstOrNull()?.let { " @$it" }.orEmpty()} (barrier ${planConfig.barrierOf(entry.task, today())})"
                 },

@@ -391,6 +391,32 @@ class AppTest {
         onNodeWithTag("plan-context-maps").assertTextContains("@home = Evenings")
     }
 
+    // [utest->dsn~busy-times~1]
+    @Test
+    fun nothingIsPlannedIntoTheBusyTimesOfACalendar() = runComposeUiTest {
+        storage.text = "Post signs dur:1h\n"
+        val ics = "BEGIN:VCALENDAR\nBEGIN:VEVENT\nDTSTART:20261112T090000\nDTEND:20261112T103000\nEND:VEVENT\nEND:VCALENDAR\n"
+        var settings = Settings()
+        val controller = TodoController(
+            settings, { storage }, saveSettings = { settings = it }, today = { LocalDate(2026, 11, 12) }, minuteOfDay = { 9 * 60 },
+            fetch = { address -> if ("gone" in address) error("no such calendar") else ics },
+        )
+        setContent { App(controller, "todo.txt") }
+
+        onNodeWithTag("open-plan").performClick()
+        onNodeWithTag("plan-calendars").performScrollTo().performTextInput("https://calendar.example.org/secret/calendar.ics\nhttps://gone.example.org/secret.ics")
+        onNodeWithTag("plan-update").performScrollTo().performClick()
+        // Planning runs in a coroutine, as reading the calendars takes time.
+        waitForIdle()
+
+        // Office hours without time maps; the meeting takes the time from nine to half past ten.
+        assertEquals("2026-11-12 w46 Thu  10:30-11:30 Post signs\n", storage.companions.getValue("calendar.txt"))
+        onNodeWithTag("plan-problem").performScrollTo().assertTextEquals("Calendar of gone.example.org was not read: no such calendar")
+        // The addresses are a setting of the device and not written next to the todo.txt file.
+        assertEquals(true, settings.calendars.startsWith("https://calendar.example.org/secret/calendar.ics"))
+        assertEquals(false, storage.companions.values.any { "example.org" in it })
+    }
+
     // [utest->dsn~color-themes~1]
     @Test
     fun theSettingsDialogChoosesThePaletteAndItsVariant() = runComposeUiTest {

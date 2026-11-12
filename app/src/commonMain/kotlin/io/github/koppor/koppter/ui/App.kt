@@ -246,7 +246,7 @@ private fun MainScreen(
         )
     }
     planning?.let {
-        PlanDialog(settings = it, onPlan = controller::plan, onDismiss = { planning = null })
+        PlanDialog(settings = it, calendars = controller.calendars, onPlan = controller::planWithCalendars, onDismiss = { planning = null })
     }
     schedule?.let {
         ScheduleDialog(

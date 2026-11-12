@@ -93,7 +93,6 @@ The planned scope is tracked as requirements in [docs/requirements](docs/require
 | `notes/<name>.txt` | The note of the task with the tag `note:<name>.txt` |
 | `koppter.yml` | Configuration of this application that belongs to the todo.txt file: the [board columns defined by filters](#board), the [share actions](#sharing-to-koppter-on-android), and the time maps and barriers for [planning](#planning) |
 | `ice_recur.txt` | Schedules of [recurring tasks](#recurring-tasks) in the format of the ice_recur add-on, such as `weekly ; day Monday - (B) Plan the week` |
-
 | `calendar.txt` | The [plan](#planning): when the open tasks are worked on, one line per day |
 | `calendar.ics` | The plan as tentative events, for import into a calendar program |
 
@@ -250,6 +249,18 @@ The pointer on the icon shows the start of the plan.
 The lines of past days stay; the lines from today on are written anew by every plan, so what is written there by hand is lost.
 In a git repository, each plan is one commit ([decision 0019](docs/decisions/0019-the-plan-is-derived-and-kept-in-calendar-txt.md)).
 The plan is also written to `calendar.ics`, with tentative events, for import into a calendar program.
+
+### Calendars
+
+*Calendars with busy times* in the plan dialog takes the addresses at which calendar services publish a calendar as an iCalendar file, one per line.
+Nothing is planned into the times of their events; events of whole days, cancelled events and events marked as free do not count.
+
+* Outlook on the web: *Settings → Calendar → Shared calendars → Publish a calendar*, then the ICS link.
+* Google Calendar: *Settings → the calendar → Integrate calendar → Secret address in iCal format*.
+
+Such an address lets everyone who has it read the calendar.
+It is therefore kept in the settings of the device and not in `koppter.yml`; each device needs it entered once.
+The application only reads the calendars and writes nothing to them.
 
 ## Sharing to koppter on Android
 

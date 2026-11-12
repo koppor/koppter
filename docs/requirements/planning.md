@@ -58,6 +58,19 @@ Covers:
 
 Needs: dsn
 
+### Busy times of calendars
+`req~busy-times~1`
+
+Nothing is planned into the times of the events of the calendars that the user names.
+A calendar is named by the address at which its service publishes it as an iCalendar file.
+The application only reads the calendars.
+
+Covers:
+
+* `feat~planning~1`
+
+Needs: dsn
+
 ### State of the plan on the task
 `req~plan-state~1`
 
@@ -141,6 +154,22 @@ An event is tentative (`STATUS` and the busy status that Outlook reads), its tim
 Covers:
 
 * `req~plan-file~1`
+
+Needs: impl, utest
+
+### Busy times
+`dsn~busy-times~1`
+
+`busyTimes` reads the events of an iCalendar file and gives the times they take by day, in the time zone of the device.
+Events of whole days, cancelled events, events marked as free and the blocks that the application exported itself are left out.
+Repeating events are followed for the frequencies daily, weekly, monthly and yearly with interval, end, count, days of the week, days of the month and excluded dates.
+A time zone that the platform does not know by name counts as that of the device.
+The addresses of the calendars are a setting of the device, as they are secrets; the plan dialog edits them.
+`fetchCalendar` reads an address over HTTP or HTTPS; `TodoController.planWithCalendars` reads all calendars for a year from today, reports those it could not read by their host and plans with the others.
+
+Covers:
+
+* `req~busy-times~1`
 
 Needs: impl, utest
 

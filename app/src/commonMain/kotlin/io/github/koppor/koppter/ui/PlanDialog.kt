@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import io.github.koppor.koppter.plan.CalendarTxt
 import io.github.koppor.koppter.storage.ConfigFile
+import kotlinx.coroutines.launch
 
 /** The three parts of the configuration for planning, each as lines of the form `name = value`. */
 data class PlanSettings(val timeMaps: String, val contextMaps: String, val barriers: String)
@@ -40,11 +42,20 @@ data class PlanResult(val summary: String, val problems: List<String>, val unpla
  */
 // [impl->dsn~plan-dialog~1]
 @Composable
-fun PlanDialog(settings: PlanSettings, onPlan: (PlanSettings) -> PlanResult?, onDismiss: () -> Unit) {
+fun PlanDialog(
+    settings: PlanSettings,
+    /** The addresses of the calendars with busy times; `null` if the platform cannot read them. */
+    calendars: String?,
+    onPlan: suspend (PlanSettings, calendars: String?) -> PlanResult?,
+    onDismiss: () -> Unit,
+) {
     var timeMaps by remember { mutableStateOf(settings.timeMaps) }
     var contextMaps by remember { mutableStateOf(settings.contextMaps) }
     var barriers by remember { mutableStateOf(settings.barriers) }
+    var addresses by remember { mutableStateOf(calendars) }
     var result by remember { mutableStateOf<PlanResult?>(null) }
+    var running by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     @Composable
     fun field(label: String, value: String, onChange: (String) -> Unit, help: String, tag: String) {
@@ -86,6 +97,15 @@ fun PlanDialog(settings: PlanSettings, onPlan: (PlanSettings) -> PlanResult?, on
                         "One per line: default = quarter, +Thesis = 2027-03-31, @research = year. The earliest barrier of a task counts.",
                     "plan-barriers",
                 )
+                // [impl->dsn~busy-times~1]
+                addresses?.let {
+                    field(
+                        "Calendars with busy times", it, { text -> addresses = text },
+                        "Addresses of iCalendar files, one per line, as Outlook and Google Calendar publish them for a calendar. " +
+                            "Nothing is planned into the times of their events. Kept on this device only, as such an address is a secret.",
+                        "plan-calendars",
+                    )
+                }
                 result?.let { shown ->
                     Text(shown.summary, modifier = Modifier.testTag("plan-summary"))
                     for (problem in shown.problems) {
@@ -101,8 +121,21 @@ fun PlanDialog(settings: PlanSettings, onPlan: (PlanSettings) -> PlanResult?, on
                 Row(Modifier.fillMaxWidth()) {
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = onDismiss, modifier = Modifier.testTag("plan-close")) { Text("Close") }
-                    Button(onClick = { result = onPlan(PlanSettings(timeMaps, contextMaps, barriers)) }, modifier = Modifier.testTag("plan-update")) {
-                        Text("Save and plan")
+                    Button(
+                        onClick = {
+                            running = true
+                            scope.launch {
+                                try {
+                                    result = onPlan(PlanSettings(timeMaps, contextMaps, barriers), addresses)
+                                } finally {
+                                    running = false
+                                }
+                            }
+                        },
+                        enabled = !running,
+                        modifier = Modifier.testTag("plan-update"),
+                    ) {
+                        Text(if (running) "Planning" else "Save and plan")
                     }
                 }
             }

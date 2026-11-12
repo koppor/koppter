@@ -11,6 +11,9 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import io.github.koppor.koppter.storage.Settings
+import io.github.koppor.koppter.plan.fetchCalendar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import io.github.koppor.koppter.storage.SettingsFile
 import io.github.koppor.koppter.storage.TodoStorage
 import io.github.koppor.koppter.sync.GitSetup
@@ -63,6 +66,7 @@ internal fun Context.todoController(gitSetup: GitSetup): TodoController {
         saveSettings = settingsFile::save,
         today = { java.time.LocalDate.now().let { LocalDate(it.year, it.monthValue, it.dayOfMonth) } },
         minuteOfDay = { java.time.LocalTime.now().toSecondOfDay() / 60 },
+        fetch = { address -> withContext(Dispatchers.IO) { fetchCalendar(address) } },
     )
 }
 
