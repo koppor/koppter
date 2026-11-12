@@ -205,7 +205,7 @@ Needs: impl, utest
 ### Filter panel
 `dsn~filter-panel~1`
 
-`FilterPanel` shows the criteria of `Filter`: the completion state as radio buttons, the text as a text field, and the threshold date as a checkbox.
+`FilterPanel` shows the criteria of `Filter`: the text as a text field and the threshold date as a checkbox at the top, and the completion state as the two switches *Open* and *Done* at the bottom, of which at least one is on.
 Priorities, projects, contexts and hashtags are shown as the labels that the task list uses for them.
 The selected values stand beside the title of the criterion and the other values below it, both sorted; a click on a label moves it to the other group.
 From a width of 840 dp on, the main screen places the panel beside the list; below that, the panel is the content of a navigation drawer.

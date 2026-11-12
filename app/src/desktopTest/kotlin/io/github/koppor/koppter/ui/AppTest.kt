@@ -201,9 +201,15 @@ class AppTest {
         onAllNodesWithTag("task").assertCountEquals(2)
         onNodeWithTag("filter-clear").performClick()
         onAllNodesWithTag("task").assertCountEquals(3)
-        onNodeWithTag("filter-completed-Yes").performClick()
+        // Open and done are two switches; switching off the only selected one selects the other.
+        onNodeWithTag("filter-done").performScrollTo().performClick()
+        onAllNodesWithTag("task").assertCountEquals(4)
+        onNodeWithTag("filter-open").performClick()
         onAllNodesWithTag("task").assertCountEquals(1)
         onNodeWithText("Call Mom").assertExists()
+        onNodeWithTag("filter-done").performClick()
+        onNodeWithTag("filter-open").assertIsSelected()
+        onAllNodesWithTag("task").assertCountEquals(3)
     }
 
     // [utest->dsn~reload-on-external-change~1]
