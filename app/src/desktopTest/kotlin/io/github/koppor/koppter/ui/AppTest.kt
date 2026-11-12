@@ -4,6 +4,8 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -180,10 +182,14 @@ class AppTest {
     @Test
     fun theFilterPanelRestrictsTheList() = runComposeUiTest {
         start()
-        onNodeWithTag("filter-project-GarageSale").performClick()
+        onNodeWithTag("filter-project-GarageSale").assertIsOff().performClick()
         onAllNodesWithTag("task").assertCountEquals(2)
+        onNodeWithTag("filter-project-GarageSale").assertIsOn()
         onNodeWithTag("filter-priority-B").performClick()
         onAllNodesWithTag("task").assertCountEquals(1)
+        // A click on a selected label takes it out of the filter again.
+        onNodeWithTag("filter-priority-B").performClick()
+        onAllNodesWithTag("task").assertCountEquals(2)
         onNodeWithTag("filter-clear").performClick()
         onAllNodesWithTag("task").assertCountEquals(3)
         onNodeWithTag("filter-completed-Yes").performClick()

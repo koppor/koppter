@@ -1,12 +1,16 @@
 package io.github.koppor.koppter.ui
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -25,7 +30,7 @@ import io.github.koppor.koppter.todotxt.Filter
 
 /**
  * The filter criteria as a column: completion, text, priorities, projects, contexts.
- * Priorities, projects and contexts list the values that occur in the file.
+ * Priorities, projects and contexts offer the values that occur in the file, as the labels that the tasks carry.
  */
 // [impl->dsn~filter-panel~1]
 @Composable
@@ -67,29 +72,14 @@ fun FilterPanel(
             onChange(filter.copy(hideFuture = !it))
         }
 
-        if (priorities.isNotEmpty()) {
-            Heading("Priorities")
-            for (priority in priorities) {
-                Option(priority.toString(), priority in filter.priorities, "filter-priority-$priority") {
-                    onChange(filter.copy(priorities = filter.priorities.toggled(priority, it)))
-                }
-            }
+        LabelFilter("Priorities", priorities, filter.priorities, { "filter-priority-$it" }, { onChange(filter.copy(priorities = it)) }) { value, suffix, modifier ->
+            PriorityLabel(value, modifier, suffix)
         }
-        if (projects.isNotEmpty()) {
-            Heading("Projects")
-            for (project in projects) {
-                Option(project, project in filter.projects, "filter-project-$project") {
-                    onChange(filter.copy(projects = filter.projects.toggled(project, it)))
-                }
-            }
+        LabelFilter("Projects", projects, filter.projects, { "filter-project-$it" }, { onChange(filter.copy(projects = it)) }) { value, suffix, modifier ->
+            ProjectLabel(value, modifier, suffix)
         }
-        if (contexts.isNotEmpty()) {
-            Heading("Contexts")
-            for (context in contexts) {
-                Option(context, context in filter.contexts, "filter-context-$context") {
-                    onChange(filter.copy(contexts = filter.contexts.toggled(context, it)))
-                }
-            }
+        LabelFilter("Contexts", contexts, filter.contexts, { "filter-context-$it" }, { onChange(filter.copy(contexts = it)) }) { value, suffix, modifier ->
+            ContextLabel(value, modifier, suffix)
         }
 
         OutlinedButton(
@@ -102,7 +92,44 @@ fun FilterPanel(
     }
 }
 
-private fun <T> Set<T>.toggled(value: T, selected: Boolean): Set<T> = if (selected) this + value else this - value
+/**
+ * One criterion with several values, shown as the labels the task list uses for them.
+ * The selected values stand beside the title, the others below it; a click moves a label to the other group.
+ * Both groups are sorted.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun <T : Comparable<T>> LabelFilter(
+    title: String,
+    values: List<T>,
+    selected: Set<T>,
+    tag: (T) -> String,
+    onChange: (Set<T>) -> Unit,
+    label: @Composable (value: T, suffix: String, modifier: Modifier) -> Unit,
+) {
+    if (values.isEmpty() && selected.isEmpty()) return
+    // The area that reacts to a click is larger than the label, which is too small for a finger.
+    fun modifier(value: T, isSelected: Boolean) = Modifier
+        .clip(CircleShape)
+        .toggleable(value = isSelected, role = Role.Checkbox, onValueChange = { onChange(if (it) selected + value else selected - value) })
+        .testTag(tag(value))
+        .padding(vertical = 5.dp)
+    FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.align(Alignment.CenterVertically).padding(vertical = 5.dp))
+        if (selected.isEmpty()) {
+            Text(
+                "all",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterVertically),
+            )
+        }
+        for (value in selected.sorted()) label(value, " \u00d7", modifier(value, true))
+    }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        for (value in values.sorted().filter { it !in selected }) label(value, "", modifier(value, false))
+    }
+}
 
 @Composable
 private fun Heading(text: String) {

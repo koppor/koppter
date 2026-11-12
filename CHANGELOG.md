@@ -12,7 +12,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Desktop application that shows the tasks of a todo.txt file with projects, contexts, tags and priority as labels at the top right of each task.
 - Adding a task by typing a line in todo.txt syntax.
 - Edit dialog with the description separate from the metadata and a preview of the resulting todo.txt line.
-- Filter panel for completion state, text, priorities, projects, contexts and threshold date.
+- Filter panel for completion state, text, priorities, projects, contexts and threshold date; priorities, projects and contexts are selected as the labels that the tasks carry.
 - Setting for the location of the todo.txt file and for writing creation and completion dates, which are not written by default.
 - Android application with the same screens; the todo.txt file is kept in the storage of the application or chosen with the document picker of the system.
 - Button in the settings that opens the file dialog of the platform to choose the todo.txt file.

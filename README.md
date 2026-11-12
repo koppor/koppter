@@ -14,6 +14,11 @@ Projects, contexts, tags and the priority are labels at the top right of each ta
 
 ![Task list with the filter panel on the left](docs/screenshots/list.png)
 
+The filter panel offers priorities, projects and contexts as the labels that the tasks carry.
+A click moves a label to the selected ones beside the title; here, the list shows the tasks of the projects *GarageSale* or *Work* that have the context *phone*.
+
+![Task list filtered by two projects and a context](docs/screenshots/filter.png)
+
 The board with one column per priority, while a task is dragged from column B to column A.
 
 ![Board by priority with a task being dragged to another column](docs/screenshots/board-priority.png)

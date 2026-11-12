@@ -35,8 +35,8 @@ fun Label(text: String, container: Color, content: Color, modifier: Modifier = M
 @Composable
 fun TaskLabels(task: Task, today: LocalDate) {
     val colors = MaterialTheme.colorScheme
-    task.projects.forEach { Label("+$it", colors.tertiaryContainer, colors.onTertiaryContainer) }
-    task.contexts.forEach { Label("@$it", colors.secondaryContainer, colors.onSecondaryContainer) }
+    task.projects.forEach { ProjectLabel(it) }
+    task.contexts.forEach { ContextLabel(it) }
     task.tags.forEach { (key, value) ->
         val overdue = key == Task.DUE && !task.completed && task.due.let { it != null && it < today }
         val dueToday = key == Task.DUE && !task.completed && task.due == today
@@ -49,13 +49,25 @@ fun TaskLabels(task: Task, today: LocalDate) {
     task.priority?.let { PriorityLabel(it) }
 }
 
+/** @param suffix text after the value, such as the mark of a label that can be removed */
 @Composable
-fun PriorityLabel(priority: Char, modifier: Modifier = Modifier) {
+fun ProjectLabel(project: String, modifier: Modifier = Modifier, suffix: String = "") {
+    Label("+$project$suffix", MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, modifier)
+}
+
+@Composable
+fun ContextLabel(context: String, modifier: Modifier = Modifier, suffix: String = "") {
+    Label("@$context$suffix", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, modifier)
+}
+
+@Composable
+fun PriorityLabel(priority: Char, modifier: Modifier = Modifier, suffix: String = "") {
     val colors = MaterialTheme.colorScheme
+    val text = "$priority$suffix"
     when (priority) {
-        'A' -> Label("A", colors.error, colors.onError, modifier)
-        'B' -> Label("B", colors.tertiary, colors.onTertiary, modifier)
-        'C' -> Label("C", colors.secondary, colors.onSecondary, modifier)
-        else -> Label(priority.toString(), colors.surfaceVariant, colors.onSurfaceVariant, modifier)
+        'A' -> Label(text, colors.error, colors.onError, modifier)
+        'B' -> Label(text, colors.tertiary, colors.onTertiary, modifier)
+        'C' -> Label(text, colors.secondary, colors.onSecondary, modifier)
+        else -> Label(text, colors.surfaceVariant, colors.onSurfaceVariant, modifier)
     }
 }

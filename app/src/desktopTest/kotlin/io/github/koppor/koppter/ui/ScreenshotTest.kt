@@ -81,6 +81,11 @@ class ScreenshotTest {
     fun rendersListAndDialogs() = runDesktopComposeUiTest(width = 1100, height = 900) {
         start()
         save("list.png")
+        onNodeWithTag("filter-project-GarageSale").performClick()
+        onNodeWithTag("filter-project-Work").performClick()
+        onNodeWithTag("filter-context-phone").performClick()
+        save("filter.png")
+        onNodeWithTag("filter-clear").performClick()
         onNodeWithText("Prepare the slides for the team meeting").performClick()
         save("edit.png")
         onNodeWithTag("edit-cancel").performClick()
