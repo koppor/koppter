@@ -32,6 +32,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Board columns defined by filter expressions in the syntax of topydo, such as `Today = due:<=today -@waiting`; they are entered in the settings and kept in `koppter.yml` next to the todo.txt file.
 - On the board, dragging a task to another column changes its priority, project, context or due date accordingly; for a column defined by a filter, the task is changed as little as possible so that it matches the filter.
 - Changes that other programs make to the todo.txt file are picked up while the application runs.
+- The release of a day on GitHub carries the signed Android application as an APK file.
 - Project infrastructure: Gradle build with a Kotlin Multiplatform `core` module, requirements tracing, decision records and continuous integration.
 
 [Unreleased]: https://github.com/koppor/koppter/commits/experimental

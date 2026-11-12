@@ -14,8 +14,11 @@ android {
         applicationId = "io.github.koppor.koppter"
         minSdk = 26
         targetSdk = 36
+        // ponytail: one version code for all builds; they install over each other as long as it never decreases.
+        // Derive it from the release date when a store or an updater needs to tell builds apart.
         versionCode = 1
-        versionName = "0"
+        // The release workflow passes the day of the release.
+        versionName = providers.environmentVariable("KOPPTER_VERSION").getOrElse("0")
     }
 
     // The key of the published APK is not in the repository (decision 0010).

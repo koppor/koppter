@@ -221,6 +221,12 @@ A column whose filter contains a word or a negated comparison does not take task
 In `koppter.yml`, a filter that contains a hashtag has to be quoted (`Doing: "#doing"`), as YAML reads an unquoted `#` as the start of a comment.
 The application writes all filters quoted.
 
+## Installing
+
+The [latest release](https://github.com/koppor/koppter/releases/latest) carries the Android application as the file `koppter-<date>.apk`.
+There is one release per day on which something changed, named after that day.
+The desktop application is not packaged yet; it is started from the sources, see [running](#running).
+
 ## Building
 
 Requirements: a JDK that starts Gradle (17 or newer) and the Android SDK (`ANDROID_HOME`, or `sdk.dir` in `local.properties`).
@@ -248,7 +254,7 @@ It reads `todo.txt` in the home directory unless another file is set in the sett
 ```
 
 builds the Android application as `android/build/outputs/apk/debug/android-debug.apk`.
-The build workflow publishes the release variant, signed with a key that is a secret of the repository ([decision 0010](docs/decisions/0010-signing-key-as-repository-secret.md)), as the artifact `koppter-android`.
+The workflows build the release variant, signed with a key that is a secret of the repository ([decision 0010](docs/decisions/0010-signing-key-as-repository-secret.md)): the build workflow publishes it as the artifact `koppter-android`, the daily release workflow attaches it to the release.
 
 ## Project documents
 
