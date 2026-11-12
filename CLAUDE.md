@@ -41,6 +41,8 @@
   `KOPPTER_SSH_TEST_URL=git@github.com:owner/repo.git ./gradlew :core:jvmTest --tests '*SshRemoteTest*'` checks SSH against a real server.
 * `:app` — Compose Multiplatform. `commonMain`: all screens and `TodoController` (state and operations).
   `desktopMain`: entry point. `desktopTest`: UI tests (`runComposeUiTest`, headless); `ScreenshotTest` writes `app/build/screenshots/`.
+  The README shows copies in `docs/screenshots/`: after a change of the user interface, run `./gradlew :app:desktopTest --tests '*ScreenshotTest*'` and copy the images there.
+  The tasks in that test are invented; never put real data into it.
   Android library target: compiled from the same `commonMain`.
 * `:android` — the Android application: `MainActivity`, `DocumentStorage` (file behind a `content:` URI).
   Not run on a device or emulator in development sessions; say so when reporting Android changes.

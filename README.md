@@ -5,6 +5,39 @@ A [todo.txt](https://github.com/todotxt/todo.txt) application for Android and fo
 Status: early development on the `experimental` branch.
 The Android application is built but has not been run on a device yet.
 
+## Screenshots
+
+The tasks in the screenshots are invented.
+
+The task list with the filter panel.
+Projects, contexts, tags and the priority are labels at the top right of each task.
+
+![Task list with the filter panel on the left](docs/screenshots/list.png)
+
+The board with one column per priority, while a task is dragged from column B to column A.
+
+![Board by priority with a task being dragged to another column](docs/screenshots/board-priority.png)
+
+The board with one column per project.
+
+![Board with one column per project](docs/screenshots/board-project.png)
+
+The board with [columns defined by filters](#board): *Now* is `due:<=today -@waiting`, *Waiting* is `@waiting`, *This week* is `due:<1w`, *Important* is `(>C)`.
+
+![Board with the columns Now, Waiting, This week and Important](docs/screenshots/board-filter.png)
+
+The edit dialog: the description without metadata at the top, the metadata below, then the note, the resulting line of the todo.txt file, and the date the task was added according to the git history.
+
+![Edit dialog of a task](docs/screenshots/edit.png)
+
+The settings, with the board columns by filter and the public SSH key for the git repository.
+
+![Settings dialog](docs/screenshots/settings.png)
+
+In a narrow window, as on a phone, the filter panel is a drawer.
+
+![Task list in a narrow window](docs/screenshots/narrow.png)
+
 ## Goals
 
 * The todo.txt file is the only data store, and it stays a file that other todo.txt tools can read and write.

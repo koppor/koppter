@@ -127,7 +127,7 @@ fun EditDialog(
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     val field = Modifier.width(165.dp)
                     DateField("Due date", due, { due = it }, dueValid, field.testTag("edit-due"))
-                    DateField("Threshold date", threshold, { threshold = it }, thresholdValid, field.testTag("edit-threshold"))
+                    DateField("Threshold", threshold, { threshold = it }, thresholdValid, field.testTag("edit-threshold"))
                     OutlinedTextField(
                         value = recurrence,
                         onValueChange = { recurrence = it },

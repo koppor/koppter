@@ -16,6 +16,7 @@ import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -160,47 +161,50 @@ fun Board(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             groups.forEachIndexed { index, group ->
-                Column(
-                    Modifier.width(320.dp).fillMaxHeight()
-                        .onGloballyPositioned { columnBounds[index] = it.boundsInRoot() }
-                        .background(
-                            if (group == target) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent,
-                            MaterialTheme.shapes.medium,
-                        )
-                        .testTag("board-column"),
-                ) {
-                    Text(
-                        "${group.title} (${group.entries.size})",
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp).testTag("board-column-title"),
-                    )
-                    LazyColumn(
-                        contentPadding = PaddingValues(bottom = 88.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                // A column of another title is another column: it starts at its top instead of where its predecessor was scrolled to.
+                key(group.title) {
+                    Column(
+                        Modifier.width(320.dp).fillMaxHeight()
+                            .onGloballyPositioned { columnBounds[index] = it.boundsInRoot() }
+                            .background(
+                                if (group == target) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent,
+                                MaterialTheme.shapes.medium,
+                            )
+                            .testTag("board-column"),
                     ) {
-                        items(group.entries, key = { it.index }) { entry ->
-                            var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
-                            val drag = Modifier.onGloballyPositioned { coordinates = it }.pointerInput(entry, group) {
-                                awaitEachGesture {
-                                    val down = awaitFirstDown(requireUnconsumed = false)
-                                    val start = if (down.type == PointerType.Mouse) {
-                                        awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
-                                    } else {
-                                        awaitLongPressOrCancellation(down.id)
-                                    } ?: return@awaitEachGesture
-                                    pointer = coordinates?.localToRoot(start.position) ?: return@awaitEachGesture
-                                    dragged = entry to group
-                                    val dropped = drag(start.id) { change ->
-                                        pointer += change.positionChange()
-                                        change.consume()
+                        Text(
+                            "${group.title} (${group.entries.size})",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp).testTag("board-column-title"),
+                        )
+                        LazyColumn(
+                            contentPadding = PaddingValues(bottom = 88.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            items(group.entries, key = { it.index }) { entry ->
+                                var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+                                val drag = Modifier.onGloballyPositioned { coordinates = it }.pointerInput(entry, group) {
+                                    awaitEachGesture {
+                                        val down = awaitFirstDown(requireUnconsumed = false)
+                                        val start = if (down.type == PointerType.Mouse) {
+                                            awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                                        } else {
+                                            awaitLongPressOrCancellation(down.id)
+                                        } ?: return@awaitEachGesture
+                                        pointer = coordinates?.localToRoot(start.position) ?: return@awaitEachGesture
+                                        dragged = entry to group
+                                        val dropped = drag(start.id) { change ->
+                                            pointer += change.positionChange()
+                                            change.consume()
+                                        }
+                                        val to = columnUnderPointer()
+                                        dragged = null
+                                        if (dropped && to != null && canMove(entry, group, to)) onMove(entry, group, to)
                                     }
-                                    val to = columnUnderPointer()
-                                    dragged = null
-                                    if (dropped && to != null && canMove(entry, group, to)) onMove(entry, group, to)
                                 }
-                            }
-                            Box(drag) {
-                                TaskCard(entry, today, onToggle = { onToggle(entry) }, onOpen = { onOpen(entry) })
+                                Box(drag) {
+                                    TaskCard(entry, today, onToggle = { onToggle(entry) }, onOpen = { onOpen(entry) })
+                                }
                             }
                         }
                     }
