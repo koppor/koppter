@@ -21,7 +21,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - On Android, the settings show the public SSH key of the device and clone a git repository whose todo.txt file is then used.
 - Synchronization status and a button to synchronize in the top bar.
 - The edit dialog shows when a task was added and completed, derived from the git history.
-- Completing a task with a recurrence tag (`rec:`) adds its next occurrence.
+- Completing a task with a recurrence tag (`rec:`, such as `rec:2w`, `rec:m` or `rec:+1y`) adds its next occurrence.
 - Notes for tasks, kept as files in the directory `notes` next to the todo.txt file and named by the tag `note:`.
 - Tasks scheduled in `ice_recur.txt` next to the todo.txt file are added on their days.
 - *Top* switch that restricts the list to the first tasks; their number is a setting.

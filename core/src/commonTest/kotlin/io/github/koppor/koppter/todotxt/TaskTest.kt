@@ -55,10 +55,10 @@ class TaskTest {
     // [utest->dsn~task-model~1]
     @Test
     fun separatesDescriptionFromMetadata() {
-        val task = Task.parse("Test due:2026-12-12 t:2026-11-19 +test @Stuttgart hallo du rec:1m")
-        assertEquals("Test hallo du", task.description)
-        assertEquals(listOf("test"), task.projects)
-        assertEquals(listOf("Stuttgart"), task.contexts)
+        val task = Task.parse("Water due:2026-12-12 t:2026-11-19 +Garden @home the plants rec:m")
+        assertEquals("Water the plants", task.description)
+        assertEquals(listOf("Garden"), task.projects)
+        assertEquals(listOf("home"), task.contexts)
         assertEquals(LocalDate(2026, 12, 12), task.due)
         assertEquals(LocalDate(2026, 11, 19), task.threshold)
         assertEquals(Recurrence(1, Recurrence.Unit.MONTH), task.recurrence)

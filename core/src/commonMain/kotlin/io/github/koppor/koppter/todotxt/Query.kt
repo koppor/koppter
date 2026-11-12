@@ -147,7 +147,8 @@ class Query private constructor(private val terms: List<Term>) {
             "today" -> today
             "tomorrow" -> today.plus(DatePeriod(days = 1))
             "yesterday" -> today.minus(DatePeriod(days = 1))
-            else -> Task.parseDate(value) ?: Recurrence.parse(value)?.next(today)
+            // An interval has an amount here, so that a value such as the "m" of `size:m` stays text.
+            else -> Task.parseDate(value) ?: value.takeIf { it.first().isDigit() }?.let(Recurrence::parse)?.next(today)
         }
     }
 }

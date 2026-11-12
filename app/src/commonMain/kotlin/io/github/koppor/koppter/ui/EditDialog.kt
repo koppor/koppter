@@ -134,7 +134,7 @@ fun EditDialog(
                         value = recurrence,
                         onValueChange = { recurrence = it },
                         label = { Text("Recurrence") },
-                        placeholder = { Text("2w, +1m") },
+                        placeholder = { Text("w, 2w, +1m") },
                         isError = !recurrenceValid,
                         singleLine = true,
                         modifier = field.testTag("edit-recurrence"),

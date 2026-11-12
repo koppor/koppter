@@ -6,7 +6,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 
 /**
- * The value of a `rec:` tag: an interval such as `1m` or `+2w`.
+ * The value of a `rec:` tag: an interval such as `1m`, `+2w` or, without amount, `w` for one week.
  *
  * A [strict] recurrence (leading `+`) counts from the previous due date, a plain one from the day of completion.
  */
@@ -31,11 +31,12 @@ data class Recurrence(val amount: Int, val unit: Unit, val strict: Boolean = fal
     override fun toString(): String = (if (strict) "+" else "") + amount + unit.letter
 
     companion object {
-        private val PATTERN = Regex("^(\\+?)(\\d+)([dbwmy])$")
+        private val PATTERN = Regex("^(\\+?)(\\d*)([dbwmy])$")
 
         fun parse(text: String): Recurrence? {
             val match = PATTERN.matchEntire(text) ?: return null
-            val amount = match.groupValues[2].toIntOrNull()?.takeIf { it > 0 } ?: return null
+            // Without an amount, the interval is one unit, as other todo.txt tools read it.
+            val amount = if (match.groupValues[2].isEmpty()) 1 else match.groupValues[2].toIntOrNull()?.takeIf { it > 0 } ?: return null
             val unit = Unit.entries.first { it.letter == match.groupValues[3].single() }
             return Recurrence(amount, unit, strict = match.groupValues[1] == "+")
         }

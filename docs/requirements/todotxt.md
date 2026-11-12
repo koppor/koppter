@@ -90,6 +90,7 @@ Needs: dsn
 `req~recurrence-tag~1`
 
 The application understands the recurrence tag `rec:` with an amount and one of the units day (`d`), business day (`b`), week (`w`), month (`m`) and year (`y`), optionally preceded by `+` for a recurrence that counts from the due date.
+Without an amount, the interval is one unit: `rec:w` is `rec:1w`.
 
 Covers:
 

@@ -104,6 +104,8 @@ class QueryTest {
         assertEquals(null, applied("-mom", "Call Mom"))
         assertEquals(null, applied("-due:<=today", "Call Mom due:2026-11-01"))
         assertEquals(null, applied("status:>doing", "Call Mom"))
+        // A single letter is a value, not an interval.
+        assertEquals("Call Mom size:m", applied("size:m", "Call Mom"))
         assertEquals(null, applied("(>A)", "Call Mom"))
         assertEquals(null, applied("@phone -@phone", "Call Mom"))
     }
