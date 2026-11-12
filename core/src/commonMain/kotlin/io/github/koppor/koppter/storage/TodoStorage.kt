@@ -20,6 +20,18 @@ interface TodoStorage {
     fun version(): Any?
 }
 
+/**
+ * A storage that keeps further files next to the todo.txt file: the notes of tasks and the schedule of recurring tasks.
+ * Paths are relative to the directory of the todo.txt file and use `/`.
+ */
+interface CompanionFiles {
+    /** The content of the file, or `null` if it does not exist. */
+    fun readCompanion(path: String): String?
+
+    /** A storage with a history records the file together with the next [TodoStorage.write]. */
+    fun writeCompanion(path: String, text: String)
+}
+
 enum class SyncState { IDLE, RUNNING, FAILED }
 
 data class SyncStatus(val state: SyncState, val message: String = "")

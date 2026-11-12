@@ -39,6 +39,30 @@ Covers:
 
 Needs: dsn
 
+### Notes
+`req~notes~1`
+
+The user attaches a note of several lines to a task.
+As with the `note` add-on of the todo.txt command line, the note is a file in the directory `notes` next to the todo.txt file, and the task names it with the tag `note:`.
+
+Covers:
+
+* `feat~extensions~1`
+
+Needs: dsn
+
+### Scheduled tasks
+`req~scheduled-tasks~1`
+
+The application adds the tasks that the file `ice_recur.txt` next to the todo.txt file schedules for the current day, in the format of the `ice_recur` add-on.
+A task is not added while an open task with the same text exists.
+
+Covers:
+
+* `feat~extensions~1`
+
+Needs: dsn
+
 ### Board
 `req~board~1`
 
@@ -128,5 +152,61 @@ Covers:
 
 * `req~board~1`
 * `req~top-tasks~1`
+
+Needs: impl, utest
+
+### Companion files
+`dsn~companion-files~1`
+
+A storage that implements `CompanionFiles` reads and writes files relative to the directory of the todo.txt file.
+`FileStorage` and `GitStorage` implement it; `GitStorage` commits the companion files written since the last commit together with the next change of the todo.txt file.
+The storage of a single document on Android does not implement it, so that notes and scheduled tasks are not available there.
+
+Covers:
+
+* `req~notes~1`
+* `req~scheduled-tasks~1`
+
+Needs: impl, utest
+
+### Notes
+`dsn~notes~1`
+
+For a storage with companion files, the edit dialog has a field for the note.
+A task without a note gets the tag `note:` with a new file name of three characters and the extension `.txt` when the user enters a note; clearing the note removes the tag and leaves the file.
+`TodoController` writes the text to `notes/<name>` before it writes the task.
+A change of the note alone is passed to the storage as a change of its own, so that a storage with a history records it.
+
+Covers:
+
+* `req~notes~1`
+
+Needs: impl, utest
+
+### Schedule of ice_recur
+`dsn~ice-recur-schedule~1`
+
+`IceRecurEntry.parse` reads a line of the form `[@start] [@@end] timing - task`.
+The timing is `daily`, `weekly`, `monthly` or `yearly` with an optional interval, followed by the specifiers `day`, `day_of_month`, `day_of_week`, `day_of_year` and `month_of_year`, separated by ` ; `.
+`IceRecurEntry.occursOn` tells whether the schedule includes a date.
+Without a start, the start is 2018-01-01, as in the add-on; weeks start on Sunday.
+A line that is not understood is skipped.
+
+Covers:
+
+* `req~scheduled-tasks~1`
+
+Needs: impl, utest
+
+### Run of ice_recur
+`dsn~ice-recur-run~1`
+
+`iceRecurTasks` returns the tasks of the entries that occur today and have no open task with the same text.
+`TodoController` adds them once per day and device; the day of the last run is kept in the settings.
+With a synchronizing storage, the run waits for a running synchronization, and a task that the history shows as added today counts as present even if it is completed.
+
+Covers:
+
+* `req~scheduled-tasks~1`
 
 Needs: impl, utest

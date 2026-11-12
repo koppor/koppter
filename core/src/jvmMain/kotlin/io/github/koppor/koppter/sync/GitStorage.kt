@@ -1,5 +1,6 @@
 package io.github.koppor.koppter.sync
 
+import io.github.koppor.koppter.storage.CompanionFiles
 import io.github.koppor.koppter.storage.FileStorage
 import io.github.koppor.koppter.storage.SyncState
 import io.github.koppor.koppter.storage.SyncStatus
@@ -36,7 +37,7 @@ class GitStorage(
     private val file: Path,
     private val repository: Repository,
     private val ssh: SshSessionFactory? = null,
-) : SyncingStorage {
+) : SyncingStorage, CompanionFiles {
     private val git = Git(repository)
     private val files = FileStorage(file)
     private val path = repository.workTree.toPath().toRealPath().relativize(file.toAbsolutePath().normalize().let { it.parent.toRealPath().resolve(it.fileName) })
@@ -46,7 +47,19 @@ class GitStorage(
     private val lock = Any()
     private val background = Executors.newSingleThreadExecutor { runnable -> Thread(runnable, "koppter-git").apply { isDaemon = true } }
 
+    /** Companion files written since the last commit, as paths in the repository. */
+    private val companions = mutableSetOf<String>()
+
     override var onStatus: (SyncStatus) -> Unit = {}
+
+    // [impl->dsn~companion-files~1]
+    override fun readCompanion(path: String): String? = synchronized(lock) { files.readCompanion(path) }
+
+    override fun writeCompanion(path: String, text: String) = synchronized(lock) {
+        files.writeCompanion(path, text)
+        companions += this.path.substringBeforeLast('/', "").let { if (it.isEmpty()) path else "$it/$path" }
+        Unit
+    }
 
     override fun read(): String = synchronized(lock) { files.read() }
 
@@ -140,11 +153,15 @@ class GitStorage(
         git.commit().setMessage("Merge remote changes").setIdent().call()
     }
 
+    /** Commits the todo.txt file and the companion files written since the last commit, and nothing else. */
     private fun commit(message: String) {
-        git.add().addFilepattern(path).call()
-        val status = git.status().addPath(path).call()
-        if (status.added.isEmpty() && status.changed.isEmpty() && status.removed.isEmpty()) return
-        git.commit().setOnly(path).setMessage(message).setIdent().call()
+        val paths = listOf(path) + companions
+        git.add().apply { paths.forEach(::addFilepattern) }.call()
+        val status = git.status().apply { paths.forEach(::addPath) }.call()
+        val changed = status.added + status.changed + status.removed
+        if (changed.isEmpty()) return
+        git.commit().apply { changed.forEach(::setOnly) }.setMessage(message).setIdent().call()
+        companions.clear()
     }
 
     // [impl->dsn~dates-from-history~1]

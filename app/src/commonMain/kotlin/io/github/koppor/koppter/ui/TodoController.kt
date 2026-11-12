@@ -3,6 +3,7 @@ package io.github.koppor.koppter.ui
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import io.github.koppor.koppter.storage.CompanionFiles
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SyncState
 import io.github.koppor.koppter.storage.SyncStatus
@@ -14,10 +15,12 @@ import io.github.koppor.koppter.todotxt.Filter
 import io.github.koppor.koppter.todotxt.Group
 import io.github.koppor.koppter.todotxt.GroupKey
 import io.github.koppor.koppter.todotxt.groupEntries
+import io.github.koppor.koppter.todotxt.iceRecurTasks
 import io.github.koppor.koppter.todotxt.Task
 import io.github.koppor.koppter.todotxt.TodoFile
 import io.github.koppor.koppter.todotxt.listOrder
 import kotlinx.datetime.LocalDate
+import kotlin.random.Random
 
 /**
  * The state of the application and the operations on it.
@@ -111,11 +114,53 @@ class TodoController(
             return
         }
         if (version != loadedVersion) load()
+        addScheduledTasks()
+    }
+
+    /**
+     * Adds the tasks that `ice_recur.txt` schedules for today, once per day and device.
+     * It waits for a running synchronization, so that tasks another device added today are known.
+     */
+    // [impl->dsn~ice-recur-run~1]
+    private fun addScheduledTasks() {
+        val today = today()
+        if (settings.iceRecurLastRun == today.toString() || syncStatus?.state == SyncState.RUNNING) return
+        guarded {
+            val schedule = (storage as? CompanionFiles)?.readCompanion(ICE_RECUR_FILE) ?: return@guarded
+            // A task that was added today counts as present even if it is completed already.
+            val addedToday = (storage as? SyncingStorage)?.dates().orEmpty().filterValues { it.added == today }.keys
+            val existing = file.lines.filter { it.isNotBlank() }.map { line -> Task.parse(line).let { if (line in addedToday) it.reopen() else it } }
+            val tasks = iceRecurTasks(schedule, today, existing)
+            if (tasks.isNotEmpty()) {
+                write(tasks.fold(file) { current, task -> current.add(task.created(today, settings.writeDates)) }, "Add recurring tasks")
+            }
+            updateSettings(settings.copy(iceRecurLastRun = today.toString()))
+        }
+    }
+
+    /** The text of the note of the task; empty if it has none, `null` if the storage keeps no notes. */
+    // [impl->dsn~notes~1]
+    fun noteOf(task: Task): String? = try {
+        (storage as? CompanionFiles)?.let { files -> task.tag(Task.NOTE)?.let { files.readCompanion("$NOTES_DIRECTORY/$it") }.orEmpty() }
+    } catch (_: Exception) {
+        null
+    }
+
+    /** A file name for the note of a task that has none yet. */
+    fun newNoteName(): String = Random.nextInt(36 * 36 * 36).toString(36).padStart(3, '0') + ".txt"
+
+    /** Writes the note into the file that the `note:` tag of the task names; returns whether the text changed. */
+    private fun saveNote(task: Task, note: String?): Boolean {
+        val name = task.tag(Task.NOTE) ?: return false
+        if (note == null || note == noteOf(task)) return false
+        (storage as? CompanionFiles)?.writeCompanion("$NOTES_DIRECTORY/$name", note) ?: return false
+        return true
     }
 
     // [impl->dsn~task-operations~1]
-    fun add(task: Task) {
+    fun add(task: Task, note: String? = null) {
         if (task.body.isBlank()) return
+        guarded { saveNote(task, note) }
         write(file.add(task.created(today(), settings.writeDates)), "Add task: ${task.description}")
     }
 
@@ -133,9 +178,14 @@ class TodoController(
         }
     }
 
-    fun replace(entry: Entry, task: Task) {
+    fun replace(entry: Entry, task: Task, note: String? = null) {
         val index = locate(entry) ?: return
-        write(file.replace(index, task), "Edit task: ${task.description}")
+        var noteChanged = false
+        guarded { noteChanged = saveNote(task, note) }
+        val new = file.replace(index, task)
+        // A changed note alone is a change to record, although the todo.txt file stays the same.
+        if (new == file && noteChanged) guarded { storage.write(file.serialize(), "Edit note: ${task.description}") }
+        write(new, "Edit task: ${task.description}")
     }
 
     fun delete(entry: Entry) {
@@ -172,6 +222,11 @@ class TodoController(
             file = new
             loadedVersion = storage.version()
         }
+    }
+
+    private companion object {
+        const val ICE_RECUR_FILE = "ice_recur.txt"
+        const val NOTES_DIRECTORY = "notes"
     }
 
     private fun guarded(action: () -> Unit) {

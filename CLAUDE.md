@@ -44,6 +44,7 @@
   Android library target: compiled from the same `commonMain`.
 * `:android` — the Android application: `MainActivity`, `DocumentStorage` (file behind a `content:` URI).
   Not run on a device or emulator in development sessions; say so when reporting Android changes.
+* Files next to todo.txt (`notes/`, `ice_recur.txt`) go through `CompanionFiles`; `GitStorage` commits them with the next todo.txt change.
 * UI elements carry a `testTag`; colors come from `MaterialTheme.colorScheme`, never from literals.
 * The file is the data store.
   A line that the user did not edit is written back unchanged.

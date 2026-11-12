@@ -7,24 +7,29 @@ data class Settings(
     val writeDates: Boolean = false,
     /** The number of tasks the *Top* view shows. */
     val topCount: Int = 10,
+    /** The day (`YYYY-MM-DD`) on which this device last added the tasks of `ice_recur.txt`. */
+    val iceRecurLastRun: String = "",
 ) {
     // [impl->dsn~settings-file~1]
     fun toProperties(): Map<String, String> = mapOf(
         TODO_FILE to todoFile,
         WRITE_DATES to writeDates.toString(),
         TOP_COUNT to topCount.toString(),
+        ICE_RECUR_LAST_RUN to iceRecurLastRun,
     )
 
     companion object {
         private const val TODO_FILE = "todoFile"
         private const val WRITE_DATES = "writeDates"
         private const val TOP_COUNT = "topCount"
+        private const val ICE_RECUR_LAST_RUN = "iceRecurLastRun"
 
         /** Unknown keys are ignored and missing keys take their default, so that settings files of other versions load. */
         fun fromProperties(properties: Map<String, String>): Settings = Settings(
             todoFile = properties[TODO_FILE].orEmpty(),
             writeDates = properties[WRITE_DATES].toBoolean(),
             topCount = properties[TOP_COUNT]?.toIntOrNull()?.takeIf { it > 0 } ?: Settings().topCount,
+            iceRecurLastRun = properties[ICE_RECUR_LAST_RUN].orEmpty(),
         )
     }
 }

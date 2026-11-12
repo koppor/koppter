@@ -62,9 +62,13 @@ fun EditDialog(
     original: Task,
     isNew: Boolean,
     dates: TaskDates?,
+    /** The text of the note of the task; `null` if the storage keeps no notes. */
+    originalNote: String?,
+    /** The file name for the note if the task has none yet. */
+    newNoteName: String,
     knownProjects: List<String>,
     knownContexts: List<String>,
-    onSave: (Task) -> Unit,
+    onSave: (Task, note: String?) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -75,6 +79,7 @@ fun EditDialog(
     var recurrence by remember { mutableStateOf(original.tag(Task.RECURRENCE).orEmpty()) }
     var projects by remember { mutableStateOf(original.projects) }
     var contexts by remember { mutableStateOf(original.contexts) }
+    var note by remember { mutableStateOf(originalNote.orEmpty()) }
 
     val dueValid = due.isBlank() || Task.parseDate(due.trim()) != null
     val thresholdValid = threshold.isBlank() || Task.parseDate(threshold.trim()) != null
@@ -84,6 +89,8 @@ fun EditDialog(
         .withTag(Task.DUE, due.trim())
         .withTag(Task.THRESHOLD, threshold.trim())
         .withTag(Task.RECURRENCE, recurrence.trim())
+        // [impl->dsn~notes~1]
+        .let { if (originalNote == null) it else it.withTag(Task.NOTE, if (note.isBlank()) null else original.tag(Task.NOTE) ?: newNoteName) }
     val valid = dueValid && thresholdValid && recurrenceValid && result.body.isNotBlank()
 
     Dialog(onDismissRequest = onDismiss) {
@@ -135,6 +142,17 @@ fun EditDialog(
                 NameList("Project", "+", projects, knownProjects, { projects = it }, "edit-project")
                 NameList("Context", "@", contexts, knownContexts, { contexts = it }, "edit-context")
 
+                if (originalNote != null) {
+                    OutlinedTextField(
+                        value = note,
+                        onValueChange = { note = it },
+                        label = { Text("Note") },
+                        minLines = 2,
+                        maxLines = 8,
+                        modifier = Modifier.fillMaxWidth().testTag("edit-note"),
+                    )
+                }
+
                 Text("Line in todo.txt", style = MaterialTheme.typography.labelMedium)
                 Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.small, modifier = Modifier.fillMaxWidth()) {
                     SelectionContainer {
@@ -164,7 +182,7 @@ fun EditDialog(
                     }
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = onDismiss, modifier = Modifier.testTag("edit-cancel")) { Text("Cancel") }
-                    Button(onClick = { onSave(result) }, enabled = valid, modifier = Modifier.testTag("edit-save")) { Text("Save") }
+                    Button(onClick = { onSave(result, if (originalNote == null) null else note) }, enabled = valid, modifier = Modifier.testTag("edit-save")) { Text("Save") }
                 }
             }
         }

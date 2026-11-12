@@ -186,10 +186,12 @@ private fun MainScreen(
             original = entry?.task ?: Task(body = ""),
             isNew = entry == null,
             dates = remember(entry) { entry?.let { controller.datesOf(it.task) } },
+            originalNote = remember(entry) { controller.noteOf(entry?.task ?: Task(body = "")) },
+            newNoteName = remember(entry) { controller.newNoteName() },
             knownProjects = controller.projects,
             knownContexts = controller.contexts,
-            onSave = { task ->
-                if (entry == null) controller.add(task) else controller.replace(entry, task)
+            onSave = { task, note ->
+                if (entry == null) controller.add(task, note) else controller.replace(entry, task, note)
                 editing = null
             },
             onDelete = {

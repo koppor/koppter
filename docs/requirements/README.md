@@ -10,7 +10,7 @@ Requirements are traced with [OpenFastTrace](https://github.com/itsallcode/openf
 | [todotxt.md](todotxt.md) | Reading, writing, filtering and ordering tasks (`req`, `dsn`) |
 | [ui.md](ui.md) | Screens, storage and settings (`req`, `dsn`) |
 | [sync.md](sync.md) | Synchronization through git (`req`, `dsn`) |
-| [extensions.md](extensions.md) | Recurrence, top tasks, most important tasks, board (`req`, `dsn`) |
+| [extensions.md](extensions.md) | Recurrence, top tasks, most important tasks, notes, scheduled tasks, board (`req`, `dsn`) |
 | [android.md](android.md) | Android application (`req`, `dsn`) |
 
 Chain: `feat` → `req` (what the user needs) → `dsn` (how it is built) → `impl` and `utest` tags in the source code.

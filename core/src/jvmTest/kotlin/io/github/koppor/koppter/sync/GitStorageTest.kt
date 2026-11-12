@@ -113,4 +113,20 @@ class GitStorageTest {
         assertNull(GitStorage.repositoryOf(Files.createTempDirectory("koppter-plain").resolve("todo.txt")))
         assertNotNull(GitStorage.repositoryOf(root.resolve("phone").also { Git.init().setDirectory(it.toFile()).call() }.resolve("sub/../todo.txt")))
     }
+
+    // [utest->dsn~companion-files~1]
+    @Test
+    fun aCompanionFileIsCommittedWithTheNextChange() {
+        val phone = device("phone")
+        assertNull(phone.readCompanion("notes/abc.txt"))
+        phone.writeCompanion("notes/abc.txt", "Ask about the recipe\n")
+        phone.write("Call Mom note:abc.txt\n", "Add task: Call Mom")
+        assertEquals("Ask about the recipe\n", phone.readCompanion("notes/abc.txt"))
+        phone.synchronizeNow()
+
+        val desktop = device("desktop")
+        desktop.synchronizeNow()
+        assertEquals("Ask about the recipe\n", desktop.readCompanion("notes/abc.txt"))
+        assertEquals(listOf("Add task: Call Mom"), messages("desktop"))
+    }
 }

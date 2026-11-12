@@ -10,7 +10,7 @@ import kotlin.io.path.writeText
 
 /** A todo.txt file in the file system. */
 // [impl->dsn~file-storage~1]
-class FileStorage(private val path: Path) : TodoStorage {
+class FileStorage(private val path: Path) : TodoStorage, CompanionFiles {
     override fun read(): String = if (path.exists()) path.readText() else ""
 
     /** Writes to a temporary file first, so that a crash never leaves a half-written todo.txt behind. */
@@ -25,6 +25,17 @@ class FileStorage(private val path: Path) : TodoStorage {
             Files.deleteIfExists(temporary)
         }
     }
+
+    // [impl->dsn~companion-files~1]
+    override fun readCompanion(path: String): String? = companion(path).takeIf { it.exists() }?.readText()
+
+    override fun writeCompanion(path: String, text: String) {
+        val file = companion(path)
+        Files.createDirectories(file.parent)
+        file.writeText(text)
+    }
+
+    private fun companion(relative: String): Path = path.toAbsolutePath().parent.resolve(relative)
 
     override fun version(): Any? = if (path.exists()) path.getLastModifiedTime() to Files.size(path) else null
 }

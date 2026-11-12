@@ -3,7 +3,7 @@
 A [todo.txt](https://github.com/todotxt/todo.txt) application for Android and for Windows and Linux desktops.
 
 Status: early development on the `experimental` branch.
-Nothing is released yet.
+The Android application is built but has not been run on a device yet.
 
 ## Goals
 
@@ -19,6 +19,16 @@ Nothing is released yet.
 * Support for the todo.txt extensions `note`, `top` and `ice_recur`, and for the `rec:` and `t:` tags.
 
 The planned scope is tracked as requirements in [docs/requirements](docs/requirements/README.md).
+
+## Files
+
+| File | Content |
+| --- | --- |
+| `todo.txt` | The tasks |
+| `notes/<name>.txt` | The note of the task with the tag `note:<name>.txt` |
+| `ice_recur.txt` | Schedules of recurring tasks in the format of the [ice_recur](https://github.com/rlpowell/todo-text-stuff/blob/master/ice_recur) add-on, such as `weekly ; day Monday - (B) Plan the week` |
+
+If these files lie in a git repository, the application commits every change and synchronizes with the remote repository.
 
 ## Building
 

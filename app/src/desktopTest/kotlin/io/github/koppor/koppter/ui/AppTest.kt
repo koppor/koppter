@@ -18,6 +18,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.input.key.Key
+import io.github.koppor.koppter.storage.CompanionFiles
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SyncState
 import io.github.koppor.koppter.storage.SyncStatus
@@ -28,10 +29,18 @@ import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-private class MemoryStorage(var text: String) : TodoStorage {
+private class MemoryStorage(var text: String) : TodoStorage, CompanionFiles {
+    val companions = mutableMapOf<String, String>()
+    val changes = mutableListOf<String>()
+    override fun readCompanion(path: String) = companions[path]
+    override fun writeCompanion(path: String, text: String) {
+        companions[path] = text
+    }
+
     override fun read() = text
     override fun write(text: String, change: String) {
         this.text = text
+        changes += change
     }
     override fun version(): Any? = text
 }
@@ -296,5 +305,41 @@ class AppTest {
         // A task on the board is completed and edited like a task in the list.
         onNodeWithText("Thank Mom").performClick()
         onNodeWithTag("edit-dialog").assertExists()
+    }
+
+    // [utest->dsn~notes~1]
+    @Test
+    fun aNoteIsKeptInAFileNamedByATag() = runComposeUiTest {
+        start()
+        openTask("Post signs")
+        onNodeWithTag("edit-note").performTextInput("Ask the neighbors first")
+        onNodeWithTag("edit-save").performClick()
+
+        val line = storage.text.lines()[1]
+        val name = Regex("^Post signs \\+GarageSale note:([0-9a-z]{3}\\.txt)$").matchEntire(line)!!.groupValues[1]
+        assertEquals("Ask the neighbors first", storage.companions["notes/$name"])
+
+        openTask("Post signs")
+        onNodeWithTag("edit-note").assertTextEquals("Note", "Ask the neighbors first")
+        onNodeWithTag("edit-note").performTextReplacement("Ask the neighbors first, then the school")
+        onNodeWithTag("edit-save").performClick()
+        assertEquals(line, storage.text.lines()[1])
+        assertEquals("Ask the neighbors first, then the school", storage.companions["notes/$name"])
+        assertEquals("Edit note: Post signs", storage.changes.last())
+    }
+
+    // [utest->dsn~ice-recur-run~1]
+    @Test
+    fun scheduledTasksAreAddedOncePerDay() = runComposeUiTest {
+        storage.companions["ice_recur.txt"] = "daily - (A) Check mail\nweekly ; day Friday - Take out trash\n"
+        start()
+        mainClock.advanceTimeBy(2_500)
+        assertEquals("(A) Check mail", storage.text.trim().lines().last())
+        assertEquals("Add recurring tasks", storage.changes.last())
+
+        onNodeWithText("Check mail").assertExists()
+        onAllNodesWithTag("task-done")[0].performClick()
+        mainClock.advanceTimeBy(2_500)
+        assertEquals(1, storage.text.lines().count { "Check mail" in it })
     }
 }
