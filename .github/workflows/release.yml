@@ -35,7 +35,7 @@ jobs:
           repo="https://github.com/$GITHUB_REPOSITORY"
           d=$(date -u -d yesterday +%F)
 
-          if [ -z "$(git rev-list origin/main..HEAD)" ]; then
+          if [ -z "$(git rev-list origin/main..HEAD)" ] && ! grep -q '^## \[Unreleased\]' CHANGELOG.md; then
             echo "nothing to merge or release"; exit 0
           fi
 
