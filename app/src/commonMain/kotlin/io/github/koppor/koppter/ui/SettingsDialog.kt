@@ -56,7 +56,9 @@ fun SettingsDialog(
     git: GitSetupActions?,
     /** The definitions of the board columns; `null` if the storage cannot keep them. */
     boardColumns: String?,
-    onSave: (Settings, boardColumns: String?) -> Unit,
+    /** The share actions; `null` if the storage cannot keep them. */
+    shareActions: String?,
+    onSave: (Settings, boardColumns: String?, shareActions: String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -65,6 +67,7 @@ fun SettingsDialog(
     var topCount by remember { mutableStateOf(settings.topCount.toString()) }
     val topCountValue = topCount.trim().toIntOrNull()?.takeIf { it > 0 }
     var columns by remember { mutableStateOf(boardColumns) }
+    var actions by remember { mutableStateOf(shareActions) }
     var theme by remember { mutableStateOf(settings.theme) }
     var appearance by remember { mutableStateOf(settings.appearance) }
 
@@ -115,6 +118,23 @@ fun SettingsDialog(
                         modifier = Modifier.fillMaxWidth().testTag("settings-board-columns"),
                     )
                 }
+                // [impl->dsn~share-actions~1]
+                actions?.let { text ->
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { actions = it },
+                        label = { Text("Share actions") },
+                        supportingText = {
+                            Text(
+                                "What sharing a text to koppter on Android adds: one action per line as title = task, for example: " +
+                                    "reading = {} @research>reading due:2w dur:1h. {} stands for the shared text. Kept in ${ConfigFile.NAME}.",
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        minLines = 2,
+                        modifier = Modifier.fillMaxWidth().testTag("settings-share-actions"),
+                    )
+                }
                 Text("Colors", style = MaterialTheme.typography.titleMedium)
                 RadioRow(ColorTheme.entries.map { it to it.title }, theme, tag = "settings-theme", onSelect = { theme = it })
                 RadioRow(Appearance.entries.map { it to it.title }, appearance, tag = "settings-appearance", onSelect = { appearance = it })
@@ -140,6 +160,7 @@ fun SettingsDialog(
                                     appearance = appearance,
                                 ),
                                 columns?.trim(),
+                                actions?.trim(),
                             )
                         },
                         enabled = topCountValue != null,

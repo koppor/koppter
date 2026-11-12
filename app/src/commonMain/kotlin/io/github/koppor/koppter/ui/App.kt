@@ -256,9 +256,11 @@ private fun MainScreen(
             chooseFile = chooseFile,
             git = git,
             boardColumns = controller.boardColumnsText,
-            onSave = { settings, boardColumns ->
-                // The columns belong to the file that was open when the dialog was opened.
+            shareActions = controller.shareActionsText,
+            onSave = { settings, boardColumns, shareActions ->
+                // The columns and share actions belong to the file that was open when the dialog was opened.
                 boardColumns?.let(controller::updateBoardColumns)
+                shareActions?.let(controller::updateShareActions)
                 controller.updateSettings(settings)
                 showSettings = false
             },

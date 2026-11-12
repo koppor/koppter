@@ -144,7 +144,8 @@ class Query private constructor(private val terms: List<Term>) {
             else -> order == 0
         }
 
-        private fun date(value: String, today: LocalDate): LocalDate? = when (value) {
+        /** The date that the value of a term names; `null` if it names none. */
+        internal fun date(value: String, today: LocalDate): LocalDate? = when (value) {
             "today" -> today
             "tomorrow" -> today.plus(DatePeriod(days = 1))
             "yesterday" -> today.minus(DatePeriod(days = 1))

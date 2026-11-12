@@ -196,6 +196,23 @@ The application differs from the add-on in these points:
   In a git repository, a task that any device added since then counts as existing, also when it is completed already.
   Without git, a second device may add a task again that was added and completed on the first.
 
+## Sharing to koppter on Android
+
+A text that another application shares to koppter, such as the link of an article, becomes a task at once; no screen opens.
+*Share actions* in the settings state what the task gets besides the shared text, one action per line as `name = task`:
+
+```text
+reading = {} @research>reading due:2w dur:1h
+inbox = @inbox
+```
+
+* `{}` stands for the shared text; without it, the shared text stands in front.
+* `due:` and `t:` may be relative to the day of sharing: `2w`, `3d`, `tomorrow`.
+* From Android 10 on, each action is a target of its own in the share sheet, named as the action; the entry *koppter* applies the first action.
+* The actions are kept in `koppter.yml` next to the todo.txt file, so that they can be edited on the desktop.
+  They need a todo.txt file in the storage of the application or in a git repository, not one of a document provider.
+* Words of the shared text that start with `+`, `@` or `#` become projects, contexts and hashtags of the task.
+
 ## Board
 
 The board shows one column per priority, project, context, hashtag or due date range.

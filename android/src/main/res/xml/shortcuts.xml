@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The shortcuts that MainActivity publishes for the share actions appear as targets for shared text. -->
+<!-- [impl->dsn~android-share-target~1] -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <share-target android:targetClass="io.github.koppor.koppter.android.ShareActivity">
+        <data android:mimeType="text/plain" />
+        <category android:name="io.github.koppor.koppter.android.category.SHARE" />
+    </share-target>
+</shortcuts>

@@ -17,6 +17,7 @@ import io.github.koppor.koppter.todotxt.Group
 import io.github.koppor.koppter.todotxt.BoardColumn
 import io.github.koppor.koppter.todotxt.GroupKey
 import io.github.koppor.koppter.todotxt.Query
+import io.github.koppor.koppter.todotxt.ShareAction
 import io.github.koppor.koppter.todotxt.groupByColumns
 import io.github.koppor.koppter.todotxt.parseBoardColumns
 import io.github.koppor.koppter.todotxt.groupEntries
@@ -155,6 +156,37 @@ class TodoController(
             loadedVersion = storage.version()
         }
         loadConfig()
+    }
+
+    // [impl->dsn~share-actions~1]
+    val shareActions: List<ShareAction> get() = ConfigFile.shareActions(config.orEmpty())
+
+    /** The share actions as the settings show them; `null` if the storage keeps no configuration file. */
+    val shareActionsText: String? get() = config?.let { shareActions.joinToString("\n") { "${it.title} = ${it.template}" } }
+
+    /** Replaces the share actions by those in the text, one per line as `title = template`. */
+    fun updateShareActions(text: String) {
+        val actions = ShareAction.parse(text)
+        if (actions == shareActions) return
+        guarded {
+            (storage as? CompanionFiles)?.writeCompanion(ConfigFile.NAME, ConfigFile.withShareActions(config.orEmpty(), actions)) ?: return@guarded
+            storage.write(file.serialize(), "Edit share actions")
+            loadedVersion = storage.version()
+        }
+        loadConfig()
+    }
+
+    /**
+     * Adds the text that another application shared as a task.
+     * [action] is the title of the share action to apply; without it or if there is none with this title, the first one is applied.
+     * Returns what to tell the user.
+     */
+    fun share(text: String, action: String? = null): String {
+        val chosen = shareActions.firstOrNull { it.title == action } ?: shareActions.firstOrNull()
+        val task = chosen?.task(text, today()) ?: Task(body = text.trim().replace(Regex("\\s+"), " "))
+        error = null
+        add(task)
+        return error ?: "Added${chosen?.let { " (${it.title})" }.orEmpty()}: ${task.description}"
     }
 
     /** Reloads if another program changed the file. */

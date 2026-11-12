@@ -310,6 +310,26 @@ class AppTest {
         onNodeWithTag("filter-context-research>reading").assertIsOn()
     }
 
+    // [utest->dsn~share-actions~1]
+    @Test
+    fun aShareActionFromTheSettingsMakesATaskOfSharedText() = runComposeUiTest {
+        val controller = TodoController(Settings(), { storage }, today = { LocalDate(2026, 11, 12) })
+        setContent { App(controller, "todo.txt") }
+        // Without an action, the shared text is the task.
+        assertEquals("Added: An article", controller.share("An article"))
+
+        onNodeWithTag("open-settings").performClick()
+        onNodeWithTag("settings-share-actions").performScrollTo().performTextInput("inbox = @inbox\nreading = {} @research>reading due:2w dur:1h")
+        onNodeWithTag("settings-save").performScrollTo().performClick()
+        assertEquals(true, storage.companions.getValue("koppter.yml").contains("share-actions:"))
+
+        assertEquals("Added (reading): https://example.org/article", controller.share("https://example.org/article", "reading"))
+        assertEquals("https://example.org/article @research>reading due:2026-11-26 dur:1h", storage.text.trim().lines().last())
+        // A title that no action has, and no title, apply the first action.
+        assertEquals("Added (inbox): Milk", controller.share("Milk", "gone"))
+        assertEquals("Milk @inbox", storage.text.trim().lines().last())
+    }
+
     // [utest->dsn~color-themes~1]
     @Test
     fun theSettingsDialogChoosesThePaletteAndItsVariant() = runComposeUiTest {
