@@ -1,5 +1,6 @@
 [files]
-extend-exclude = ["gradlew", "gradlew.bat", "*.keystore"]
+# gradle-daemon-jvm.properties is generated and consists of identifiers of JDK downloads.
+extend-exclude = ["gradlew", "gradlew.bat", "*.keystore", "gradle/gradle-daemon-jvm.properties"]
 
 [default.extend-words]
 # "mit" and "mitf" are todo.txt add-ons (most important task)

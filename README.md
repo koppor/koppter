@@ -95,8 +95,9 @@ A column whose filter contains a word or a negated comparison does not take task
 
 ## Building
 
-Requirements: JDK 21 and the Android SDK (`ANDROID_HOME`, or `sdk.dir` in `local.properties`).
-The Gradle wrapper downloads everything else, including the Android platform the build needs.
+Requirements: a JDK that starts Gradle (17 or newer) and the Android SDK (`ANDROID_HOME`, or `sdk.dir` in `local.properties`).
+The build itself runs on JDK 25 and compiles for it.
+The Gradle wrapper downloads everything else, including that JDK and the Android platform the build needs.
 
 ```shell
 ./gradlew build traceRequirements
