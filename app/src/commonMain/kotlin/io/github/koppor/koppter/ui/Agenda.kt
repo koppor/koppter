@@ -1,5 +1,16 @@
 package io.github.koppor.koppter.ui
 
+import io.github.koppor.koppter.todotxt.LEVEL_SEPARATOR
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -182,33 +193,74 @@ fun Week(blocks: List<TextBlock>?, entryOf: (TextBlock) -> Entry?, today: LocalD
     }
 }
 
+/** The contexts that the typed text asks for: first those of which a level starts with it, then those that contain it. */
+internal fun matchingContexts(contexts: List<String>, typed: String): List<String> {
+    val wanted = typed.trimStart('@').lowercase()
+    val (starting, containing) = contexts.filter { wanted in it.lowercase() }
+        .partition { context -> context.lowercase().split(LEVEL_SEPARATOR).any { it.startsWith(wanted) } }
+    return starting + containing
+}
+
 /**
- * The tasks without context, to be sorted: each with the contexts of the file, of which one click gives the task its context.
+ * The tasks without context, to be sorted. One task is marked; typing narrows the contexts, and Enter gives the first of them
+ * to the marked task, or the typed text as a new context if none is left. With the pointer, a click on a context gives it to its task.
  */
 // [impl->dsn~inbox~1]
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Inbox(entries: List<Entry>, contexts: List<String>, onAssign: (Entry, String) -> Unit, onOpen: (Entry) -> Unit) {
+    var typed by remember { mutableStateOf("") }
+    var mark by remember { mutableStateOf(0) }
+    // A task that got its context leaves the list, so the mark is then on the next one.
+    val marked = mark.coerceIn(0, maxOf(0, entries.lastIndex))
+    val matching = matchingContexts(contexts, typed)
+    val focus = remember { FocusRequester() }
+    val keyboard = LocalKeyboard.current
+    LaunchedEffect(Unit) { if (keyboard) focus.requestFocus() }
+
     Column(Modifier.verticalScroll(rememberScrollState()).padding(8.dp).testTag("inbox"), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            when {
-                entries.isEmpty() -> "Every task has a context."
-                contexts.isEmpty() -> "No task has a context yet. Open a task to give it one."
-                else -> "Tasks without context. A click on a context gives it to the task."
-            },
-            Modifier.padding(4.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        for (entry in entries) {
-            Card(onClick = { onOpen(entry) }, modifier = Modifier.fillMaxWidth().testTag("inbox-task")) {
+        if (entries.isEmpty()) {
+            Text("Every task has a context.", Modifier.padding(4.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            OutlinedTextField(
+                value = typed,
+                onValueChange = { typed = it.filterNot(Char::isWhitespace) },
+                label = { Text("Context for the marked task") },
+                supportingText = { Text("Enter gives the first context shown, or the typed one if none is left. The arrow keys mark another task.") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().focusRequester(focus).testTag("inbox-typed").onPreviewKeyEvent {
+                    if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                    when (it.key) {
+                        Key.Enter -> (matching.firstOrNull() ?: typed.trimStart('@')).takeIf { typed.isNotEmpty() && it.isNotEmpty() }?.let { context ->
+                            onAssign(entries[marked], context)
+                            typed = ""
+                        }
+                        Key.DirectionDown -> mark = marked + 1
+                        Key.DirectionUp -> mark = marked - 1
+                        else -> return@onPreviewKeyEvent false
+                    }
+                    true
+                },
+            )
+        }
+        for ((index, entry) in entries.withIndex()) {
+            Card(
+                onClick = { onOpen(entry) },
+                border = if (index == marked) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+                modifier = Modifier.fillMaxWidth().testTag(if (index == marked) "inbox-marked" else "inbox-task"),
+            ) {
                 Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(entry.task.description, style = MaterialTheme.typography.bodyLarge)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        for (context in contexts) {
+                        for (context in if (index == marked) matching else contexts) {
                             // The area that reacts to a click is larger than the label, which is too small for a finger.
                             ContextLabel(
                                 context,
-                                Modifier.clip(CircleShape).clickable { onAssign(entry, context) }.testTag("inbox-context-$context").padding(vertical = 5.dp),
+                                Modifier.clip(CircleShape).clickable {
+                                    onAssign(entry, context)
+                                    // Back to the field, so that typing goes on after a click; the field is gone with the last task.
+                                    if (keyboard && entries.size > 1) focus.requestFocus()
+                                }.testTag("inbox-context-$context").padding(vertical = 5.dp),
                                 path = true,
                             )
                         }

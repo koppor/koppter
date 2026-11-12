@@ -1,5 +1,6 @@
 package io.github.koppor.koppter.android
 
+import android.content.res.Configuration
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -53,7 +54,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         controller = todoController(gitSetup)
         publishShareTargets(controller.shareActions)
-        setContent { App(controller, "todo.txt in the storage of the application", chooseFile = ::chooseFile, git = gitActions) }
+        val keyboard = resources.configuration.keyboard != Configuration.KEYBOARD_NOKEYS
+        setContent { App(controller, "todo.txt in the storage of the application", chooseFile = ::chooseFile, git = gitActions, keyboard = keyboard) }
     }
 
     // The share actions may have been edited in the settings.

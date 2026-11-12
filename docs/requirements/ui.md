@@ -86,6 +86,18 @@ Covers:
 
 Needs: dsn
 
+### Keyboard
+`req~keyboard-shortcuts~1`
+
+With a keyboard, the user adds a task, saves the edit dialog, changes the view and reaches the fields for a new task and for the text of the filter without the pointer.
+
+Covers:
+
+* `feat~task-editing~1`
+* `feat~task-list~1`
+
+Needs: dsn
+
 ### Color themes
 `req~color-themes~1`
 
@@ -228,6 +240,22 @@ Covers:
 * `req~quick-add~1`
 
 Needs: impl
+
+### Keyboard shortcuts
+`dsn~keyboard-shortcuts~1`
+
+The main screen is focusable and takes the focus at the start and after a change of the view, so that keys reach it also when no element has the focus; it handles the keys before its elements do.
+With Ctrl, or the command key: N opens the dialog for a new task, and 1 to 6 show the list and the views in the order of their switches.
+With Ctrl and Shift: A gives the focus to the quick add field, F to the text of the filter, L opens the plan dialog, and O, Y and C show the list, the agenda and the week, as these keys do in SkedPal.
+In the edit dialog, Ctrl and Enter save if *Save* is enabled, and Esc closes without saving.
+`LocalKeyboard` tells whether the device has a keyboard; with one, the description of the edit dialog and the field of the inbox get the focus when they appear.
+On Android, it is the keyboard of the configuration of the device.
+
+Covers:
+
+* `req~keyboard-shortcuts~1`
+
+Needs: impl, utest
 
 ### Reload on external change
 `dsn~reload-on-external-change~1`

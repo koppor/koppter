@@ -451,6 +451,9 @@ Needs: impl, utest
 
 `TodoController.inbox` gives the visible open tasks without context.
 `Inbox` shows each of them with the contexts of the file as labels with all their levels; a click on a label gives the task that context through `Task.edit`, and a click on the task opens the edit dialog.
+One task is marked, at first the first one.
+A field takes typed text: the marked task then shows the contexts that contain the text, those first of which a level starts with it.
+Enter gives the marked task the first of them, or the typed text as a new context if no context contains it; the arrow keys up and down move the mark.
 The switch of the inbox above the tasks shows the number of its tasks.
 
 Covers:

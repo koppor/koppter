@@ -224,7 +224,11 @@ The bar of a task shows how much of its time has passed: from its threshold date
 
 *Inbox* above the tasks lists the open tasks without context, and the switch tells how many there are.
 Each task shows the contexts of the file; a click on one gives it to the task, which then leaves the inbox.
-A context that no task has yet is given in the edit dialog, which a click on the task opens.
+
+With the keyboard, one task is marked.
+Typing narrows the contexts of the marked task, and Enter gives it the first one shown: `rea` and Enter for `@research>reading`.
+If no context contains the typed text, Enter gives the text as a new context.
+The arrow keys up and down mark another task, to leave one where it is.
 
 ![Inbox with the contexts to choose from](docs/screenshots/inbox.png)
 
@@ -298,6 +302,22 @@ The application only reads the calendars and writes nothing to them.
 * The events of the calendars are not shown in the agenda and the week: only their times are read, when planning.
   A task is not coupled to an event either.
 * Reading calendars and the import of `calendar.ics` have been tried with files written for the tests, not with the calendars of Outlook or Google.
+
+## Keyboard
+
+| Keys | Effect |
+| --- | --- |
+| Ctrl+N | New task in the edit dialog |
+| Ctrl+Enter | In the edit dialog: save |
+| Esc | In the edit dialog: close without saving |
+| Ctrl+Shift+A | Go to the line that adds a task |
+| Ctrl+Shift+F | Go to the text of the filter |
+| Ctrl+1 to Ctrl+6 | List, board, overview, agenda, week, inbox |
+| Ctrl+Shift+O, Ctrl+Shift+Y, Ctrl+Shift+C | List, agenda, week, as in SkedPal outline, today list and calendar |
+| Ctrl+Shift+L | Plan dialog |
+
+On macOS, the command key takes the place of Ctrl.
+There is no key yet that acts on a task of the list, such as completing or deleting it: the list has no marked task.
 
 ## Sharing to koppter on Android
 

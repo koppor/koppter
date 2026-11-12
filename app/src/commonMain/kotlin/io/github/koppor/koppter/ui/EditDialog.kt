@@ -1,5 +1,15 @@
 package io.github.koppor.koppter.ui
 
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -102,11 +112,24 @@ fun EditDialog(
         .let { if (originalNote == null) it else it.withTag(Task.NOTE, if (note.isBlank()) null else original.tag(Task.NOTE) ?: newNoteName) }
     val valid = dueValid && thresholdValid && recurrenceValid && durationValid && result.body.isNotBlank()
 
+    val descriptionFocus = remember { FocusRequester() }
+    val keyboard = LocalKeyboard.current
+    LaunchedEffect(Unit) { if (keyboard) descriptionFocus.requestFocus() }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = MaterialTheme.shapes.large,
             tonalElevation = 6.dp,
-            modifier = Modifier.widthIn(max = 560.dp).testTag("edit-dialog"),
+            modifier = Modifier.widthIn(max = 560.dp).testTag("edit-dialog")
+                // [impl->dsn~keyboard-shortcuts~1]
+                .onPreviewKeyEvent {
+                    val save = it.type == KeyEventType.KeyDown && it.key == Key.Enter && (it.isCtrlPressed || it.isMetaPressed)
+                    // Not left to the dialog of the platform, which closes on Esc only where it gets the key.
+                    val close = it.type == KeyEventType.KeyDown && it.key == Key.Escape
+                    if (save && valid) onSave(result, if (originalNote == null) null else note)
+                    if (close) onDismiss()
+                    save || close
+                },
         ) {
             Column(
                 Modifier.verticalScroll(rememberScrollState()).padding(20.dp),
@@ -117,7 +140,7 @@ fun EditDialog(
                     onValueChange = { description = it.replace('\n', ' ') },
                     label = { Text("Description") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth().testTag("edit-description"),
+                    modifier = Modifier.fillMaxWidth().focusRequester(descriptionFocus).testTag("edit-description"),
                 )
 
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -45,6 +45,8 @@ fun FilterPanel(
     contexts: List<String>,
     hashtags: List<String>,
     modifier: Modifier = Modifier,
+    /** For the field of the text, so that a shortcut can give it the focus. */
+    textModifier: Modifier = Modifier,
 ) {
     Column(modifier.verticalScroll(rememberScrollState()).padding(12.dp).testTag("filter-panel")) {
         OutlinedTextField(
@@ -52,7 +54,7 @@ fun FilterPanel(
             onValueChange = { onChange(filter.copy(text = it)) },
             label = { Text("Text") },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth().testTag("filter-text"),
+            modifier = textModifier.fillMaxWidth().testTag("filter-text"),
         )
 
         Option("Show tasks before their threshold date", !filter.hideFuture, "filter-future") {

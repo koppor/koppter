@@ -1,5 +1,8 @@
 package io.github.koppor.koppter.ui
 
+import androidx.compose.ui.test.withKeysDown
+import androidx.compose.ui.test.withKeyDown
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
@@ -448,18 +451,74 @@ class AppTest {
 
     // [utest->dsn~inbox~1]
     @Test
-    fun theInboxGivesATaskItsContextWithOneClick() = runComposeUiTest {
-        storage.text += "Sweep the floor\nRead the survey @research>reading\n"
+    fun theInboxGivesATaskItsContextWithOneClickOrByTyping() = runComposeUiTest {
+        storage.text += "Sweep the floor\nMow the lawn\nRead the survey @research>reading\n"
         start()
-        onNodeWithTag("inbox-switch").assertTextEquals("Inbox 2").performClick()
+        onNodeWithTag("inbox-switch").assertTextEquals("Inbox 3").performClick()
         onAllNodesWithTag("inbox-task").assertCountEquals(2)
+        onNodeWithTag("inbox-marked").assertExists()
 
-        onAllNodesWithTag("inbox-context-research>reading")[0].performClick()
+        // With the pointer: a click on a context of a task.
+        onAllNodesWithTag("inbox-context-phone")[0].performClick()
+        assertEquals(1, storage.text.lines().count { it.endsWith(" @phone") && "Mom" !in it && "pickup" !in it })
+        assertEquals(true, storage.changes.last().startsWith("Edit task: "))
+        onNodeWithTag("inbox-switch").assertTextEquals("Inbox 2")
 
-        assertEquals(true, "Post signs +GarageSale @research>reading" in storage.text)
-        assertEquals("Edit task: Post signs", storage.changes.last())
-        onAllNodesWithTag("inbox-task").assertCountEquals(1)
-        onNodeWithTag("inbox-switch").assertTextEquals("Inbox 1")
+        // With the keyboard: the field has the focus, typing narrows the contexts of the marked task, Enter gives the first.
+        onNodeWithTag("inbox-typed").assertIsFocused().performTextInput("rea")
+        onAllNodesWithTag("inbox-context-research").assertCountEquals(1)
+        onNodeWithTag("inbox-typed").performKeyInput { pressKey(Key.Enter) }
+        assertEquals(2, storage.text.lines().count { it.endsWith(" @research>reading") })
+        onNodeWithTag("inbox-typed").assertTextContains("")
+
+        // Without a context that matches, the typed text is the new context; the arrow keys do not leave the list.
+        onNodeWithTag("inbox-typed").performTextInput("@garden")
+        onNodeWithTag("inbox-typed").performKeyInput {
+            pressKey(Key.DirectionDown)
+            pressKey(Key.Enter)
+        }
+        assertEquals(1, storage.text.lines().count { it.endsWith(" @garden") })
+        onNodeWithText("Every task has a context.").assertExists()
+    }
+
+    // [utest->dsn~keyboard-shortcuts~1]
+    @Test
+    fun keysOpenANewTaskShowTheViewsAndSaveTheDialog() = runComposeUiTest {
+        start()
+        fun ctrl(key: Key, shift: Boolean = false) = onNodeWithTag("main-screen").performKeyInput {
+            withKeysDown(listOfNotNull(Key.CtrlLeft, Key.ShiftLeft.takeIf { shift })) { pressKey(key) }
+        }
+
+        ctrl(Key.Four)
+        onNodeWithTag("agenda").assertExists()
+        ctrl(Key.C, shift = true)
+        onNodeWithTag("week").assertExists()
+        ctrl(Key.Six)
+        onNodeWithTag("inbox").assertExists()
+        ctrl(Key.One)
+        onNodeWithTag("inbox").assertDoesNotExist()
+
+        ctrl(Key.F, shift = true)
+        onNodeWithTag("filter-text").assertIsFocused()
+        ctrl(Key.A, shift = true)
+        onNodeWithTag("quick-add").assertIsFocused()
+        ctrl(Key.L, shift = true)
+        onNodeWithTag("plan-dialog").assertExists()
+        onNodeWithTag("plan-close").performScrollTo().performClick()
+
+        // Esc closes a dialog without saving.
+        ctrl(Key.N)
+        onNodeWithTag("edit-description").performTextInput("Not wanted")
+        onNodeWithTag("edit-description").performKeyInput { pressKey(Key.Escape) }
+        onNodeWithTag("edit-dialog").assertDoesNotExist()
+        assertEquals(false, "Not wanted" in storage.text)
+
+        // A new task without the pointer: the description has the focus, Ctrl+Enter saves.
+        ctrl(Key.N)
+        onNodeWithTag("edit-description").assertIsFocused().performTextInput("Buy milk")
+        onNodeWithTag("edit-description").performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.Enter) } }
+        onNodeWithTag("edit-dialog").assertDoesNotExist()
+        assertEquals(true, "Buy milk" in storage.text)
     }
 
     // [utest->dsn~busy-times~1]
