@@ -11,11 +11,13 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performMouseInput
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -450,5 +452,29 @@ class AppTest {
         onNodeWithText("Garage (3)").assertExists()
         // The task matches the filter of its former column as before.
         onNodeWithText("Phone (2)").assertExists()
+    }
+
+    // [utest->dsn~hashtags-in-ui~1]
+    @Test
+    fun hashtagsAreLabelsFilterCriteriaAndEditableInTheDialog() = runComposeUiTest {
+        start()
+        onNodeWithTag("filter-hashtag-urgent").assertDoesNotExist()
+
+        openTask("Post signs")
+        onNodeWithTag("edit-hashtag-add").performTextInput("123 ")
+        onNodeWithTag("edit-hashtag-add").performTextInput("#urgent ")
+        onNodeWithTag("edit-line").assertTextEquals("Post signs +GarageSale #urgent")
+        // The dialog is higher than the window of the test.
+        onNodeWithTag("edit-save").performScrollTo().performClick()
+
+        assertEquals("Post signs +GarageSale #urgent", storage.text.lines()[1])
+        // On the card and in the filter panel.
+        onAllNodesWithText("#urgent", useUnmergedTree = true).assertCountEquals(2)
+        onNodeWithTag("filter-hashtag-urgent").performClick()
+        onAllNodesWithTag("task").assertCountEquals(1)
+
+        onNodeWithTag("board-switch").performClick()
+        onNodeWithTag("group-HASHTAG").performClick()
+        onNodeWithText("#urgent (1)").assertExists()
     }
 }

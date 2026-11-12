@@ -190,4 +190,24 @@ class TaskTest {
         val completed = Task.parse("(A) 2026-11-01 Water plants rec:1w").complete(today, writeDate = true)
         assertEquals("(A) Water plants rec:1w due:2026-11-19", completed.nextOccurrence(today)!!.toLine())
     }
+
+    // [utest->dsn~hashtags~1]
+    @Test
+    fun hashtagsAreMetadataAndStartWithALetter() {
+        val task = Task.parse("Fix #123 in C# for #release +App #Release #release #2go # x#y")
+
+        assertEquals(listOf("release", "Release"), task.hashtags)
+        assertEquals("Fix #123 in C# for #2go # x#y", task.description)
+    }
+
+    // [utest->dsn~hashtags~1]
+    // [utest->dsn~canonical-order-on-edit~1]
+    @Test
+    fun editingWritesHashtagsBetweenContextsAndTags() {
+        val task = Task.parse("Call #family Mom due:2026-11-20 @phone +Home")
+
+        assertEquals("Call Mom +Home @phone #family #urgent due:2026-11-20", task.edit(hashtags = task.hashtags + "urgent").toLine())
+        assertEquals("Call Mom +Home @phone due:2026-11-20", task.edit(hashtags = emptyList()).toLine())
+        assertEquals(task, task.edit(hashtags = listOf("family")))
+    }
 }

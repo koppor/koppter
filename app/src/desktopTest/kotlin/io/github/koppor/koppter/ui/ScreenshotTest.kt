@@ -43,7 +43,7 @@ class ScreenshotTest {
         override var onStatus: (SyncStatus) -> Unit = {}
         override fun sync() = Unit
         override fun dates() = mapOf(
-            "(B) Prepare the slides for the team meeting +Work @computer due:2026-11-17 note:k3f.txt" to TaskDates(added = LocalDate(2026, 11, 5)),
+            "(B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 note:k3f.txt" to TaskDates(added = LocalDate(2026, 11, 5)),
         )
 
         override fun readCompanion(path: String) = companions[path]
@@ -51,14 +51,14 @@ class ScreenshotTest {
 
         override fun read() = """
             (A) Call the landlord about the heating @phone due:2026-11-12
-            (A) Submit the travel expense report +Work @computer due:2026-11-10
+            (A) Submit the travel expense report +Work @computer #money due:2026-11-10
             (B) Schedule Goodwill pickup +GarageSale @phone due:2026-11-14
-            (B) Prepare the slides for the team meeting +Work @computer due:2026-11-17 note:k3f.txt
+            (B) Prepare the slides for the team meeting +Work @computer #meeting due:2026-11-17 note:k3f.txt
             (C) Post signs around the neighborhood +GarageSale @errands
-            (C) Renew the library card @errands due:2026-11-20
+            (C) Renew the library card @errands #someday due:2026-11-20
             Water the plants @home due:2026-11-12 rec:1w
             Book the train to Hamburg +Vacation @computer @waiting
-            Compare prices for a new bike +Vacation
+            Compare prices for a new bike +Vacation #money #someday
             Back up the photos @computer due:2026-12-01 rec:+1m
             x Thank Mom for the meatballs +Family @phone
         """.trimIndent() + "\n"
@@ -78,7 +78,7 @@ class ScreenshotTest {
     }
 
     @Test
-    fun rendersListAndDialogs() = runDesktopComposeUiTest(width = 1100, height = 900) {
+    fun rendersListAndDialogs() = runDesktopComposeUiTest(width = 1100, height = 980) {
         start()
         save("list.png")
         onNodeWithTag("filter-project-GarageSale").performClick()

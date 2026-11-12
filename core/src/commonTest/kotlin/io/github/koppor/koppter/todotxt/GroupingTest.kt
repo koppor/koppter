@@ -99,4 +99,16 @@ class GroupingTest {
         assertEquals(null, move("(B) Call Mom", GroupKey.PRIORITY, "B", "B"))
         assertEquals(null, move("Call Mom", GroupKey.DUE, "No due date", "Overdue"))
     }
+
+    // [utest->dsn~board-groups~1]
+    // [utest->dsn~board-move~1]
+    @Test
+    fun hashtagsFormColumnsAndAMoveReplacesTheHashtagOfTheSourceColumn() {
+        val tagged = TodoFile.parse("Call Mom #todo #family\nPay bill #doing\nPost signs").entries
+        val groups = groupEntries(tagged, GroupKey.HASHTAG, today)
+
+        assertEquals(listOf("#doing", "#family", "#todo", "No hashtag"), groups.map { it.title })
+        val moved = moveToGroup(tagged[0].task, GroupKey.HASHTAG, groups.first { it.title == "#todo" }, groups.first { it.title == "#doing" }, today)
+        assertEquals("Call Mom #family #doing", moved?.toLine())
+    }
 }

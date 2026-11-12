@@ -71,6 +71,8 @@ object ConfigFile {
         text.startsWith("'") -> SINGLE_QUOTED.find(text)?.let { match ->
             match.groupValues[1].replace("''", "'") to text.substring(match.value.length).trimStart()
         }
+        // In YAML, a number sign at the start is a comment: a filter that starts with a hashtag has to be quoted.
+        text.startsWith("#") -> "" to ""
         else -> {
             // A plain scalar ends before a comment and, as a key, before the colon that separates it from the value.
             val end = (if (key) END_OF_PLAIN_KEY else END_OF_PLAIN_VALUE).find(text)?.range?.first ?: text.length

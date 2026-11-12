@@ -117,6 +117,7 @@ class TodoController(
 
     val projects: List<String> get() = file.entries.flatMap { it.task.projects }.distinct().sorted()
     val contexts: List<String> get() = file.entries.flatMap { it.task.contexts }.distinct().sorted()
+    val hashtags: List<String> get() = file.entries.flatMap { it.task.hashtags }.distinct().sorted()
     val priorities: List<Char> get() = file.entries.mapNotNull { it.task.priority }.distinct().sorted()
 
     fun load() {

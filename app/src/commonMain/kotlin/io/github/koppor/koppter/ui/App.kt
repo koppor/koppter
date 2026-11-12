@@ -124,6 +124,7 @@ private fun MainScreen(
             priorities = controller.priorities,
             projects = controller.projects,
             contexts = controller.contexts,
+            hashtags = controller.hashtags,
             modifier = modifier,
         )
     }
@@ -195,6 +196,7 @@ private fun MainScreen(
             newNoteName = remember(entry) { controller.newNoteName() },
             knownProjects = controller.projects,
             knownContexts = controller.contexts,
+            knownHashtags = controller.hashtags,
             onSave = { task, note ->
                 if (entry == null) controller.add(task, note) else controller.replace(entry, task, note)
                 editing = null

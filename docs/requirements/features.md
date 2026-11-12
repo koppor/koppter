@@ -30,7 +30,7 @@ Needs: req
 ## Filtering
 `feat~filtering~1`
 
-The user restricts the list by completion state, text, priorities, projects and contexts.
+The user restricts the list by completion state, text, priorities, projects, contexts and hashtags.
 
 Needs: req
 
@@ -59,7 +59,7 @@ Needs: req
 ## todo.txt extensions
 `feat~extensions~1`
 
-The application supports recurring tasks (`rec:`, `ice_recur`), threshold dates (`t:`), notes attached to tasks (`note:`) and a view of the top tasks.
+The application supports recurring tasks (`rec:`, `ice_recur`), threshold dates (`t:`), notes attached to tasks (`note:`), hashtags (`#tag`) and a view of the top tasks.
 
 Needs: req
 

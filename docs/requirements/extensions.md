@@ -67,7 +67,7 @@ Needs: dsn
 `req~board~1`
 
 The application shows the tasks as a board with columns.
-The user chooses whether the columns are the priorities, the projects, the contexts or ranges of the due date.
+The user chooses whether the columns are the priorities, the projects, the contexts, the hashtags or ranges of the due date.
 The board shows the tasks that match the filter.
 
 Covers:
@@ -100,7 +100,46 @@ Covers:
 
 Needs: dsn
 
+### Hashtags
+`req~hashtags~1`
+
+A word of a task that starts with `#` and a letter is a hashtag: a label without a fixed meaning.
+The application shows, filters and edits hashtags like projects and contexts, and offers them as the columns of the board.
+
+Covers:
+
+* `feat~extensions~1`
+
+Needs: dsn
+
 ## Design
+
+### Hashtags of a task
+`dsn~hashtags~1`
+
+`Task.hashtags` are the words of the body that start with `#` followed by a letter, without the `#`.
+A number sign followed by another character, such as `#123`, and a number sign inside a word stay words of the description.
+Hashtags are not part of the description, and `Task.edit` writes them between the contexts and the tags.
+
+Covers:
+
+* `req~hashtags~1`
+* `adr~hashtags~1`
+
+Needs: impl, utest
+
+### Hashtags in the user interface
+`dsn~hashtags-in-ui~1`
+
+A hashtag is an outlined label on the task, after the contexts.
+The filter panel and the edit dialog have a section for hashtags that works like those for projects and contexts; the edit dialog accepts only names that start with a letter.
+The board offers the hashtags as columns.
+
+Covers:
+
+* `req~hashtags~1`
+
+Needs: impl, utest
 
 ### Recurrence on completion
 `dsn~recurrence-on-completion~1`
@@ -142,7 +181,7 @@ Needs: impl
 ### Groups of the board
 `dsn~board-groups~1`
 
-`groupEntries` distributes entries over groups by priority, project, context or due date.
+`groupEntries` distributes entries over groups by priority, project, context, hashtag or due date.
 A task with several projects or contexts appears in each of their groups.
 The due date groups are overdue, today, later and no due date.
 Tasks without a value form the last group; empty groups are left out.
@@ -171,7 +210,7 @@ Needs: impl, utest
 `dsn~query~1`
 
 `Query` evaluates a filter expression in the syntax of topydo: terms separated by blanks, all of which a task has to match.
-`+project` and `@context` match a task with this project or context.
+`+project`, `@context` and `#hashtag` match a task with this project, context or hashtag.
 `(A)` matches a task with this priority; `(>B)` and `(<=C)` match a higher priority, and this or a lower one; a task without priority matches none of them.
 `key:value` matches a task whose tag has this value; with `<`, `<=`, `>`, `>=` in front of the value, the tag is compared to it, as a date if both are dates.
 A date is an ISO date, `today`, `tomorrow`, `yesterday`, or an interval from today such as `1w`.
@@ -221,7 +260,7 @@ Needs: impl, utest
 
 `moveToGroup` returns the task as it is after a move from one group to another.
 For priorities, the task gets the priority of the target group, or none.
-For projects and contexts, the value of the source group is replaced by that of the target group; the other projects and contexts of the task stay.
+For projects, contexts and hashtags, the value of the source group is replaced by that of the target group; the other projects, contexts and hashtags of the task stay.
 For due dates, the group *today* sets today, the group *later* tomorrow, and the group without due date removes the date.
 A move within a group or into the group of overdue tasks changes nothing.
 
@@ -237,7 +276,7 @@ Needs: impl, utest
 
 `Query.applyTo` returns the task with the smallest change that makes it match the expression.
 A term that the task matches changes nothing.
-Otherwise, `+project` and `@context` add the project or context, and `key:value` sets the tag; negated, they remove it.
+Otherwise, `+project`, `@context` and `#hashtag` add the project, context or hashtag, and `key:value` sets the tag; negated, they remove it.
 A priority term sets the nearest priority that matches, and its negation removes the priority.
 A comparison of a tag with a date sets the nearest date that matches.
 A word, a negated comparison, and a comparison with a value that is not a date cannot be established; the column then does not take the task.

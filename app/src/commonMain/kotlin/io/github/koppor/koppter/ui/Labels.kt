@@ -1,5 +1,6 @@
 package io.github.koppor.koppter.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,10 +15,20 @@ import androidx.compose.ui.unit.dp
 import io.github.koppor.koppter.todotxt.Task
 import kotlinx.datetime.LocalDate
 
-/** One label of a task: a rounded box with an optional key, such as `due:`, in front of the value. */
+/**
+ * One label of a task: a rounded box with an optional key, such as `due:`, in front of the value.
+ *
+ * @param outlined draws a border around the box, for a label whose container has the color of its surroundings
+ */
 @Composable
-fun Label(text: String, container: Color, content: Color, modifier: Modifier = Modifier, key: String? = null) {
-    Surface(color = container, contentColor = content, shape = RoundedCornerShape(percent = 50), modifier = modifier) {
+fun Label(text: String, container: Color, content: Color, modifier: Modifier = Modifier, key: String? = null, outlined: Boolean = false) {
+    Surface(
+        color = container,
+        contentColor = content,
+        shape = RoundedCornerShape(percent = 50),
+        border = if (outlined) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null,
+        modifier = modifier,
+    ) {
         Row(Modifier.padding(horizontal = 8.dp, vertical = 2.dp)) {
             if (key != null) {
                 Text("$key ", style = MaterialTheme.typography.labelMedium, color = content.copy(alpha = 0.7f))
@@ -28,7 +39,7 @@ fun Label(text: String, container: Color, content: Color, modifier: Modifier = M
 }
 
 /**
- * The labels of a task in the order projects, contexts, dates, recurrence, other tags, priority.
+ * The labels of a task in the order projects, contexts, hashtags, tags, priority.
  * All colors come from the theme, so that the labels follow light and dark mode.
  */
 // [impl->dsn~task-labels~1]
@@ -37,6 +48,7 @@ fun TaskLabels(task: Task, today: LocalDate) {
     val colors = MaterialTheme.colorScheme
     task.projects.forEach { ProjectLabel(it) }
     task.contexts.forEach { ContextLabel(it) }
+    task.hashtags.forEach { HashtagLabel(it) }
     task.tags.forEach { (key, value) ->
         val overdue = key == Task.DUE && !task.completed && task.due.let { it != null && it < today }
         val dueToday = key == Task.DUE && !task.completed && task.due == today
@@ -58,6 +70,13 @@ fun ProjectLabel(project: String, modifier: Modifier = Modifier, suffix: String 
 @Composable
 fun ContextLabel(context: String, modifier: Modifier = Modifier, suffix: String = "") {
     Label("@$context$suffix", MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, modifier)
+}
+
+// [impl->dsn~hashtags-in-ui~1]
+/** Outlined, as the theme has no third container color that differs enough from those of projects and contexts. */
+@Composable
+fun HashtagLabel(hashtag: String, modifier: Modifier = Modifier, suffix: String = "") {
+    Label("#$hashtag$suffix", MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.onSurface, modifier, outlined = true)
 }
 
 @Composable

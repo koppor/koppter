@@ -63,4 +63,14 @@ class FilterTest {
             file.entries.sortedWith(listOrder).map { it.task.description },
         )
     }
+
+    // [utest->dsn~filter~1]
+    @Test
+    fun hashtagsRestrictLikeProjectsAndContexts() {
+        val tasks = listOf("Call Mom #family", "Pay bill #money #urgent", "Post signs").map(Task::parse)
+        fun matching(filter: Filter) = tasks.filter { filter.matches(it, today) }.map { it.description }
+
+        assertEquals(listOf("Call Mom", "Pay bill"), matching(Filter(hashtags = setOf("family", "urgent"))))
+        assertEquals(listOf("Call Mom", "Pay bill", "Post signs"), matching(Filter()))
+    }
 }

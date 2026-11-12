@@ -14,7 +14,7 @@ Projects, contexts, tags and the priority are labels at the top right of each ta
 
 ![Task list with the filter panel on the left](docs/screenshots/list.png)
 
-The filter panel offers priorities, projects and contexts as the labels that the tasks carry.
+The filter panel offers priorities, projects, contexts and hashtags as the labels that the tasks carry.
 A click moves a label to the selected ones beside the title; here, the list shows the tasks of the projects *GarageSale* or *Work* that have the context *phone*.
 
 ![Task list filtered by two projects and a context](docs/screenshots/filter.png)
@@ -50,9 +50,9 @@ In a narrow window, as on a phone, the filter panel is a drawer.
 * Synchronization through git, with one commit per added and per completed task.
   The dates a task was added and completed are then read from the history instead of being written into the file.
 * Synchronization through a local folder and through OneDrive.
-* A task list that shows projects, contexts, due date and priority as labels at the top right of each task.
+* A task list that shows projects, contexts, hashtags, due date and priority as labels at the top right of each task.
 * An edit dialog that separates the description from the metadata and shows the resulting todo.txt line.
-* A filter panel for completion state, text, priorities, projects and contexts.
+* A filter panel for completion state, text, priorities, projects, contexts and hashtags.
 * A Kanban board.
 * Support for the todo.txt extensions `note`, `top` and `ice_recur`, and for the `rec:` and `t:` tags.
 
@@ -71,9 +71,14 @@ If these files lie in a git repository, the application commits every change and
 
 A file in OneDrive, or in another storage service, is used through the platform ([decision 0011](docs/decisions/0011-onedrive-through-the-platform.md)): on Android, choose it with *Choose file* in the settings; on the desktop, choose it in the synchronized folder.
 
+## Hashtags
+
+A word that starts with `#` and a letter, such as `#urgent`, is a hashtag: a third kind of label next to `+project` and `@context`, without a fixed meaning ([decision 0014](docs/decisions/0014-hashtags-as-a-third-kind-of-label.md)).
+`#123` and `C#` stay words of the description.
+
 ## Board
 
-The board shows one column per priority, project, context or due date range.
+The board shows one column per priority, project, context, hashtag or due date range.
 Dragging a task to another column changes that attribute of the task.
 
 Columns can also be defined by filters, one per line as `title = filter`.
@@ -88,7 +93,7 @@ Important = (>C)
 
 | Term | Matches a task |
 | --- | --- |
-| `+project`, `@context` | with this project or context |
+| `+project`, `@context`, `#hashtag` | with this project, context or hashtag |
 | `(A)`, `(>B)`, `(<=C)` | with this priority, a higher one, this or a lower one |
 | `due:today`, `due:<1w`, `t:>=2026-12-01`, `status:doing` | whose tag has this value or compares so to it; dates are ISO dates, `today`, `tomorrow`, `yesterday` or an interval from today |
 | `-term` | that does not match the term |
@@ -97,6 +102,9 @@ Important = (>C)
 Dragging a task to such a column changes the task as little as possible so that it matches the filter ([decision 0013](docs/decisions/0013-smallest-change-on-drop-on-a-filter-column.md)): projects, contexts and tags are added or, for negated terms, removed, and a priority or date is set to the nearest value that matches.
 Nothing else is removed, so the task stays in its former column as well unless the filter of the new column excludes that.
 A column whose filter contains a word or a negated comparison does not take tasks.
+
+In `todo.txt-config.yml`, a filter that contains a hashtag has to be quoted (`Doing: "#doing"`), as YAML reads an unquoted `#` as the start of a comment.
+The application writes all filters quoted.
 
 ## Building
 

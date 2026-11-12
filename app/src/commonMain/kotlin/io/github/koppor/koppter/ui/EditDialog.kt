@@ -68,6 +68,7 @@ fun EditDialog(
     newNoteName: String,
     knownProjects: List<String>,
     knownContexts: List<String>,
+    knownHashtags: List<String>,
     onSave: (Task, note: String?) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
@@ -79,13 +80,14 @@ fun EditDialog(
     var recurrence by remember { mutableStateOf(original.tag(Task.RECURRENCE).orEmpty()) }
     var projects by remember { mutableStateOf(original.projects) }
     var contexts by remember { mutableStateOf(original.contexts) }
+    var hashtags by remember { mutableStateOf(original.hashtags) }
     var note by remember { mutableStateOf(originalNote.orEmpty()) }
 
     val dueValid = due.isBlank() || Task.parseDate(due.trim()) != null
     val thresholdValid = threshold.isBlank() || Task.parseDate(threshold.trim()) != null
     val recurrenceValid = recurrence.isBlank() || Recurrence.parse(recurrence.trim()) != null
     val result = original
-        .edit(description = description, priority = priority, projects = projects, contexts = contexts)
+        .edit(description = description, priority = priority, projects = projects, contexts = contexts, hashtags = hashtags)
         .withTag(Task.DUE, due.trim())
         .withTag(Task.THRESHOLD, threshold.trim())
         .withTag(Task.RECURRENCE, recurrence.trim())
@@ -141,6 +143,9 @@ fun EditDialog(
 
                 NameList("Project", "+", projects, knownProjects, { projects = it }, "edit-project")
                 NameList("Context", "@", contexts, knownContexts, { contexts = it }, "edit-context")
+                // [impl->dsn~hashtags-in-ui~1]
+                // "#123" in a line is a word of the description, not a hashtag.
+                NameList("Hashtag", "#", hashtags, knownHashtags, { hashtags = it }, "edit-hashtag") { it.first().isLetter() }
 
                 if (originalNote != null) {
                     OutlinedTextField(
@@ -228,7 +233,7 @@ private fun DateField(label: String, value: String, onChange: (String) -> Unit, 
     }
 }
 
-/** The projects or contexts of the task as removable chips, a field to add one, and the known names as suggestions. */
+/** The projects, contexts or hashtags of the task as removable chips, a field to add one, and the known names as suggestions. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NameList(
@@ -238,11 +243,13 @@ private fun NameList(
     known: List<String>,
     onChange: (List<String>) -> Unit,
     tag: String,
+    /** Whether the name is one that the todo.txt line keeps as this kind of metadata. */
+    valid: (String) -> Boolean = { true },
 ) {
     var input by remember { mutableStateOf("") }
     fun add(name: String) {
         val clean = name.trim().removePrefix(sign).replace(Regex("\\s+"), "-")
-        if (clean.isNotEmpty() && clean !in names) onChange(names + clean)
+        if (clean.isNotEmpty() && clean !in names && valid(clean)) onChange(names + clean)
         input = ""
     }
     Column {

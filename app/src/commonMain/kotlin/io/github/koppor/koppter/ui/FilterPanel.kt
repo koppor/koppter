@@ -29,8 +29,8 @@ import io.github.koppor.koppter.todotxt.Completion
 import io.github.koppor.koppter.todotxt.Filter
 
 /**
- * The filter criteria as a column: completion, text, priorities, projects, contexts.
- * Priorities, projects and contexts offer the values that occur in the file, as the labels that the tasks carry.
+ * The filter criteria as a column: completion, text, priorities, projects, contexts, hashtags.
+ * Priorities, projects, contexts and hashtags offer the values that occur in the file, as the labels that the tasks carry.
  */
 // [impl->dsn~filter-panel~1]
 @Composable
@@ -40,6 +40,7 @@ fun FilterPanel(
     priorities: List<Char>,
     projects: List<String>,
     contexts: List<String>,
+    hashtags: List<String>,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.verticalScroll(rememberScrollState()).padding(12.dp).testTag("filter-panel")) {
@@ -80,6 +81,10 @@ fun FilterPanel(
         }
         LabelFilter("Contexts", contexts, filter.contexts, { "filter-context-$it" }, { onChange(filter.copy(contexts = it)) }) { value, suffix, modifier ->
             ContextLabel(value, modifier, suffix)
+        }
+        // [impl->dsn~hashtags-in-ui~1]
+        LabelFilter("Hashtags", hashtags, filter.hashtags, { "filter-hashtag-$it" }, { onChange(filter.copy(hashtags = it)) }) { value, suffix, modifier ->
+            HashtagLabel(value, modifier, suffix)
         }
 
         OutlinedButton(

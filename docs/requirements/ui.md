@@ -7,7 +7,7 @@ Requirements and design for the screens shared by all platforms.
 ### Labels at the top right of a task
 `req~labels-top-right~1`
 
-Each task in the list shows its description and, in a row at the top right, its projects, contexts, tags such as the due date, and its priority as labels.
+Each task in the list shows its description and, in a row at the top right, its projects, contexts, hashtags, tags such as the due date, and its priority as labels.
 The description contains no metadata.
 
 Covers:
@@ -42,7 +42,7 @@ Needs: dsn
 `req~edit-dialog~1`
 
 The edit dialog shows the description without metadata in its first field.
-Below it, the dialog has fields for priority, due date, threshold date, recurrence, projects and contexts.
+Below it, the dialog has fields for priority, due date, threshold date, recurrence, projects, contexts and hashtags.
 Below these fields, the dialog shows the line as it will be written to the todo.txt file, in a monospaced font.
 
 Covers:
@@ -55,7 +55,7 @@ Needs: dsn
 `req~filter-panel~1`
 
 A panel offers the filter criteria.
-Priorities, projects and contexts are offered as the values that occur in the file.
+Priorities, projects, contexts and hashtags are offered as the values that occur in the file.
 The panel stands beside the list where the window is wide enough and slides over the list otherwise.
 
 Covers:
@@ -143,7 +143,7 @@ Needs: impl, utest
 ### Task labels
 `dsn~task-labels~1`
 
-`TaskLabels` emits one label per project, context and tag and one for the priority, in this order.
+`TaskLabels` emits one label per project, context, hashtag and tag and one for the priority, in this order.
 A tag label shows its key in front of the value.
 The colors are taken from the Material color scheme; a due date in the past uses the error colors.
 
@@ -184,7 +184,7 @@ Needs: impl, utest
 `dsn~filter-panel~1`
 
 `FilterPanel` shows the criteria of `Filter`: the completion state as radio buttons, the text as a text field, and the threshold date as a checkbox.
-Priorities, projects and contexts are shown as the labels that the task list uses for them.
+Priorities, projects, contexts and hashtags are shown as the labels that the task list uses for them.
 The selected values stand beside the title of the criterion and the other values below it, both sorted; a click on a label moves it to the other group.
 From a width of 840 dp on, the main screen places the panel beside the list; below that, the panel is the content of a navigation drawer.
 

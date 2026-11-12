@@ -60,6 +60,19 @@ class QueryTest {
         assertEquals("", matching("status:done"))
     }
 
+    // [utest->dsn~query~1]
+    // [utest->dsn~board-move-to-filter~1]
+    @Test
+    fun hashtagsMatchAndAreAddedAndRemoved() {
+        val query = Query.parse("#doing -#todo")
+
+        assertEquals(true, query.matches(Task.parse("Call Mom #doing"), today))
+        assertEquals(false, query.matches(Task.parse("Call Mom #doing #todo"), today))
+        assertEquals("Call Mom +Family #doing", query.applyTo(Task.parse("Call Mom #todo +Family"), today)?.toLine())
+        // A number sign before a digit is a word, as in a task.
+        assertEquals(true, Query.parse("#123").matches(Task.parse("Fix #123"), today))
+    }
+
     private fun applied(expression: String, line: String): String? = Query.parse(expression).applyTo(Task.parse(line), today)?.toLine()
 
     // [utest->dsn~board-move-to-filter~1]

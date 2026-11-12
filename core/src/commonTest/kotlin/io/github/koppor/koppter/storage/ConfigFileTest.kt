@@ -66,6 +66,16 @@ class ConfigFileTest {
     }
 
     @Test
+    fun aNumberSignStartsACommentUnlessTheScalarIsQuoted() {
+        val config = "board-columns:\n  Doing: \"#doing\"\n  Comment: #doing\n  Both: +Work #comment\n"
+
+        assertEquals(
+            listOf(BoardColumn("Doing", "#doing"), BoardColumn("Comment", ""), BoardColumn("Both", "+Work")),
+            ConfigFile.boardColumns(config),
+        )
+    }
+
+    @Test
     fun aConfigurationWithoutColumnsHasNone() {
         assertEquals(emptyList(), ConfigFile.boardColumns(""))
         assertEquals(emptyList(), ConfigFile.boardColumns("other: value\n"))

@@ -32,7 +32,7 @@ Needs: dsn
 `req~description-separate-from-metadata~1`
 
 The application distinguishes the description of a task from its metadata.
-The description is the text without projects, contexts and tags.
+The description is the text without projects, contexts, hashtags and tags.
 
 Covers:
 
@@ -157,7 +157,7 @@ Needs: impl, utest
 ### Metadata after the description
 `dsn~canonical-order-on-edit~1`
 
-`Task.edit` rebuilds the body in the order description, projects, contexts, tags.
+`Task.edit` rebuilds the body in the order description, projects, contexts, hashtags, tags.
 If no value differs from the current one, the task is returned unchanged.
 
 Covers:
@@ -186,7 +186,7 @@ Needs: impl, utest
 `dsn~filter~1`
 
 `Filter` holds the criteria; `Filter.matches` combines them with *and*.
-Within priorities, projects and contexts, one matching value suffices, and an empty selection does not restrict.
+Within priorities, projects, contexts and hashtags, one matching value suffices, and an empty selection does not restrict.
 The text is searched in the whole line, ignoring case.
 The default shows open tasks whose threshold date is not in the future.
 

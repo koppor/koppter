@@ -9,7 +9,7 @@ import kotlinx.datetime.minus
  * One task line of a todo.txt file.
  *
  * [body] is everything after the completion marker, priority and dates, kept verbatim.
- * Description, projects, contexts and tags are views on it, so that a change of the
+ * Description, projects, contexts, hashtags and tags are views on it, so that a change of the
  * header (completing, setting the priority) leaves the user's wording untouched.
  */
 // [impl->dsn~task-model~1]
@@ -28,11 +28,18 @@ data class Task(
     /** Context names without the leading `@`, in order of appearance. */
     val contexts: List<String> get() = tokens.filter(::isContext).map { it.substring(1) }.distinct()
 
+    /**
+     * Hashtag names without the leading `#`, in order of appearance.
+     * A hashtag starts with a letter, so that a number such as `#123` stays a word of the description.
+     */
+    // [impl->dsn~hashtags~1]
+    val hashtags: List<String> get() = tokens.filter(::isHashtag).map { it.substring(1) }.distinct()
+
     /** The `key:value` tags in order of appearance; a key may occur more than once. */
     val tags: List<Pair<String, String>>
         get() = tokens.filter(::isTag).map { it.substringBefore(':') to it.substringAfter(':') }
 
-    /** The body without projects, contexts and tags. */
+    /** The body without projects, contexts, hashtags and tags. */
     val description: String get() = tokens.filterNot(::isMetadata).joinToString(" ")
 
     /** The value of the first tag with the given key. */
@@ -83,7 +90,7 @@ data class Task(
 
     /**
      * Replaces description and metadata.
-     * The body is rebuilt in a fixed order: description, projects, contexts, tags.
+     * The body is rebuilt in a fixed order: description, projects, contexts, hashtags, tags.
      */
     // [impl->dsn~canonical-order-on-edit~1]
     fun edit(
@@ -92,9 +99,10 @@ data class Task(
         projects: List<String> = this.projects,
         contexts: List<String> = this.contexts,
         tags: List<Pair<String, String>> = this.tags,
+        hashtags: List<String> = this.hashtags,
     ): Task {
         if (description == this.description && priority == this.priority && projects == this.projects &&
-            contexts == this.contexts && tags == this.tags
+            contexts == this.contexts && tags == this.tags && hashtags == this.hashtags
         ) {
             return this
         }
@@ -102,6 +110,7 @@ data class Task(
             add(description.trim().replace(WHITESPACE, " "))
             projects.distinct().forEach { add("+$it") }
             contexts.distinct().forEach { add("@$it") }
+            hashtags.distinct().forEach { add("#$it") }
             tags.forEach { (key, value) -> add("$key:$value") }
         }
         return copy(priority = priority, body = parts.filter { it.isNotEmpty() }.joinToString(" "))
@@ -200,9 +209,10 @@ data class Task(
 
         private fun isProject(token: String) = token.length > 1 && token.startsWith('+')
         private fun isContext(token: String) = token.length > 1 && token.startsWith('@')
+        private fun isHashtag(token: String) = token.length > 1 && token.startsWith('#') && token[1].isLetter()
 
         // "http://example.org" and "12:30" are words, not tags.
         private fun isTag(token: String) = TAG.matches(token) && !token.first().isDigit()
-        private fun isMetadata(token: String) = isProject(token) || isContext(token) || isTag(token)
+        private fun isMetadata(token: String) = isProject(token) || isContext(token) || isHashtag(token) || isTag(token)
     }
 }

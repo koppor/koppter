@@ -8,7 +8,7 @@ import kotlinx.datetime.plus
 /**
  * A filter expression in the syntax of topydo: terms separated by blanks, all of which a task has to match.
  *
- * * `+project`, `@context`: the task has this project or context.
+ * * `+project`, `@context`, `#hashtag`: the task has this project, context or hashtag.
  * * `(A)`, `(>B)`, `(<=C)`: the task has this priority, a higher one, or this or a lower one.
  *   A task without priority matches none of them.
  * * `due:today`, `due:<1w`, `t:>=2026-12-01`: the tag has this value, or compares so to it.
@@ -23,7 +23,7 @@ class Query private constructor(private val terms: List<Term>) {
 
     /**
      * The task with the smallest change that makes it match: each term that it does not match adds or removes
-     * a project, a context, the priority or a tag. Nothing else of the task changes.
+     * a project, a context, a hashtag, the priority or a tag. Nothing else of the task changes.
      *
      * @return `null` if a term cannot be established that way: a word, a negated comparison,
      *   or a comparison of a tag with a value that is not a date
@@ -64,6 +64,12 @@ class Query private constructor(private val terms: List<Term>) {
         override fun matches(task: Task, today: LocalDate) = name in task.contexts
         override fun establish(task: Task, today: LocalDate) = task.edit(contexts = task.contexts + name)
         override fun revoke(task: Task) = task.edit(contexts = task.contexts - name)
+    }
+
+    private class Hashtag(val name: String) : Term {
+        override fun matches(task: Task, today: LocalDate) = name in task.hashtags
+        override fun establish(task: Task, today: LocalDate) = task.edit(hashtags = task.hashtags + name)
+        override fun revoke(task: Task) = task.edit(hashtags = task.hashtags - name)
     }
 
     private class Priority(val operator: String, val letter: Char) : Term {
@@ -120,6 +126,8 @@ class Query private constructor(private val terms: List<Term>) {
                     '-' -> return Not(term(word.substring(1)))
                     '+' -> return Project(word.substring(1))
                     '@' -> return Context(word.substring(1))
+                    // As in a task, "#123" is a word.
+                    '#' -> if (word[1].isLetter()) return Hashtag(word.substring(1))
                 }
             }
             PRIORITY.matchEntire(word)?.let { return Priority(it.groupValues[1], it.groupValues[2].single()) }
