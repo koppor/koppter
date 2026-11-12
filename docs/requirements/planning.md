@@ -71,6 +71,18 @@ Covers:
 
 Needs: dsn
 
+### Views of the plan
+`req~agenda~1`
+
+The user sees what is planned for today and the days after it, together with the tasks that are due today or overdue but not planned for today.
+The user sees the plan of a week as a calendar.
+
+Covers:
+
+* `feat~planning~1`
+
+Needs: dsn
+
 ### State of the plan on the task
 `req~plan-state~1`
 
@@ -186,6 +198,21 @@ Covers:
 
 * `req~plan~1`
 * `req~barriers~1`
+
+Needs: impl, utest
+
+### Agenda and week
+`dsn~agenda~1`
+
+`CalendarTxt.blocks` reads the blocks of `calendar.txt`; `TodoController.entryOf` finds the open task of a block by its text.
+`Agenda` shows today and the six days after it, each day that has blocks with its blocks in the order of time; a block shows its task as in the list, or its text if the task is no longer open under that text.
+Below the blocks of today, it lists the open tasks that are due today or earlier and have no block today (`TodoController.dueUnplanned`).
+`Week` shows the seven days of a week from Monday as columns with the hours running down, at least from 08:00 to 18:00, and each block at its time; buttons move by a week, and a click on a block opens its task.
+Both views show what the file says and do not plan.
+
+Covers:
+
+* `req~agenda~1`
 
 Needs: impl, utest
 

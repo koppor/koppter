@@ -391,6 +391,77 @@ class AppTest {
         onNodeWithTag("plan-context-maps").assertTextContains("@home = Evenings")
     }
 
+    // [utest->dsn~agenda~1]
+    @Test
+    fun theAgendaShowsTheBlocksOfTheNextDaysAndWhatIsDueWithoutABlock() = runComposeUiTest {
+        storage.text += "Sweep the floor due:2026-11-12\n"
+        storage.companions["calendar.txt"] = """
+            2026-11-11 w46 Wed  09:00-09:30 Yesterday
+            2026-11-12 w46 Thu  09:00-09:30 Schedule pickup +GarageSale @phone. 10:00-10:30 A task that is gone
+            2026-11-13 w46 Fri  09:00-10:00 Thank Mom @phone
+            2026-11-25 w48 Wed  09:00-10:00 Post signs +GarageSale
+        """.trimIndent() + "\n"
+        start()
+        onNodeWithTag("agenda-switch").performClick()
+
+        onNodeWithTag("agenda-day-2026-11-12").assertTextEquals("Today · Thu 2026-11-12")
+        onNodeWithTag("agenda-day-2026-11-13").assertTextEquals("Tomorrow · Fri 2026-11-13")
+        // A day without a block is left out, as are the days after the week.
+        onNodeWithTag("agenda-day-2026-11-14").assertDoesNotExist()
+        onAllNodesWithTag("agenda-block").assertCountEquals(3)
+        // A block whose task is gone still tells what was planned.
+        onNodeWithText("A task that is gone").assertExists()
+        // Due today, but planned for no time of today.
+        onNodeWithTag("agenda-due").assertExists()
+        onNodeWithText("Sweep the floor").assertExists()
+
+        // The tasks are completed where they are shown.
+        onAllNodesWithTag("task-done")[0].performClick()
+        assertEquals(true, storage.text.lines().any { it.startsWith("x ") && "Schedule pickup" in it })
+    }
+
+    // [utest->dsn~agenda~1]
+    @Test
+    fun theWeekShowsTheBlocksAsACalendar() = runComposeUiTest {
+        storage.companions["calendar.txt"] = """
+            2026-11-11 w46 Wed  09:00-09:30 Yesterday
+            2026-11-12 w46 Thu  09:00-09:30 Schedule pickup +GarageSale @phone
+            2026-11-13 w46 Fri  09:00-10:00 Thank Mom @phone
+            2026-11-25 w48 Wed  09:00-10:00 Post signs +GarageSale
+        """.trimIndent() + "\n"
+        start()
+        onNodeWithTag("week-switch").performClick()
+
+        onNodeWithTag("week-title").assertTextEquals("Week 46 · 2026-11-09 to 2026-11-15")
+        onAllNodesWithTag("week-block").assertCountEquals(3)
+        onNodeWithTag("week-next").performClick()
+        onAllNodesWithTag("week-block").assertCountEquals(0)
+        onNodeWithTag("week-next").performClick()
+        onNodeWithTag("week-title").assertTextEquals("Week 48 · 2026-11-23 to 2026-11-29")
+        onAllNodesWithTag("week-block").assertCountEquals(1)
+        onNodeWithTag("week-today").performClick()
+
+        // A click on a block opens its task.
+        onNodeWithText("09:00 Thank Mom").performClick()
+        onNodeWithTag("edit-dialog").assertExists()
+    }
+
+    // [utest->dsn~inbox~1]
+    @Test
+    fun theInboxGivesATaskItsContextWithOneClick() = runComposeUiTest {
+        storage.text += "Sweep the floor\nRead the survey @research>reading\n"
+        start()
+        onNodeWithTag("inbox-switch").assertTextEquals("Inbox 2").performClick()
+        onAllNodesWithTag("inbox-task").assertCountEquals(2)
+
+        onAllNodesWithTag("inbox-context-research>reading")[0].performClick()
+
+        assertEquals(true, "Post signs +GarageSale @research>reading" in storage.text)
+        assertEquals("Edit task: Post signs", storage.changes.last())
+        onAllNodesWithTag("inbox-task").assertCountEquals(1)
+        onNodeWithTag("inbox-switch").assertTextEquals("Inbox 1")
+    }
+
     // [utest->dsn~busy-times~1]
     @Test
     fun nothingIsPlannedIntoTheBusyTimesOfACalendar() = runComposeUiTest {

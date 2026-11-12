@@ -50,7 +50,7 @@ class ScreenshotTest {
                   default: quarter
                   "+Vacation": 2026-11-30
             """.trimIndent(),
-            // As "Save and plan" writes it on the day of the screenshots at noon; the bike was added afterwards.
+            // As "Save and plan" writes it on the day of the screenshots at noon; the bike and the present were added afterwards.
             "calendar.txt" to """
                 2026-11-12 w46 Thu  13:00-13:30 Call the landlord about the heating @phone. 13:30-14:00 Schedule Goodwill pickup +GarageSale @phone. 14:00-14:30 Post signs around the neighborhood +GarageSale @errands. 14:30-15:00 Renew the library card @errands>city. 19:00-19:30 Water the plants @home
                 2026-11-13 w46 Fri  08:00-08:30 Submit the travel expense report +Work @computer. 08:30-10:00 Prepare the slides for the team meeting +Work @computer
@@ -91,6 +91,7 @@ class ScreenshotTest {
             Water the plants @home due:2026-11-12 rec:1w
             Book the train to Hamburg +Vacation @computer @waiting
             Compare prices for a new bike +Vacation #money #someday
+            Find a present for Dad +Family due:2026-11-12
             Back up the photos @computer>backup due:2026-12-01 rec:+1m
             x Thank Mom for the meatballs +Family @phone
         """.trimIndent() + "\n"
@@ -140,6 +141,17 @@ class ScreenshotTest {
         onNodeWithTag("open-plan").performClick()
         onNodeWithTag("plan-update").performScrollTo().performClick()
         save("plan.png")
+    }
+
+    @Test
+    fun rendersAgendaWeekAndInbox() = runDesktopComposeUiTest(width = 1100, height = 860) {
+        start()
+        onNodeWithTag("agenda-switch").performClick()
+        save("agenda.png")
+        onNodeWithTag("week-switch").performClick()
+        save("week.png")
+        onNodeWithTag("inbox-switch").performClick()
+        save("inbox.png")
     }
 
     @Test

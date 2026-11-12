@@ -9,6 +9,7 @@ import io.github.koppor.koppter.plan.Ics
 import io.github.koppor.koppter.plan.PlanState
 import io.github.koppor.koppter.plan.Planned
 import io.github.koppor.koppter.plan.Span
+import io.github.koppor.koppter.plan.TextBlock
 import io.github.koppor.koppter.plan.busyTimes
 import io.github.koppor.koppter.plan.plan
 import io.github.koppor.koppter.storage.ConfigFile
@@ -47,6 +48,9 @@ import kotlin.random.Random
  * Every change is written to the storage at once; there is no unsaved state.
  */
 // ponytail: file access runs on the caller's thread; move it off the UI thread when a storage is slow (network).
+/** What the main screen shows of the tasks. */
+enum class View(val title: String) { LIST("List"), BOARD("Board"), OVERVIEW("Overview"), AGENDA("Agenda"), WEEK("Week"), INBOX("Inbox") }
+
 class TodoController(
     settings: Settings,
     private val storageFor: (Settings) -> TodoStorage,
@@ -72,10 +76,9 @@ class TodoController(
     var topOnly by mutableStateOf(false)
 
     /** Shows the tasks as a board instead of as a list. */
-    var board by mutableStateOf(false)
+    var view by mutableStateOf(View.LIST)
 
-    /** Shows the contexts with their states instead of the tasks. */
-    var overview by mutableStateOf(false)
+    val board: Boolean get() = view == View.BOARD
 
     /** The attribute whose values are the columns of the board; `null` for the columns the user defined. */
     var groupKey by mutableStateOf<GroupKey?>(GroupKey.PRIORITY)
@@ -83,8 +86,33 @@ class TodoController(
     /** The configuration file next to the todo.txt file; `null` if the storage keeps no files next to the todo.txt file. */
     private var config by mutableStateOf<String?>(null)
 
-    /** When the tasks are planned according to `calendar.txt`, by the text of their blocks; `null` without that file. */
-    private var planned by mutableStateOf<Map<String, Planned>?>(null)
+    /** The blocks of `calendar.txt`; `null` without that file. */
+    var planBlocks by mutableStateOf<List<TextBlock>?>(null)
+        private set
+
+    /** When the tasks are planned from today on, by the text of their blocks. */
+    private val planned: Map<String, Planned>? get() = planBlocks?.let { CalendarTxt.planned(it, today()) }
+
+    /** The open task that a block of the plan is for; `null` if the task was completed, deleted or edited since. */
+    fun entryOf(block: TextBlock): Entry? = file.entries.firstOrNull { !it.task.completed && CalendarTxt.text(it.task) == block.text }
+
+    /** The open tasks that are due today or earlier and have no block today. */
+    // [impl->dsn~agenda~1]
+    val dueUnplanned: List<Entry>
+        get() {
+            val today = today()
+            val plannedToday = planBlocks.orEmpty().filter { it.date == today }.map { it.text }.toSet()
+            return file.entries.filter { entry ->
+                !entry.task.completed && entry.task.due.let { it != null && it <= today } && CalendarTxt.text(entry.task) !in plannedToday
+            }.sortedWith(listOrder)
+        }
+
+    /** The visible open tasks without context, which wait for one. */
+    // [impl->dsn~inbox~1]
+    val inbox: List<Entry> get() = visible.filter { !it.task.completed && it.task.contexts.isEmpty() }
+
+    /** Gives a task of the inbox its context. */
+    fun assignContext(entry: Entry, context: String) = replace(entry, entry.task.edit(contexts = listOf(context)))
 
     /** The columns the user defined. */
     val boardColumns: List<BoardColumn> get() = ConfigFile.boardColumns(config.orEmpty())
@@ -161,10 +189,10 @@ class TodoController(
             config
         }
         if (boardColumns.isEmpty() && groupKey == null) groupKey = GroupKey.PRIORITY
-        planned = try {
-            (storage as? CompanionFiles)?.readCompanion(CalendarTxt.NAME)?.let { CalendarTxt.planned(it, today()) }
+        planBlocks = try {
+            (storage as? CompanionFiles)?.readCompanion(CalendarTxt.NAME)?.let(CalendarTxt::blocks)
         } catch (_: Exception) {
-            planned
+            planBlocks
         }
     }
 

@@ -9,6 +9,9 @@ import kotlinx.datetime.plus
 /** When a task is planned: the start of its first block and the day of its last one. */
 data class Planned(val date: LocalDate, val start: Int, val lastDate: LocalDate)
 
+/** A block as the file has it: a time of a day and the text of the task. */
+data class TextBlock(val date: LocalDate, val span: Span, val text: String)
+
 /** How the plan of a task relates to its due date. */
 enum class PlanState { FITS, TIGHT, LATE }
 
@@ -44,24 +47,37 @@ object CalendarTxt {
         val byDay = blocks.groupBy { it.date }
         val days = generateSequence(today) { it.plus(DatePeriod(days = 1)) }.takeWhile { day -> blocks.any { it.date >= day } }
         val planned = days.map { day ->
-            val events = byDay[day].orEmpty().sortedBy { it.span.start }.joinToString(". ") { "${time(it.span.start)}-${time(it.span.end)} ${text(it.entry.task)}" }
+            val events = byDay[day].orEmpty().sortedBy { it.span.start }.joinToString(". ") { "${timesText(it.span)} ${text(it.entry.task)}" }
             "$day w${week(day).toString().padStart(2, '0')} ${WEEKDAYS[day.dayOfWeek.isoDayNumber - 1]}  $events".trimEnd()
         }
         return (kept + planned).joinToString("\n", postfix = "\n")
     }
 
+    /** The blocks of the file in the order of time, those of past days included. */
+    fun blocks(calendar: String): List<TextBlock> = calendar.lines().flatMap { line ->
+        val date = dateOf(line) ?: return@flatMap emptyList()
+        DAY_LINE.matchEntire(line)!!.groupValues[2].split(NEXT_BLOCK).mapNotNull { event ->
+            val (h1, m1, h2, m2, text) = BLOCK.matchEntire(event.trim())?.destructured ?: return@mapNotNull null
+            TextBlock(date, Span(h1.toInt() * 60 + m1.toInt(), h2.toInt() * 60 + m2.toInt()), text)
+        }
+    }.sortedWith(compareBy<TextBlock> { it.date }.thenBy { it.span.start })
+
     /** When the tasks are planned from today on, by the text of their blocks. */
-    fun planned(calendar: String, today: LocalDate): Map<String, Planned> {
+    fun planned(blocks: List<TextBlock>, today: LocalDate): Map<String, Planned> {
         val result = mutableMapOf<String, Planned>()
-        for (line in calendar.lines()) {
-            val date = dateOf(line)?.takeIf { it >= today } ?: continue
-            for (event in DAY_LINE.matchEntire(line)!!.groupValues[2].split(NEXT_BLOCK)) {
-                val (hour, minute, _, _, text) = BLOCK.matchEntire(event.trim())?.destructured ?: continue
-                result[text] = result[text]?.copy(lastDate = date) ?: Planned(date, hour.toInt() * 60 + minute.toInt(), date)
-            }
+        for (block in blocks.filter { it.date >= today }) {
+            result[block.text] = result[block.text]?.copy(lastDate = block.date) ?: Planned(block.date, block.span.start, block.date)
         }
         return result
     }
+
+    fun planned(calendar: String, today: LocalDate): Map<String, Planned> = planned(blocks(calendar), today)
+
+    /** The times of a block as a text, such as `09:00-10:30`. */
+    fun timesText(span: Span): String = "${time(span.start)}-${time(span.end)}"
+
+    /** A day as a text, such as `Mon 2026-11-16`. */
+    fun dayText(date: LocalDate): String = "${WEEKDAYS[date.dayOfWeek.isoDayNumber - 1]} $date"
 
     /** The state of an open task in a plan: late if it is not planned at all or its last block lies behind its due date. */
     fun state(task: Task, planned: Planned?): PlanState {
@@ -75,5 +91,5 @@ object CalendarTxt {
     }
 
     /** The start of the plan of a task as a text, such as `Mon 2026-11-16 09:00`. */
-    fun startText(planned: Planned): String = "${WEEKDAYS[planned.date.dayOfWeek.isoDayNumber - 1]} ${planned.date} ${time(planned.start)}"
+    fun startText(planned: Planned): String = "${dayText(planned.date)} ${time(planned.start)}"
 }

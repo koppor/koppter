@@ -179,6 +179,13 @@ class PlannerTest {
         assertEquals(Planned(monday, 8 * 60, monday), planned["Review the paper"])
         assertEquals("Mon 2026-11-16 08:00", CalendarTxt.startText(planned.getValue("Review the paper")))
 
+        // The blocks of all days, for the views of the plan.
+        assertEquals(
+            listOf("2026-11-11 09:00-10:00 Old block", "2026-11-12 08:00-08:30 Call the landlord @phone"),
+            CalendarTxt.blocks(calendar).take(2).map { "${it.date} ${CalendarTxt.timesText(it.span)} ${it.text}" },
+        )
+        assertEquals("Mon 2026-11-16", CalendarTxt.dayText(monday))
+
         val landlord = Task.parse("(A) Call the landlord @phone dur:30m due:2026-11-12")
         assertEquals(PlanState.TIGHT, CalendarTxt.state(landlord, planned[CalendarTxt.text(landlord)]))
         assertEquals(PlanState.FITS, CalendarTxt.state(Task.parse("Review the paper"), planned["Review the paper"]))

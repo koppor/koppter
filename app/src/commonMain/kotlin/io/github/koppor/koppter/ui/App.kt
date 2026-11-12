@@ -206,8 +206,15 @@ private fun MainScreen(
                         QuickAdd(onAdd = controller::add)
                         ViewOptions(controller, onPlan = { planning = controller.planSettings })
                         val emptyText = if (controller.file.entries.isEmpty()) "No tasks" else "No task matches the filter"
-                        if (controller.overview) {
-                            Overview(contextStates(controller.visible, controller.today()), controller.today(), { editing = Editing(it) }, emptyText)
+                        val open: (Entry) -> Unit = { editing = Editing(it) }
+                        if (controller.view == View.OVERVIEW) {
+                            Overview(contextStates(controller.visible, controller.today()), controller.today(), open, emptyText)
+                        } else if (controller.view == View.AGENDA) {
+                            Agenda(controller.planBlocks, controller.dueUnplanned, controller::entryOf, controller.today(), controller::toggle, open)
+                        } else if (controller.view == View.WEEK) {
+                            Week(controller.planBlocks, controller::entryOf, controller.today(), open)
+                        } else if (controller.view == View.INBOX) {
+                            Inbox(controller.inbox, controller.contexts, controller::assignContext, open)
                         } else if (controller.board) {
                             Board(
                                 controller.groups, controller.today(), controller::toggle, onOpen = { editing = Editing(it) },
@@ -279,7 +286,7 @@ private fun MainScreen(
     }
 }
 
-/** The switches above the tasks: only the top tasks, list or board, and what forms the columns of the board. */
+/** The switches above the tasks: only the top tasks, the view that replaces the list, and what forms the columns of the board. */
 // [impl->dsn~view-options~1]
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -291,25 +298,14 @@ private fun ViewOptions(controller: TodoController, onPlan: () -> Unit) {
             label = { Text("Top ${controller.settings.topCount}") },
             modifier = Modifier.testTag("top"),
         )
-        FilterChip(
-            selected = controller.board,
-            onClick = {
-                controller.board = !controller.board
-                controller.overview = false
-            },
-            label = { Text("Board") },
-            modifier = Modifier.testTag("board-switch"),
-        )
-        // [impl->dsn~overview~1]
-        FilterChip(
-            selected = controller.overview,
-            onClick = {
-                controller.overview = !controller.overview
-                controller.board = false
-            },
-            label = { Text("Overview") },
-            modifier = Modifier.testTag("overview-switch"),
-        )
+        for (view in View.entries - View.LIST) {
+            FilterChip(
+                selected = controller.view == view,
+                onClick = { controller.view = if (controller.view == view) View.LIST else view },
+                label = { Text(if (view == View.INBOX && controller.inbox.isNotEmpty()) "${view.title} ${controller.inbox.size}" else view.title) },
+                modifier = Modifier.testTag("${view.name.lowercase()}-switch"),
+            )
+        }
         // [impl->dsn~plan-dialog~1]
         if (controller.canSchedule) {
             AssistChip(onClick = onPlan, label = { Text("Plan") }, modifier = Modifier.testTag("open-plan"))

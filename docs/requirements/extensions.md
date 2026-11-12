@@ -76,6 +76,17 @@ Covers:
 
 Needs: dsn
 
+### Inbox
+`req~inbox~1`
+
+The user sees the open tasks that have no context and gives such a task a context of the file with one action.
+
+Covers:
+
+* `feat~task-list~1`
+
+Needs: dsn
+
 ### Overview of the contexts
 `req~overview~1`
 
@@ -367,7 +378,7 @@ Needs: impl, utest
 ### View options
 `dsn~view-options~1`
 
-A row of switches above the tasks turns the *Top* view and the board on and off and, for the board, selects the attribute of the columns or the columns defined by filters.
+A row of switches above the tasks turns the *Top* view on and off, shows one of the views that replace the list (board, overview, agenda, week, inbox) and, for the board, selects the attribute of the columns or the columns defined by filters.
 
 Covers:
 
@@ -427,11 +438,24 @@ Needs: impl, utest
 `contextStates` groups the open tasks by their contexts of the outermost level, a context including the contexts below it, and sorts the tasks of each by urgency; the tasks without context form a group of their own.
 The state of a context is that of its most urgent task: overdue, due today, or neither.
 `Overview` shows the contexts of the visible tasks as tiles with a dot in the color of the state, and after a click on a tile the tasks of that context with a progress bar and the text of their urgency.
-A switch above the tasks turns the overview on; it and the board exclude each other.
+A switch above the tasks turns the overview on; it and the other views that replace the list exclude each other.
 
 Covers:
 
 * `req~overview~1`
+
+Needs: impl, utest
+
+### Inbox
+`dsn~inbox~1`
+
+`TodoController.inbox` gives the visible open tasks without context.
+`Inbox` shows each of them with the contexts of the file as labels with all their levels; a click on a label gives the task that context through `Task.edit`, and a click on the task opens the edit dialog.
+The switch of the inbox above the tasks shows the number of its tasks.
+
+Covers:
+
+* `req~inbox~1`
 
 Needs: impl, utest
 

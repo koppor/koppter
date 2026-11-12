@@ -220,6 +220,14 @@ The filter panel applies to the overview as it does to the list.
 A click on a tile lists the tasks of the context, the most urgent first and those without due date last.
 The bar of a task shows how much of its time has passed: from its threshold date (`t:`) to its due date, else from its creation date, else over the two weeks before the due date.
 
+## Inbox
+
+*Inbox* above the tasks lists the open tasks without context, and the switch tells how many there are.
+Each task shows the contexts of the file; a click on one gives it to the task, which then leaves the inbox.
+A context that no task has yet is given in the edit dialog, which a click on the task opens.
+
+![Inbox with the contexts to choose from](docs/screenshots/inbox.png)
+
 ## Planning
 
 *Plan* above the tasks gives each open task times in which it is to be worked on and writes them to `calendar.txt` next to the todo.txt file.
@@ -250,6 +258,20 @@ The lines of past days stay; the lines from today on are written anew by every p
 In a git repository, each plan is one commit ([decision 0019](docs/decisions/0019-the-plan-is-derived-and-kept-in-calendar-txt.md)).
 The plan is also written to `calendar.ics`, with tentative events, for import into a calendar program.
 
+### Agenda and week
+
+*Agenda* above the tasks shows the blocks of today and of the six days after it, each with its task, which is completed and opened there as in the list.
+Below the blocks of today are the tasks that are due today or overdue and have no block today.
+
+![Agenda with the blocks of the next days](docs/screenshots/agenda.png)
+
+*Week* shows the blocks of a week as a calendar; a click on a block opens its task.
+
+![Plan of a week as a calendar](docs/screenshots/week.png)
+
+Both show what `calendar.txt` says: after tasks changed, *Plan* brings it up to date.
+A block whose task was completed, deleted or edited since shows the text it was planned with.
+
 ### Calendars
 
 *Calendars with busy times* in the plan dialog takes the addresses at which calendar services publish a calendar as an iCalendar file, one per line.
@@ -273,6 +295,8 @@ The application only reads the calendars and writes nothing to them.
 * An occurrence of a repeating event that was moved counts as busy at its old and at its new time.
 * Whether a calendar program replaces the events of an earlier import of `calendar.ics` or adds them again has not been tried.
   The events carry the same id in every export, and the application leaves its own events out when it reads a calendar they were imported into.
+* The events of the calendars are not shown in the agenda and the week: only their times are read, when planning.
+  A task is not coupled to an event either.
 * Reading calendars and the import of `calendar.ics` have been tried with files written for the tests, not with the calendars of Outlook or Google.
 
 ## Sharing to koppter on Android

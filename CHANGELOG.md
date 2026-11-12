@@ -36,6 +36,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Overview with one tile per context that tells whether tasks of the context are overdue or due today; a click on a tile lists the tasks of the context by urgency, each with a bar that fills up to its due date.
 - Planning: *Plan* gives each open task the earliest free times of its time map and writes the plan to `calendar.txt` and, with tentative events, to `calendar.ics`; time maps may be restricted to other time maps and are given to contexts, a barrier keeps tasks from being planned behind the end of the quarter or another date, and a calendar icon on each task tells whether its plan meets its due date.
 - Planning leaves out the times of the events of calendars that are named by the address of their iCalendar file, as Outlook and Google Calendar publish it.
+- *Agenda* shows the planned blocks of today and the six days after it with the tasks that are due but not planned for today, and *Week* shows the plan of a week as a calendar.
+- *Inbox* lists the tasks without context; a click on a context gives it to the task.
 - Board view with one column per priority, project, context, hashtag or due date range.
 - Board columns defined by filter expressions in the syntax of topydo, such as `Today = due:<=today -@waiting`; they are entered in the settings and kept in `koppter.yml` next to the todo.txt file.
 - On the board, dragging a task to another column changes its priority, project, context or due date accordingly; for a column defined by a filter, the task is changed as little as possible so that it matches the filter.
