@@ -1,5 +1,7 @@
 # koppter
 
+![Logo of koppter: a K as the cabin of a helicopter](docs/logo.svg)
+
 A [todo.txt](https://github.com/todotxt/todo.txt) application for Android and for Windows and Linux desktops.
 
 Status: early development on the `experimental` branch.

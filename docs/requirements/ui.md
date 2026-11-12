@@ -97,6 +97,17 @@ Covers:
 
 Needs: dsn
 
+### Application icon
+`req~application-icon~1`
+
+The application has an icon by which the user tells it from other applications: on the window and in the task bar on the desktop, and in the launcher on Android.
+
+Covers:
+
+* `feat~platforms~1`
+
+Needs: dsn
+
 ### Settings survive a restart
 `req~persistent-settings~1`
 
@@ -268,6 +279,19 @@ Covers:
 * `adr~colors-from-published-palettes~1`
 
 Needs: impl, utest
+
+### Application icon
+`dsn~application-icon~1`
+
+`docs/logo.svg` is the drawing of the icon: a K as the cabin of a helicopter, in colors of the palette Nord.
+The desktop window shows `koppter.png`, an export of that drawing in the resources of the desktop target.
+The Android application has an adaptive icon whose foreground repeats the paths of the drawing as a vector drawable.
+
+Covers:
+
+* `req~application-icon~1`
+
+Needs: impl
 
 ### Settings dialog
 `dsn~settings-dialog~1`

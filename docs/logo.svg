@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 512 512">
+  <title>koppter</title>
+  <!-- The colors are those of the palette Nord: nord6, nord3, nord9, nord10. -->
+  <rect width="512" height="512" rx="112" fill="#ECEFF4"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- rotor and mast -->
+    <path d="M100 96H412M256 96V140" stroke="#4C566A" stroke-width="26"/>
+    <!-- tail boom and tail rotor -->
+    <path d="M256 236H120M120 196V276" stroke="#81A1C1" stroke-width="26"/>
+    <!-- skids -->
+    <path d="M196 428H404q22 0 30-22M256 380V428M372 388V428" stroke="#4C566A" stroke-width="22"/>
+    <!-- K: the cabin -->
+    <path d="M256 160V364M260 276L384 160M306 238L388 364" stroke="#5E81AC" stroke-width="64"/>
+  </g>
+</svg>

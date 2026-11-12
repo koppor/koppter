@@ -45,6 +45,7 @@
   The README shows copies in `docs/screenshots/`: after a change of the user interface, run `./gradlew :app:desktopTest --tests '*ScreenshotTest*'` and copy the images there.
   The tasks in that test are invented; never put real data into it.
   Android library target: compiled from the same `commonMain`.
+  The icon is drawn in `docs/logo.svg`; after a change, export it with `inkscape docs/logo.svg -w 256 -o app/src/desktopMain/resources/koppter.png` and repeat the paths in `android/src/main/res/drawable/ic_launcher_foreground.xml`.
 * `:android` — the Android application: `MainActivity`, `DocumentStorage` (file behind a `content:` URI).
   Not run on a device or emulator in development sessions; say so when reporting Android changes.
   CI signs the release APK with the key from the secrets `SIGNING_KEYSTORE_BASE64` and `SIGNING_KEYSTORE_PASSWORD` (decision 0010); the key store itself is never committed.
