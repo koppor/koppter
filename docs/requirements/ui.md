@@ -86,6 +86,17 @@ Covers:
 
 Needs: dsn
 
+### Color themes
+`req~color-themes~1`
+
+The user chooses the colors of the application: the palette Nord or Everforest, each light, dark or as the system is set.
+
+Covers:
+
+* `feat~task-list~1`
+
+Needs: dsn
+
 ### Settings survive a restart
 `req~persistent-settings~1`
 
@@ -244,10 +255,24 @@ Covers:
 
 Needs: impl, utest
 
+### Color themes
+`dsn~color-themes~1`
+
+`colorScheme` fills the roles of the Material color scheme with the colors of the chosen palette in its light or dark variant.
+A container color is the color of its role mixed into the color of the cards; the text on an accent color is the end of the palette with the higher contrast.
+The palette and the variant are settings; `App` asks the system for the variant if the setting leaves it to the system.
+
+Covers:
+
+* `req~color-themes~1`
+* `adr~colors-from-published-palettes~1`
+
+Needs: impl, utest
+
 ### Settings dialog
 `dsn~settings-dialog~1`
 
-`SettingsDialog` edits the location of the todo.txt file, the switch for writing dates, the number of top tasks and the board columns defined by filters.
+`SettingsDialog` edits the location of the todo.txt file, the switch for writing dates, the number of top tasks, the board columns defined by filters and the colors.
 A changed location makes the controller load the other file.
 
 Covers:

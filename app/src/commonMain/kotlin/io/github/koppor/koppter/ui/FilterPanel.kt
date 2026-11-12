@@ -45,21 +45,12 @@ fun FilterPanel(
 ) {
     Column(modifier.verticalScroll(rememberScrollState()).padding(12.dp).testTag("filter-panel")) {
         Heading("Completed")
-        Row {
-            for ((completion, label) in listOf(Completion.ALL to "All", Completion.COMPLETED to "Yes", Completion.OPEN to "No")) {
-                Row(
-                    Modifier.selectable(
-                        selected = filter.completion == completion,
-                        onClick = { onChange(filter.copy(completion = completion)) },
-                        role = Role.RadioButton,
-                    ).testTag("filter-completed-$label").padding(end = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(selected = filter.completion == completion, onClick = null)
-                    Text(label, Modifier.padding(start = 4.dp))
-                }
-            }
-        }
+        RadioRow(
+            listOf(Completion.ALL to "All", Completion.COMPLETED to "Yes", Completion.OPEN to "No"),
+            filter.completion,
+            tag = "filter-completed",
+            onSelect = { onChange(filter.copy(completion = it)) },
+        )
 
         OutlinedTextField(
             value = filter.text,
@@ -149,5 +140,22 @@ private fun Option(label: String, checked: Boolean, tag: String, onChange: (Bool
     ) {
         Checkbox(checked = checked, onCheckedChange = null, modifier = Modifier.padding(6.dp))
         Text(label)
+    }
+}
+
+/** One of several options; the tag of an option is [tag] followed by its label. */
+@Composable
+fun <T> RadioRow(options: List<Pair<T, String>>, selected: T, tag: String, onSelect: (T) -> Unit) {
+    Row {
+        for ((option, label) in options) {
+            Row(
+                Modifier.selectable(selected = selected == option, onClick = { onSelect(option) }, role = Role.RadioButton)
+                    .testTag("$tag-$label").padding(end = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = selected == option, onClick = null)
+                Text(label, Modifier.padding(start = 4.dp))
+            }
+        }
     }
 }

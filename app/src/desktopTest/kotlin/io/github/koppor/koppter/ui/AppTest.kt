@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -25,6 +26,8 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
+import io.github.koppor.koppter.storage.Appearance
+import io.github.koppor.koppter.storage.ColorTheme
 import io.github.koppor.koppter.storage.CompanionFiles
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SyncState
@@ -219,6 +222,22 @@ class AppTest {
         assertEquals("x 2026-11-12 Thank Mom @phone due:2026-11-20 pri:A", storage.text.lines()[2])
     }
 
+    // [utest->dsn~color-themes~1]
+    @Test
+    fun theSettingsDialogChoosesThePaletteAndItsVariant() = runComposeUiTest {
+        var saved = Settings()
+        val controller = TodoController(Settings(), { storage }, saveSettings = { saved = it }, today = { LocalDate(2026, 11, 12) })
+        setContent { App(controller, "todo.txt") }
+        onNodeWithTag("open-settings").performClick()
+        onNodeWithTag("settings-theme-Nord").assertIsSelected()
+        onNodeWithTag("settings-theme-Everforest").performScrollTo().performClick()
+        onNodeWithTag("settings-appearance-Dark").performScrollTo().performClick()
+        onNodeWithTag("settings-save").performScrollTo().performClick()
+
+        assertEquals(ColorTheme.EVERFOREST to Appearance.DARK, saved.theme to saved.appearance)
+        assertEquals(saved, Settings.fromProperties(saved.toProperties()))
+    }
+
     // [utest->dsn~sync-status~1]
     // [utest->dsn~dates-in-dialog~1]
     @Test
@@ -265,13 +284,13 @@ class AppTest {
 
         onNodeWithTag("open-settings").performClick()
         onNodeWithTag("settings-public-key").assertTextEquals("ecdsa-sha2-nistp256 AAAA koppter")
-        onNodeWithTag("settings-git-url").performTextInput("git@example.org:other.git")
-        onNodeWithTag("settings-clone").performClick()
+        onNodeWithTag("settings-git-url").performScrollTo().performTextInput("git@example.org:other.git")
+        onNodeWithTag("settings-clone").performScrollTo().performClick()
         onNodeWithTag("settings-clone-message").assertTextEquals("Not cloned: no such repository")
 
         onNodeWithTag("settings-git-url").performTextReplacement("git@example.org:todo.git")
-        onNodeWithTag("settings-clone").performClick()
-        onNodeWithTag("settings-save").performClick()
+        onNodeWithTag("settings-clone").performScrollTo().performClick()
+        onNodeWithTag("settings-save").performScrollTo().performClick()
         assertEquals("/data/repository/todo.txt", controller.settings.todoFile)
     }
 

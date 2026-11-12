@@ -32,6 +32,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import io.github.koppor.koppter.storage.Appearance
+import io.github.koppor.koppter.storage.ColorTheme
 import io.github.koppor.koppter.storage.ConfigFile
 import io.github.koppor.koppter.storage.Settings
 import kotlinx.coroutines.launch
@@ -63,6 +65,8 @@ fun SettingsDialog(
     var topCount by remember { mutableStateOf(settings.topCount.toString()) }
     val topCountValue = topCount.trim().toIntOrNull()?.takeIf { it > 0 }
     var columns by remember { mutableStateOf(boardColumns) }
+    var theme by remember { mutableStateOf(settings.theme) }
+    var appearance by remember { mutableStateOf(settings.appearance) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large, tonalElevation = 6.dp, modifier = Modifier.widthIn(max = 560.dp).testTag("settings-dialog")) {
@@ -111,6 +115,9 @@ fun SettingsDialog(
                         modifier = Modifier.fillMaxWidth().testTag("settings-board-columns"),
                     )
                 }
+                Text("Colors", style = MaterialTheme.typography.titleMedium)
+                RadioRow(ColorTheme.entries.map { it to it.title }, theme, tag = "settings-theme", onSelect = { theme = it })
+                RadioRow(Appearance.entries.map { it to it.title }, appearance, tag = "settings-appearance", onSelect = { appearance = it })
                 Text(
                     "A file in a git repository is committed after every change and synchronized with the remote repository.",
                     style = MaterialTheme.typography.bodySmall,
@@ -129,6 +136,8 @@ fun SettingsDialog(
                                     todoFile = todoFile.trim(),
                                     writeDates = writeDates,
                                     topCount = topCountValue ?: settings.topCount,
+                                    theme = theme,
+                                    appearance = appearance,
                                 ),
                                 columns?.trim(),
                             )

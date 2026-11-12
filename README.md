@@ -47,6 +47,15 @@ In a narrow window, as on a phone, the filter panel is a drawer.
 
 ![Task list in a narrow window](docs/screenshots/narrow.png)
 
+The colors are those of the palette [Nord](https://www.nordtheme.com/) or [Everforest](https://github.com/sainnhe/everforest), light or dark; the settings choose, and by default the application follows the system ([decision 0015](docs/decisions/0015-colors-from-published-palettes.md)).
+The screenshots above show Nord in its light variant.
+
+![Task list in the dark variant of Nord](docs/screenshots/nord-dark.png)
+
+![Task list in the light variant of Everforest](docs/screenshots/everforest-light.png)
+
+![Task list in the dark variant of Everforest](docs/screenshots/everforest-dark.png)
+
 ## Goals
 
 * The todo.txt file is the only data store, and it stays a file that other todo.txt tools can read and write.

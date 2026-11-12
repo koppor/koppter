@@ -9,6 +9,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
+import io.github.koppor.koppter.storage.Appearance
+import io.github.koppor.koppter.storage.ColorTheme
 import io.github.koppor.koppter.storage.CompanionFiles
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SyncStatus
@@ -83,8 +85,8 @@ class ScreenshotTest {
         override suspend fun clone(url: String) = "todo.txt"
     }
 
-    private fun DesktopComposeUiTest.start() {
-        val controller = TodoController(Settings(), { storage }, today = { LocalDate(2026, 11, 12) })
+    private fun DesktopComposeUiTest.start(settings: Settings = Settings()) {
+        val controller = TodoController(settings, { storage }, today = { LocalDate(2026, 11, 12) })
         setContent { App(controller, "todo.txt", git = git) }
     }
 
@@ -132,6 +134,24 @@ class ScreenshotTest {
         save("board-project.png")
         onNodeWithTag("group-FILTER").performClick()
         save("board-filter.png")
+    }
+
+    @Test
+    fun rendersNordDark() = runDesktopComposeUiTest(width = 1100, height = 620) {
+        start(Settings(appearance = Appearance.DARK))
+        save("nord-dark.png")
+    }
+
+    @Test
+    fun rendersEverforestLight() = runDesktopComposeUiTest(width = 1100, height = 620) {
+        start(Settings(theme = ColorTheme.EVERFOREST))
+        save("everforest-light.png")
+    }
+
+    @Test
+    fun rendersEverforestDark() = runDesktopComposeUiTest(width = 1100, height = 620) {
+        start(Settings(theme = ColorTheme.EVERFOREST, appearance = Appearance.DARK))
+        save("everforest-dark.png")
     }
 
     @Test

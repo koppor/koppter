@@ -19,6 +19,7 @@ Architectural decisions are recorded as [Markdown Architectural Decision Records
 | [0012](0012-board-columns-by-filter-in-a-file.md) | Board columns defined by filters are kept in a configuration file next to the todo.txt file |
 | [0013](0013-smallest-change-on-drop-on-a-filter-column.md) | A task dropped on a column defined by a filter gets the smallest change that makes it match |
 | [0014](0014-hashtags-as-a-third-kind-of-label.md) | Hashtags are a third kind of label next to projects and contexts |
+| [0015](0015-colors-from-published-palettes.md) | Colors come from the palettes Nord and Everforest |
 
 ## Conventions
 

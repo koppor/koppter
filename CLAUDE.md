@@ -49,6 +49,6 @@
   Not run on a device or emulator in development sessions; say so when reporting Android changes.
   CI signs the release APK with the key from the secrets `SIGNING_KEYSTORE_BASE64` and `SIGNING_KEYSTORE_PASSWORD` (decision 0010); the key store itself is never committed.
 * Files next to todo.txt (`notes/`, `ice_recur.txt`, `koppter.yml`) go through `CompanionFiles`; `GitStorage` commits them with the next todo.txt change.
-* UI elements carry a `testTag`; colors come from `MaterialTheme.colorScheme`, never from literals.
+* UI elements carry a `testTag`; colors come from `MaterialTheme.colorScheme`, never from literals; `Theme.kt` builds the scheme from the palettes (decision 0015).
 * The file is the data store.
   A line that the user did not edit is written back unchanged.

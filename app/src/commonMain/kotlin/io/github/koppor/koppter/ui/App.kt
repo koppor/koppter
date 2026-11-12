@@ -37,8 +37,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +55,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.koppor.koppter.storage.Appearance
 import io.github.koppor.koppter.storage.SyncState
 import io.github.koppor.koppter.storage.SyncStatus
 import io.github.koppor.koppter.todotxt.Entry
@@ -82,7 +81,12 @@ fun App(
     chooseFile: (suspend () -> String?)? = null,
     git: GitSetupActions? = null,
 ) {
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
+    val dark = when (controller.settings.appearance) {
+        Appearance.SYSTEM -> isSystemInDarkTheme()
+        Appearance.LIGHT -> false
+        Appearance.DARK -> true
+    }
+    MaterialTheme(colorScheme = colorScheme(controller.settings.theme, dark)) {
         MainScreen(controller, defaultTodoFile, chooseFile, git)
     }
 }
