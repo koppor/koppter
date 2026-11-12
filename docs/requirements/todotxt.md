@@ -218,3 +218,14 @@ Covers:
 * `req~recurrence-tag~1`
 
 Needs: impl, utest
+
+### Creation date
+`dsn~creation-date~1`
+
+`Task.created` sets today as the creation date of a new task if the caller asks for it and the task has none.
+
+Covers:
+
+* `req~no-dates-by-default~1`
+
+Needs: impl, utest

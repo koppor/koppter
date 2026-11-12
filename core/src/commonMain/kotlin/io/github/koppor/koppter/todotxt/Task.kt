@@ -104,11 +104,26 @@ data class Task(
         return copy(priority = priority, body = parts.filter { it.isNotEmpty() }.joinToString(" "))
     }
 
-    /** Sets the tag, replacing all tags with the same key; `null` or blank removes it. */
+    /**
+     * Sets the tag; `null` or blank removes it.
+     * An existing tag keeps its position, so that setting a tag to the value it has changes nothing.
+     */
     fun withTag(key: String, value: String?): Task {
-        val others = tags.filterNot { it.first == key }
-        return edit(tags = if (value.isNullOrBlank()) others else others + (key to value))
+        val index = tags.indexOfFirst { it.first == key }
+        val others = tags.filterIndexed { i, tag -> tag.first != key || i == index }
+        return edit(
+            tags = when {
+                value.isNullOrBlank() -> others.filterNot { it.first == key }
+                index < 0 -> others + (key to value)
+                else -> others.map { if (it.first == key) key to value else it }
+            },
+        )
     }
+
+    /** The task as it is added to the file: with today as creation date if dates are written. */
+    // [impl->dsn~creation-date~1]
+    fun created(today: LocalDate, writeDate: Boolean): Task =
+        if (writeDate && creationDate == null && !completed) copy(creationDate = today) else this
 
     companion object {
         const val DUE = "due"

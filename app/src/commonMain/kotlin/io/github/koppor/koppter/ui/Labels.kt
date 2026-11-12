@@ -1,0 +1,61 @@
+package io.github.koppor.koppter.ui
+
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import io.github.koppor.koppter.todotxt.Task
+import kotlinx.datetime.LocalDate
+
+/** One label of a task: a rounded box with an optional key, such as `due:`, in front of the value. */
+@Composable
+fun Label(text: String, container: Color, content: Color, modifier: Modifier = Modifier, key: String? = null) {
+    Surface(color = container, contentColor = content, shape = RoundedCornerShape(percent = 50), modifier = modifier) {
+        Row(Modifier.padding(horizontal = 8.dp, vertical = 2.dp)) {
+            if (key != null) {
+                Text("$key ", style = MaterialTheme.typography.labelMedium, color = content.copy(alpha = 0.7f))
+            }
+            Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+/**
+ * The labels of a task in the order projects, contexts, dates, recurrence, other tags, priority.
+ * All colors come from the theme, so that the labels follow light and dark mode.
+ */
+// [impl->dsn~task-labels~1]
+@Composable
+fun TaskLabels(task: Task, today: LocalDate) {
+    val colors = MaterialTheme.colorScheme
+    task.projects.forEach { Label("+$it", colors.tertiaryContainer, colors.onTertiaryContainer) }
+    task.contexts.forEach { Label("@$it", colors.secondaryContainer, colors.onSecondaryContainer) }
+    task.tags.forEach { (key, value) ->
+        val overdue = key == Task.DUE && !task.completed && task.due.let { it != null && it < today }
+        val dueToday = key == Task.DUE && !task.completed && task.due == today
+        when {
+            overdue -> Label(value, colors.errorContainer, colors.onErrorContainer, key = "$key:")
+            dueToday -> Label(value, colors.primaryContainer, colors.onPrimaryContainer, key = "$key:")
+            else -> Label(value, colors.surfaceVariant, colors.onSurfaceVariant, key = "$key:")
+        }
+    }
+    task.priority?.let { PriorityLabel(it) }
+}
+
+@Composable
+fun PriorityLabel(priority: Char, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    when (priority) {
+        'A' -> Label("A", colors.error, colors.onError, modifier)
+        'B' -> Label("B", colors.tertiary, colors.onTertiary, modifier)
+        'C' -> Label("C", colors.secondary, colors.onSecondary, modifier)
+        else -> Label(priority.toString(), colors.surfaceVariant, colors.onSurfaceVariant, modifier)
+    }
+}

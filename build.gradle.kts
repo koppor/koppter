@@ -2,6 +2,8 @@
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.compose.multiplatform) apply false
     alias(libs.plugins.openfasttrace)
 }
 
@@ -13,6 +15,8 @@ requirementTracing {
         "build.gradle.kts",
         "core/build.gradle.kts",
         "core/src",
+        "app/build.gradle.kts",
+        "app/src",
         ".github/workflows",
     )
 }

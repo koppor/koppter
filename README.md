@@ -29,8 +29,17 @@ The Gradle wrapper downloads everything else.
 ./gradlew build traceRequirements
 ```
 
-`build` compiles and runs the unit tests.
+`build` compiles and runs the unit tests and the user interface tests.
 `traceRequirements` checks that every requirement and decision is covered ([OpenFastTrace](https://github.com/itsallcode/openfasttrace)); the report is written to `build/reports/tracing.txt`.
+
+## Running
+
+```shell
+./gradlew :app:run
+```
+
+starts the desktop application.
+It reads `todo.txt` in the home directory unless another file is set in the settings.
 
 ## Project documents
 

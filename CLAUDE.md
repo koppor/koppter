@@ -34,6 +34,10 @@
 ## Architecture
 
 * `:core` — Kotlin Multiplatform, JVM target.
-  `commonMain`: todo.txt model, parser, filter, sort.
+  `commonMain`: todo.txt model, parser, filter, sort, storage interface, settings.
+  `jvmMain`: file storage, settings file.
+* `:app` — Compose Multiplatform. `commonMain`: all screens and `TodoController` (state and operations).
+  `desktopMain`: entry point. `desktopTest`: UI tests (`runComposeUiTest`, headless); `ScreenshotTest` writes `app/build/screenshots/`.
+* UI elements carry a `testTag`; colors come from `MaterialTheme.colorScheme`, never from literals.
 * The file is the data store.
   A line that the user did not edit is written back unchanged.

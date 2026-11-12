@@ -45,6 +45,8 @@ Adding and completing a task each create a commit, so that the dates of both eve
 
 The todo.txt file lives in a folder chosen by the user, which may be synchronized by another program.
 
+Needs: req
+
 ## Synchronization through OneDrive
 `feat~sync-onedrive~1`
 

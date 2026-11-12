@@ -20,3 +20,4 @@ dependencyResolutionManagement {
 rootProject.name = "koppter"
 
 include(":core")
+include(":app")

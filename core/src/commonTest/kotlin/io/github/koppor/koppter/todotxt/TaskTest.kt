@@ -138,4 +138,20 @@ class TaskTest {
         assertEquals("Call Mom +Family due:2026-11-25", task.withTag(Task.DUE, "2026-11-25").toLine())
         assertEquals("Call Mom +Family", task.withTag(Task.DUE, null).toLine())
     }
+
+    // [utest->dsn~canonical-order-on-edit~1]
+    @Test
+    fun aTagKeepsItsPositionWhenItsValueChanges() {
+        val task = Task.parse("Call Mom t:2026-11-01 due:2026-11-20")
+        assertEquals("Call Mom t:2026-11-05 due:2026-11-20", task.withTag(Task.THRESHOLD, "2026-11-05").toLine())
+        assertSame(task, task.withTag(Task.THRESHOLD, "2026-11-01"))
+    }
+
+    // [utest->dsn~creation-date~1]
+    @Test
+    fun aNewTaskGetsACreationDateOnlyWhenSwitchedOn() {
+        assertEquals("(A) Call Mom", Task.parse("(A) Call Mom").created(today, writeDate = false).toLine())
+        assertEquals("(A) 2026-11-12 Call Mom", Task.parse("(A) Call Mom").created(today, writeDate = true).toLine())
+        assertEquals("2026-11-01 Call Mom", Task.parse("2026-11-01 Call Mom").created(today, writeDate = true).toLine())
+    }
 }
