@@ -89,8 +89,8 @@ Needs: dsn
 ### Order by hand
 `req~list-step~1`
 
-The user moves a task one step up or down in the list, to order the tasks of the same priority and due date by hand.
-A step over the border to another priority gives the task that priority.
+The user orders the tasks of the same priority and due date by hand: with a step up or down, or by dragging a task to its place.
+A task that crosses the border to another priority takes that priority.
 
 Covers:
 
@@ -229,6 +229,24 @@ If the neighbor has the same priority, due date and due time, the line of the ta
 If the neighbor has another priority, the task takes that priority and its line is moved so that it stays on its side of the neighbor: one step crosses the border, the next one passes the neighbor.
 If the due date or due time differs as well, only the priority changes, as the due date then orders the two tasks.
 A neighbor with the same priority and another due date or due time cannot be passed, and neither can a completed task; `Task.canStepOver` tells that, and the button is disabled.
+
+Covers:
+
+* `req~list-step~1`
+
+Needs: impl, utest
+
+### Drag in the list
+`dsn~list-drag~1`
+
+A task of the list is dragged with the mouse, or with the finger after a long press, as a card of the board is.
+While it is dragged, its description follows the pointer, and a line marks where it would be put: before the nearest task if the pointer is in the upper half of that task, behind it otherwise.
+Dropping it calls `TodoController.drop`, which applies `TodoFile.moveTo`.
+The task takes the priority of the task it is put next to.
+If both have the same due date and due time, its line is moved directly before or behind the line of that task; a line whose priority stays is written as it was.
+If they differ in that, only the priority changes, as the due date then orders the two tasks.
+There is no line, and no drop, at a task of the same priority and another due date or due time, or at a completed task.
+The list does not scroll while a task is dragged.
 
 Covers:
 

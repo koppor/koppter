@@ -60,4 +60,19 @@ class TodoFileTest {
         assertNull(file.stepped(2, 5, up = true))
         assertNull(file.stepped(4, 6, up = false))
     }
+
+    // [utest->dsn~list-drag~1]
+    @Test
+    fun aTaskIsPutNextToAnotherOneAndTakesItsPriority() {
+        val file = TodoFile.parse("(B) Shelf\n(B) Photos\n(B) Taxes\n(A) Report\nLetter due:2026-11-15\n")
+        fun moved(index: Int, target: Int, before: Boolean) = file.moveTo(index, target, before)?.serialize()
+
+        assertEquals("(B) Taxes\n(B) Shelf\n(B) Photos\n(A) Report\nLetter due:2026-11-15\n", moved(2, 0, before = true))
+        assertEquals("(B) Photos\n(B) Taxes\n(B) Shelf\n(A) Report\nLetter due:2026-11-15\n", moved(0, 2, before = false))
+        assertEquals("(B) Shelf\n(B) Taxes\n(A) Photos\n(A) Report\nLetter due:2026-11-15\n", moved(1, 3, before = true))
+        // With another due date, the priority is all that changes.
+        assertEquals("(B) Shelf\n(B) Photos\n(B) Taxes\n(A) Report\n(B) Letter due:2026-11-15\n", moved(4, 0, before = true))
+        assertNull(moved(1, 1, before = true))
+        assertEquals(file, file.moveTo(1, 0, before = false))
+    }
 }

@@ -12,7 +12,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Names for priorities, such as 1, 2, 3, 5 and 8 instead of A to E: the settings take them or fill in a scale at a click, the application shows and offers them, filters accept them, and the file keeps the letters.
 - Source of each extension of the todo.txt format in the README.
 - Comparison with other applications for tasks in plain text files in `docs/related-work.md`, starting with Beorg.
-- Arrows at each task of the list that move it one step up or down: among tasks of the same priority and due date they order the lines in the file, and at the border to another priority the task takes that priority.
+- Order by hand: a task is dragged to its place in the list or in its column of the board, or moved one step with the arrows at its right; among tasks of the same priority and due date this orders the lines in the file, and next to a task of another priority the task takes that priority.
 - Dates in words in the line typed above the list, such as `tomorrow`, `next week`, `by Wed` or `tomorrow 3pm`: the application shows and writes the tags they stand for.
 
 ## [2026-11-12] - 2026-11-12

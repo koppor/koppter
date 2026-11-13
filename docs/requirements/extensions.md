@@ -375,6 +375,21 @@ Covers:
 
 Needs: impl, utest
 
+### Place of a card in its column
+`dsn~board-drag-position~1`
+
+A card that is dropped next to another card of a column is put before or behind it, as a task is in the list (`dsn~list-drag~1`); a line marks the place while the card is dragged.
+Within its own column, the card takes the priority of the card it is put next to.
+In another column, the card changes what the column stands for and nothing else: it gets its place only next to a card of the priority it then has, and otherwise the order of the list places it.
+`TodoController.move` applies the change of the column and the place as one change.
+
+Covers:
+
+* `req~board-move~1`
+* `req~list-step~1`
+
+Needs: impl, utest
+
 ### View options
 `dsn~view-options~1`
 

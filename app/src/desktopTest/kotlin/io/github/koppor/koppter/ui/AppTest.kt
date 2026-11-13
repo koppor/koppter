@@ -130,6 +130,74 @@ class AppTest {
         assertEquals("(B) Post signs +GarageSale", storage.text.lines()[0])
     }
 
+    /** Drags the task with the mouse to the upper or lower part of the card of another task, and holds it there. */
+    private fun ComposeUiTest.dragTo(description: String, target: String, before: Boolean) {
+        val from = onNodeWithText(description).fetchSemanticsNode().boundsInRoot
+        val to = onNodeWithText(target).fetchSemanticsNode().boundsInRoot
+        onNodeWithText(description).performMouseInput {
+            moveTo(center)
+            press()
+            moveBy(Offset(-10f, 0f))
+            moveBy(Offset(to.center.x - from.center.x, (if (before) to.top + 5 else to.bottom - 5) - from.center.y))
+        }
+        onNodeWithTag("task-dragged").assertExists()
+    }
+
+    // [utest->dsn~list-drag~1]
+    @Test
+    fun draggingATaskInTheListPutsItNextToAnotherOneWithThePriorityOfThatOne() = runComposeUiTest {
+        storage.text += "Paint the fence\n"
+        start()
+        // The list shows: Thank Mom (A, due), Schedule pickup (B), Post signs, Paint the fence.
+        dragTo("Paint the fence", "Schedule pickup", before = true)
+        onNodeWithTag("drop-line").assertExists()
+        onNodeWithTag("task-list").performMouseInput { release() }
+        assertEquals(listOf("(B) Paint the fence", "(B) Schedule pickup +GarageSale @phone", "Post signs +GarageSale"), storage.text.lines().take(3))
+        assertEquals("Move task: Paint the fence", storage.changes.last())
+        onNodeWithTag("task-dragged").assertDoesNotExist()
+
+        // Behind a task of the same priority: only the line moves, as it is.
+        dragTo("Paint the fence", "Schedule pickup", before = false)
+        onNodeWithTag("task-list").performMouseInput { release() }
+        assertEquals(listOf("(B) Schedule pickup +GarageSale @phone", "(B) Paint the fence", "Post signs +GarageSale"), storage.text.lines().take(3))
+
+        // A task that is due on another day cannot be passed within its priority: there is no place to drop.
+        storage.text = "(A) Thank Mom @phone due:2026-11-20\n(A) Paint the fence\n"
+        mainClock.advanceTimeBy(5_000)
+        dragTo("Paint the fence", "Thank Mom", before = true)
+        onNodeWithTag("drop-line").assertDoesNotExist()
+        onNodeWithTag("task-list").performMouseInput { release() }
+        assertEquals("(A) Thank Mom @phone due:2026-11-20\n(A) Paint the fence\n", storage.text)
+    }
+
+    // [utest->dsn~board-drag-position~1]
+    @Test
+    fun draggingACardOntoAnotherCardOfTheBoardPutsItThere() = runComposeUiTest {
+        storage.text += "(B) Paint the fence\n(A) Mow the lawn\n"
+        start()
+        onNodeWithTag("board-switch").performClick()
+        // Column A holds Thank Mom and Mow the lawn, column B Schedule pickup and Paint the fence.
+        dragTo("Paint the fence", "Schedule pickup", before = true)
+        onNodeWithTag("drop-line").assertExists()
+        onNodeWithTag("board").performMouseInput { release() }
+        assertEquals(listOf("(B) Paint the fence", "(B) Schedule pickup +GarageSale @phone"), storage.text.lines().take(2))
+        assertEquals("Move task: Paint the fence", storage.changes.last())
+
+        // To a place in another column, which gives the task its priority.
+        dragTo("Mow the lawn", "Paint the fence", before = false)
+        onNodeWithTag("drop-line").assertExists()
+        onNodeWithTag("board").performMouseInput { release() }
+        assertEquals(listOf("(B) Paint the fence", "(B) Mow the lawn", "(B) Schedule pickup +GarageSale @phone"), storage.text.lines().take(3))
+        assertEquals("Move task to B: Mow the lawn", storage.changes.last())
+
+        // In a board by project, a card that changes its column keeps its priority: it has no place next to a card of another priority.
+        onNodeWithTag("group-PROJECT").performClick()
+        dragTo("Thank Mom", "Schedule pickup", before = true)
+        onNodeWithTag("drop-line").assertDoesNotExist()
+        onNodeWithTag("board").performMouseInput { release() }
+        assertEquals("(A) Thank Mom +GarageSale @phone due:2026-11-20", storage.text.lines()[4])
+    }
+
     // [utest->dsn~quick-add-dates~1]
     @Test
     fun quickAddShowsAndWritesTheDatesOfTypedWords() = runComposeUiTest {
@@ -948,14 +1016,14 @@ class AppTest {
             moveBy(Offset(-30f, 0f))
             moveBy(Offset(-300f, 0f))
         }
-        onNodeWithTag("board-dragged").assertExists()
+        onNodeWithTag("task-dragged").assertExists()
         // The description now exists twice, in the card and at the pointer, so the board takes the release.
         onNodeWithTag("board").performMouseInput { release() }
 
         assertEquals("(A) Schedule pickup +GarageSale @phone", storage.text.lines()[0])
         assertEquals("Move task to A: Schedule pickup", storage.changes.last())
         onNodeWithText("A (2)").assertExists()
-        onNodeWithTag("board-dragged").assertDoesNotExist()
+        onNodeWithTag("task-dragged").assertDoesNotExist()
         onNodeWithTag("edit-dialog").assertDoesNotExist()
     }
 

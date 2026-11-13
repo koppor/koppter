@@ -264,14 +264,20 @@ The phrases are those that [SkedPal](https://docs.skedpal.com/planning/setting-a
 ## Order of the list
 
 The list shows the open tasks first, ordered by priority, then by due date and due time, then by the position of their lines in the file.
-The two arrows at the right of a task move it one step:
+A task is moved by dragging it with the mouse, or with the finger after a long press, or one step at a time with the two arrows at its right.
+A line shows where a dragged task would be put.
 
-* Past a task of the same priority and due date, the two lines change places in the file.
+* Next to a task of the same priority and due date, the line of the task is moved there in the file.
   This orders the tasks that are equally important and due on the same day, such as those of a weekend.
-* At the border to another priority, the task takes that priority: `(B)` becomes `(A)` on the way up, and the next step passes the task above.
-* Within a priority, the due date keeps its order: a task cannot pass one that is due on another day, and its arrow is disabled.
+* Next to a task of another priority, the task takes that priority: `(B)` becomes `(A)`.
+  With an arrow, the first step at such a border changes the priority, and the next one passes the task above.
+* Within a priority, the due date keeps its order: a task cannot pass one that is due on another day.
+  Its arrow is disabled, and dragging shows no line there.
+* If the task and the one it is put next to are due on different days, it takes the priority and the due date decides its place.
 
-The arrows are in the list only, not on the board, where a task is dragged to another column.
+On the [board](#board), a card is dragged to a place in its column in the same way.
+Dragged to another column, it changes what the column stands for and keeps its priority otherwise, so that it gets its place only among the cards of that priority.
+The list does not scroll while a task is dragged; use the arrows or the edit dialog for a place that is not on the screen.
 
 ## Names for priorities
 

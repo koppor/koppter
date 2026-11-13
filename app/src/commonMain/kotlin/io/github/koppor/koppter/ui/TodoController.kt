@@ -487,11 +487,28 @@ class TodoController(
         return task?.takeIf { it != entry.task }
     }
 
-    /** Applies the move of a task from one column of the board to another. */
-    fun move(entry: Entry, from: Group, to: Group) {
-        val task = moved(entry, from, to) ?: return
+    /**
+     * Applies the move of a task from one column of the board to another, or within its column.
+     * With [at], the task is also put before or behind that task of the column.
+     * Within its column, it takes the priority of that task, as [drop] does it.
+     */
+    // [impl->dsn~board-drag-position~1]
+    fun move(entry: Entry, from: Group, to: Group, at: Entry? = null, before: Boolean = false) {
+        val task = moved(entry, from, to)
+        if (task == null && (from.title != to.title || at == null)) return
         val index = locate(entry) ?: return
-        write(file.replace(index, task), "Move task to ${to.title}: ${task.description}")
+        var new = task?.let { file.replace(index, it) } ?: file
+        // A move to another column changes what the column stands for and nothing else: the task gets its place only among tasks of its priority.
+        if (at != null && (task == null || task.priority == at.task.priority)) locate(at)?.let { other -> new.moveTo(index, other, before)?.let { new = it } }
+        write(new, if (task == null) "Move task: ${entry.task.description}" else "Move task to ${to.title}: ${task.description}")
+    }
+
+    /** Puts the task before or behind another one of the list: see [TodoFile.moveTo]. */
+    // [impl->dsn~list-drag~1]
+    fun drop(entry: Entry, target: Entry, before: Boolean) {
+        val index = locate(entry) ?: return
+        val other = locate(target) ?: return
+        write(file.moveTo(index, other, before) ?: return, "Move task: ${entry.task.description}")
     }
 
     /** Lets the task step over its neighbor in the list: see [TodoFile.step]. */

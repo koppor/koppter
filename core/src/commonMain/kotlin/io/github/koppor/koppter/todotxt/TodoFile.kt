@@ -31,23 +31,32 @@ data class TodoFile(
     fun remove(index: Int): TodoFile = copy(lines = lines.filterIndexed { i, _ -> i != index })
 
     /**
+     * The file after the task of a line is put next to another task of the list; `null` if the order of the list does not allow that.
+     *
+     * The task takes the priority of the other one.
+     * With the same due date and time, its line is moved directly before or behind the line of the other one, and is written as it was if its priority stays.
+     * With another due date or time, the list orders the two tasks itself, so that only the priority changes.
+     */
+    // [impl->dsn~list-drag~1]
+    fun moveTo(index: Int, target: Int, before: Boolean): TodoFile? {
+        val task = Task.parse(lines[index])
+        val other = Task.parse(lines[target])
+        if (index == target || !task.canStepOver(other)) return null
+        val line = if (task.priority == other.priority) lines[index] else task.edit(priority = other.priority).toLine()
+        if (task.due != other.due || task.by != other.by) return copy(lines = lines.toMutableList().also { it[index] = line })
+        val at = (if (target > index) target - 1 else target) + if (before) 0 else 1
+        return copy(lines = lines.filterIndexed { i, _ -> i != index }.toMutableList().also { it.add(at, line) })
+    }
+
+    /**
      * The file after the task of a line steps over its neighbor in the list; `null` if the order of the list does not allow that.
      *
      * A neighbor with another priority is a border: the task takes that priority and stays on its side of the neighbor.
-     * A neighbor with the same priority and due date changes places with it, which the position of the line in the file decides.
+     * A neighbor with the same priority and due date changes places with it.
      */
     // [impl->dsn~list-step~1]
-    fun step(index: Int, neighbor: Int, up: Boolean): TodoFile? {
-        val task = Task.parse(lines[index])
-        val other = Task.parse(lines[neighbor])
-        if (!task.canStepOver(other)) return null
-        val border = task.priority != other.priority
-        val line = if (border) task.edit(priority = other.priority).toLine() else lines[index]
-        // With another due date, the list orders the two tasks itself.
-        if (task.due != other.due || task.by != other.by) return copy(lines = lines.toMutableList().also { it[index] = line })
-        val at = (if (neighbor > index) neighbor - 1 else neighbor) + if (up != border) 0 else 1
-        return copy(lines = lines.filterIndexed { i, _ -> i != index }.toMutableList().also { it.add(at, line) })
-    }
+    fun step(index: Int, neighbor: Int, up: Boolean): TodoFile? =
+        moveTo(index, neighbor, before = up == (Task.parse(lines[index]).priority == Task.parse(lines[neighbor]).priority))
 
     fun serialize(): String = if (lines.isEmpty()) "" else lines.joinToString(lineSeparator, postfix = lineSeparator)
 

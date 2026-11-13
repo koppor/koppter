@@ -290,12 +290,12 @@ private fun MainScreen(
                         } else if (controller.board) {
                             Board(
                                 controller.groups, controller.today(), controller::toggle, onOpen = { editing = Editing(it) },
-                                canMove = { entry, from, to -> controller.moved(entry, from, to) != null },
+                                moved = controller::moved,
                                 onMove = controller::move,
                                 emptyText = emptyText,
                             )
                         } else {
-                            TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, controller::step, emptyText)
+                            TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, controller::step, controller::drop, emptyText)
                         }
                     }
                 }
