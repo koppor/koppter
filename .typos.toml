@@ -6,3 +6,5 @@ extend-exclude = ["gradlew", "gradlew.bat", "*.keystore", "gradle/gradle-daemon-
 # "mit" and "mitf" are todo.txt add-ons (most important task)
 mit = "mit"
 mitf = "mitf"
+# "nd" is the ending of an ordinal number, as in "2nd", in the pattern of the date phrases
+nd = "nd"
