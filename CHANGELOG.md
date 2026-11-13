@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Calendar Versioning](https://calver.org/) with the scheme `YYYY-0M-0D`.
 
+## [Unreleased]
+
+### Added
+
+- Source of each extension of the todo.txt format in the README.
+
 ## [2026-11-12] - 2026-11-12
 
 ### Added
@@ -57,6 +63,6 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Changes that other programs make to the todo.txt file are picked up while the application runs.
 - The release of a day on GitHub carries the signed Android application as an APK file.
 - Project infrastructure: Gradle build with a Kotlin Multiplatform `core` module, requirements tracing, decision records and continuous integration.
-- Source of each extension of the todo.txt format in the README.
 
+[Unreleased]: https://github.com/koppor/koppter/compare/v2026-11-12...experimental
 [2026-11-12]: https://github.com/koppor/koppter/releases/tag/v2026-11-12
