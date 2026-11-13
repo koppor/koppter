@@ -170,6 +170,49 @@ class AppTest {
         assertEquals("(A) Thank Mom @phone due:2026-11-20\n(A) Paint the fence\n", storage.text)
     }
 
+    // [utest->dsn~drag-scroll~1]
+    @Test
+    fun theListScrollsWhileATaskIsHeldAtItsEdge() = runComposeUiTest {
+        storage.text = (1..40).joinToString("") { "Task $it\n" }
+        start()
+        onNodeWithText("Task 40").assertDoesNotExist()
+        val list = onNodeWithTag("task-list").fetchSemanticsNode().boundsInRoot
+        val card = onNodeWithText("Task 1").fetchSemanticsNode().boundsInRoot
+        onNodeWithText("Task 1").performMouseInput {
+            moveTo(center)
+            press()
+            moveBy(Offset(-10f, 0f))
+            moveBy(Offset(0f, list.bottom - 5 - card.center.y))
+        }
+        // Held at the lower edge, the list scrolls to its end; the dragged task has left the window and is dropped all the same.
+        mainClock.advanceTimeBy(6_000)
+        onNodeWithText("Task 40").assertExists()
+        onNodeWithTag("task-list").performMouseInput { release() }
+        assertEquals(listOf("Task 39", "Task 40", "Task 1"), storage.text.trim().lines().takeLast(3))
+
+    }
+
+    // [utest->dsn~drag-scroll~1]
+    @Test
+    fun theListScrollsAlsoWhileATaskIsHeldWithTheFinger() = runComposeUiTest {
+        storage.text = (1..40).joinToString("") { "Task $it\n" }
+        start()
+        val list = onNodeWithTag("task-list").fetchSemanticsNode().boundsInRoot
+        val card = onNodeWithText("Task 1").fetchSemanticsNode().boundsInRoot
+        // The finger takes the task after a long press.
+        onNodeWithText("Task 1").performTouchInput {
+            down(center)
+            advanceEventTime(1_000)
+            moveBy(Offset(0f, 20f))
+            moveBy(Offset(0f, list.bottom - 5 - card.center.y - 20))
+        }
+        onNodeWithTag("task-dragged").assertExists()
+        mainClock.advanceTimeBy(6_000)
+        onNodeWithText("Task 40").assertExists()
+        onNodeWithTag("task-list").performTouchInput { up() }
+        assertEquals(listOf("Task 39", "Task 40", "Task 1"), storage.text.trim().lines().takeLast(3))
+    }
+
     // [utest->dsn~board-drag-position~1]
     @Test
     fun draggingACardOntoAnotherCardOfTheBoardPutsItThere() = runComposeUiTest {

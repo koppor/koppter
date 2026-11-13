@@ -13,9 +13,11 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
@@ -30,6 +32,7 @@ import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.LocalPinnableContainer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -44,7 +47,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -67,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import io.github.koppor.koppter.todotxt.Entry
 import io.github.koppor.koppter.todotxt.Group
 import io.github.koppor.koppter.todotxt.Task
+import kotlinx.coroutines.delay
 import kotlinx.datetime.LocalDate
 
 @Composable
@@ -89,8 +95,17 @@ fun TaskList(
     // [impl->dsn~list-drag~1]
     val drag = remember { CardDrag<Entry>() }
     fun target(): Pair<Entry, Boolean>? = drag.dragged?.let { entry -> drag.target { true }?.takeIf { (target) -> entry.task.canStepOver(target.task) } }
-    Box(modifier.fillMaxSize().onGloballyPositioned { drag.origin = it.positionInRoot() }) {
+    val list = rememberLazyListState()
+    var area by remember { mutableStateOf<Rect?>(null) }
+    DragScroll(drag, list) { area }
+    Box(
+        modifier.fillMaxSize().onGloballyPositioned {
+            drag.origin = it.positionInRoot()
+            area = it.boundsInRoot()
+        },
+    ) {
         LazyColumn(
+            state = list,
             modifier = Modifier.fillMaxSize().testTag("task-list"),
             contentPadding = PaddingValues(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -137,12 +152,18 @@ private class CardDrag<K : Any> {
  * Makes the element a card that is dragged with the mouse, or with the finger after a long press, as a plain drag with the finger scrolls.
  * [onDrop] is called while the state still holds the dragged card.
  */
-// ponytail: the list does not scroll while a card is dragged; scroll at the edges when lists longer than the window need it.
 @Composable
 private fun <K : Any> Modifier.cardDrag(state: CardDrag<K>, key: K, onDrop: () -> Unit): Modifier {
     var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val drop by rememberUpdatedState(onDrop)
     DisposableEffect(key) { onDispose { state.cards.remove(key) } }
+    // A lazy list drops the items that leave the window, and with the item its gesture: the dragged card is kept while the list scrolls.
+    val container = LocalPinnableContainer.current
+    val held = state.dragged == key
+    DisposableEffect(held, container) {
+        val pin = if (held) container?.pin() else null
+        onDispose { pin?.release() }
+    }
     return onGloballyPositioned {
         coordinates = it
         val bounds = it.boundsInRoot()
@@ -163,6 +184,29 @@ private fun <K : Any> Modifier.cardDrag(state: CardDrag<K>, key: K, onDrop: () -
             }
             if (dropped) drop()
             state.dragged = null
+        }
+    }
+}
+
+/**
+ * Scrolls the list while a card is held near its upper or lower edge, or beyond it: the nearer to the edge, the faster.
+ *
+ * @param area the bounds of the list in the coordinates of the window
+ */
+// [impl->dsn~drag-scroll~1]
+@Composable
+private fun DragScroll(state: CardDrag<*>, list: LazyListState, area: () -> Rect?) {
+    val zone = with(LocalDensity.current) { 56.dp.toPx() }
+    val step = with(LocalDensity.current) { 14.dp.toPx() }
+    if (state.dragged == null) return
+    LaunchedEffect(list) {
+        while (true) {
+            delay(16)
+            val bounds = area() ?: continue
+            val pointer = state.pointer
+            if (pointer.x !in bounds.left..bounds.right) continue
+            val pull = ((pointer.y - bounds.bottom + zone) / zone).coerceIn(0f, 1f) - ((bounds.top + zone - pointer.y) / zone).coerceIn(0f, 1f)
+            if (pull != 0f) list.scrollBy(pull * step)
         }
     }
 }
@@ -311,7 +355,10 @@ fun Board(
                             style = MaterialTheme.typography.titleSmall,
                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp).testTag("board-column-title"),
                         )
+                        val list = rememberLazyListState()
+                        DragScroll(drag, list) { columnBounds[index] }
                         LazyColumn(
+                            state = list,
                             contentPadding = PaddingValues(bottom = 88.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                         ) {

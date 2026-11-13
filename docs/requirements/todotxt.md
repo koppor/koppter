@@ -246,7 +246,19 @@ The task takes the priority of the task it is put next to.
 If both have the same due date and due time, its line is moved directly before or behind the line of that task; a line whose priority stays is written as it was.
 If they differ in that, only the priority changes, as the due date then orders the two tasks.
 There is no line, and no drop, at a task of the same priority and another due date or due time, or at a completed task.
-The list does not scroll while a task is dragged.
+
+Covers:
+
+* `req~list-step~1`
+
+Needs: impl, utest
+
+### Scrolling while a task is dragged
+`dsn~drag-scroll~1`
+
+While a task is held within 56 dp of the upper or lower edge of the list, or beyond that edge, the list scrolls towards it, the faster the nearer the pointer is to the edge.
+The columns of the board scroll in the same way; the board does not scroll sideways.
+The dragged card is pinned in its lazy list, as the list would otherwise drop it, and its gesture with it, when it leaves the window.
 
 Covers:
 
