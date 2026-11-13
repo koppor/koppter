@@ -601,6 +601,36 @@ class AppTest {
     }
 
     // [utest->dsn~plan-dialog~1]
+    @Test
+    fun thePlanDialogShowsWhatTheConfigurationHoldsAndWhatWasSaved() = runComposeUiTest {
+        storage.companions["koppter.yml"] = """
+            time-maps:
+              "General": "Mon-Fri 08:00-12:00 13:00-17:00"
+            context-time-maps:
+              "@home": "General"
+            barriers:
+              "default": "year"
+            limits:
+              "+GarageSale": "block 45m"
+        """.trimIndent() + "\n"
+        start()
+        onNodeWithTag("open-plan").performClick()
+        onNodeWithTag("plan-time-maps").assertTextContains("General = Mon-Fri 08:00-12:00 13:00-17:00")
+        onNodeWithTag("plan-time-maps").assertTextContains("Time maps (optional)")
+        onNodeWithTag("plan-context-maps").assertTextContains("@home = General")
+        onNodeWithTag("plan-barriers").assertTextContains("default = year")
+        onNodeWithTag("plan-limits").assertTextContains("+GarageSale = block 45m")
+
+        // What is saved is there when the dialog is opened again.
+        onNodeWithTag("plan-barriers").performScrollTo().performTextReplacement("default = month")
+        onNodeWithTag("plan-update").performScrollTo().performClick()
+        onNodeWithTag("plan-close").performClick()
+        onNodeWithTag("open-plan").performClick()
+        onNodeWithTag("plan-barriers").assertTextContains("default = month")
+        onNodeWithTag("plan-time-maps").assertTextContains("General = Mon-Fri 08:00-12:00 13:00-17:00")
+    }
+
+    // [utest->dsn~plan-dialog~1]
     // [utest->dsn~plan-state~1]
     @Test
     fun planningWritesTheCalendarAndMarksTheTasksWithTheStateOfTheirPlan() = runComposeUiTest {

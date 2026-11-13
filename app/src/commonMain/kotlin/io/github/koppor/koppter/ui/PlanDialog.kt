@@ -62,7 +62,8 @@ fun PlanDialog(
         OutlinedTextField(
             value = value,
             onValueChange = onChange,
-            label = { Text(label) },
+            // In the small style also while the field is empty: at the size of the content, the label reads as content.
+            label = { Text("$label (optional)", style = MaterialTheme.typography.bodySmall) },
             supportingText = { Text(help) },
             textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
             minLines = 2,
@@ -87,7 +88,7 @@ fun PlanDialog(
                     "Time maps", timeMaps, { timeMaps = it },
                     "When tasks are planned, one map per line: General = Mon-Fri 08:00-12:00 13:00-18:00. " +
                         "A map that starts with the name of another one is restricted to its times: Morning-Focus = General 08:00-11:00. " +
-                        "The first map is for tasks whose contexts name none.",
+                        "The first map is for tasks whose contexts name none. Without a map: Mon-Fri 09:00-17:00.",
                     "plan-time-maps",
                 )
                 field(
@@ -98,7 +99,7 @@ fun PlanDialog(
                 field(
                     "Barriers", barriers, { barriers = it },
                     "The day behind which a task is not planned: week, month, quarter, year or a date. " +
-                        "One per line: default = quarter, +Thesis = 2027-03-31, @research = year. The earliest barrier of a task counts.",
+                        "One per line: default = quarter, +Thesis = 2027-03-31, @research = year. The earliest barrier of a task counts. Without one: quarter.",
                     "plan-barriers",
                 )
                 // [impl->dsn~plan-limits~1]
