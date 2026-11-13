@@ -57,5 +57,6 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Changes that other programs make to the todo.txt file are picked up while the application runs.
 - The release of a day on GitHub carries the signed Android application as an APK file.
 - Project infrastructure: Gradle build with a Kotlin Multiplatform `core` module, requirements tracing, decision records and continuous integration.
+- Source of each extension of the todo.txt format in the README.
 
 [Unreleased]: https://github.com/koppor/koppter/commits/experimental
