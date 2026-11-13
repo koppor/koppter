@@ -108,6 +108,15 @@ class AppTest {
         onNodeWithText("Buy milk").assertExists()
     }
 
+    // [utest->dsn~quick-add-week~1]
+    @Test
+    fun quickAddGivesATaskForNextWeekTheDatesOfThatWeek() = runComposeUiTest {
+        start()
+        onNodeWithTag("quick-add").performTextInput("Write the report next week")
+        onNodeWithTag("quick-add").performKeyInput { pressKey(Key.Enter) }
+        assertEquals("Write the report t:2026-11-16 due:2026-11-22", storage.text.trim().lines().last())
+    }
+
     // [utest->dsn~task-operations~1]
     @Test
     fun completingWritesNoDateByDefault() = runComposeUiTest {

@@ -444,7 +444,7 @@ class TodoController(
         write(file.add(task.created(today(), settings.writeDates)), "Add task: ${task.description}")
     }
 
-    fun add(line: String) = add(Task.parse(priorityNames.toLetters(line)).withContextSwitcherTags())
+    fun add(line: String) = add(Task.parse(priorityNames.toLetters(line)).withWeek(today()).withContextSwitcherTags())
 
     fun toggle(entry: Entry) {
         val index = locate(entry) ?: return

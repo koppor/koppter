@@ -1,9 +1,12 @@
 package io.github.koppor.koppter.todotxt
 
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
+import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import kotlin.time.Duration
 
 /**
@@ -45,6 +48,21 @@ data class Task(
 
     /** The value of the first tag with the given key. */
     fun tag(key: String): String? = tags.firstOrNull { it.first == key }?.second
+
+    /**
+     * The task with `this week` or `next week` at the end of its text replaced by the dates of that week:
+     * due on its Sunday and, for the next week, not relevant before its Monday.
+     * A date that the task already has stays.
+     */
+    // [impl->dsn~quick-add-week~1]
+    fun withWeek(today: LocalDate): Task {
+        val weeks = WEEK_PHRASES.indexOfFirst { body.endsWith(it, ignoreCase = true) }.takeIf { it >= 0 } ?: return this
+        val monday = today.plus(DatePeriod(days = 7 * weeks + 1 - today.dayOfWeek.isoDayNumber))
+        val task = copy(body = body.dropLast(WEEK_PHRASES[weeks].length))
+        return task
+            .withTag(THRESHOLD, task.tag(THRESHOLD) ?: monday.takeIf { weeks > 0 }?.toString())
+            .withTag(DUE, task.tag(DUE) ?: monday.plus(DatePeriod(days = 6)).toString())
+    }
 
     /** Replaces links that were copied from ContextSwitcher by `cs:` tags behind the other metadata. */
     // [impl->dsn~context-switcher-tag~1]
@@ -224,6 +242,9 @@ data class Task(
         private val CONTEXT_SWITCHER_LINK = Regex("^contextswitcher://(?:task|switch)/(.+)$")
 
         private val WHITESPACE = Regex("\\s+")
+
+        /** The index is the number of weeks from the running one. */
+        private val WEEK_PHRASES = listOf(" this week", " next week")
         private val PRIORITY_PREFIX = Regex("^\\(([A-Z])\\) ")
         private val DATE_PREFIX = Regex("^(\\d{4}-\\d{2}-\\d{2}) ")
         private val TAG = Regex("^[^:\\s]+:[^:\\s/][^\\s]*$")

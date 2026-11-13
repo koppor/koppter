@@ -141,6 +141,10 @@ The column *Source* names the tool or document that defines each of them; those 
 The *Top* switch above the list restricts it to the first tasks, whose number is a setting, as the add-on [top](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#top-see-the-top-tasks) of the todo.txt command line does.
 There is no notation for a most important task as the add-ons [mit](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#mit-most-important-task) and [mitf](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#mitf-most-important-task-in-the-future) have it: priority `(A)` together with a due date serves that purpose ([decision 0009](docs/decisions/0009-no-notation-for-most-important-tasks.md)).
 
+A line typed above the list may end with `this week` or `next week` instead of dates.
+`Write the report next week` becomes `Write the report t:2026-11-16 due:2026-11-22` when typed in the week before: not relevant before the Monday and due on the Sunday of that week.
+`this week` sets the due date only.
+
 Notes, `ice_recur.txt`, the board columns by filter and the names of the priorities need a `todo.txt` file in a folder or a git repository.
 They are not available for a file chosen through the document picker of Android, as the application then has access to that one file only.
 

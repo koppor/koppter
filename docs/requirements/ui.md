@@ -27,6 +27,17 @@ Covers:
 
 Needs: dsn
 
+### Name a week when adding a task
+`req~quick-add-week~1`
+
+A typed line that ends with `this week` or `next week` gives a task that is due at the end of that week and, for the next week, not relevant before its Monday.
+
+Covers:
+
+* `feat~task-editing~1`
+
+Needs: dsn
+
 ### Complete, reopen and delete a task
 `req~complete-and-delete~1`
 
@@ -232,6 +243,20 @@ A text field above the list passes its content to `TodoController.add` on Enter 
 Covers:
 
 * `req~quick-add~1`
+
+Needs: impl, utest
+
+### Week in the quick add line
+`dsn~quick-add-week~1`
+
+`TodoController.add` applies `Task.withWeek` to the typed line.
+It removes `this week` or `next week` from the end of the text, in any case of the letters, and sets `due:` to the Sunday of that week and, for the next week, `t:` to its Monday.
+A week runs from Monday to Sunday.
+A `due:` or `t:` tag that the line has stays, and the words elsewhere in the text stay text.
+
+Covers:
+
+* `req~quick-add-week~1`
 
 Needs: impl, utest
 
