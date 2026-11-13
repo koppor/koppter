@@ -11,7 +11,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import io.github.koppor.koppter.storage.Appearance
-import io.github.koppor.koppter.storage.ColorTheme
 import io.github.koppor.koppter.storage.CompanionFiles
 import io.github.koppor.koppter.storage.Settings
 import io.github.koppor.koppter.storage.SyncStatus
@@ -191,18 +190,6 @@ class ScreenshotTest {
     fun rendersNordDark() = runDesktopComposeUiTest(width = 1100, height = 620) {
         start(Settings(appearance = Appearance.DARK))
         save("nord-dark.png")
-    }
-
-    @Test
-    fun rendersEverforestLight() = runDesktopComposeUiTest(width = 1100, height = 620) {
-        start(Settings(theme = ColorTheme.EVERFOREST))
-        save("everforest-light.png")
-    }
-
-    @Test
-    fun rendersEverforestDark() = runDesktopComposeUiTest(width = 1100, height = 620) {
-        start(Settings(theme = ColorTheme.EVERFOREST, appearance = Appearance.DARK))
-        save("everforest-dark.png")
     }
 
     @Test
