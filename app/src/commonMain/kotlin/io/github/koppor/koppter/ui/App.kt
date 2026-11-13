@@ -123,6 +123,7 @@ fun App(
             LocalFineColor provides fineColor(controller.settings.theme, dark),
             LocalPlanOf provides controller::planOf,
             LocalKeyboard provides keyboard,
+            LocalPriorityNames provides controller.priorityNames,
         ) {
             MainScreen(controller, defaultTodoFile, chooseFile, git)
         }
@@ -345,10 +346,12 @@ private fun MainScreen(
             git = git,
             boardColumns = controller.boardColumnsText,
             shareActions = controller.shareActionsText,
-            onSave = { settings, boardColumns, shareActions ->
-                // The columns and share actions belong to the file that was open when the dialog was opened.
+            priorityNames = controller.priorityNamesText,
+            onSave = { settings, boardColumns, shareActions, priorityNames ->
+                // The columns, share actions and names belong to the file that was open when the dialog was opened.
                 boardColumns?.let(controller::updateBoardColumns)
                 shareActions?.let(controller::updateShareActions)
+                priorityNames?.let(controller::updatePriorityNames)
                 controller.updateSettings(settings)
                 showSettings = false
             },

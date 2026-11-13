@@ -24,6 +24,7 @@ import io.github.koppor.koppter.todotxt.Filter
 import io.github.koppor.koppter.todotxt.Group
 import io.github.koppor.koppter.todotxt.BoardColumn
 import io.github.koppor.koppter.todotxt.GroupKey
+import io.github.koppor.koppter.todotxt.PriorityNames
 import io.github.koppor.koppter.todotxt.Query
 import io.github.koppor.koppter.todotxt.ShareAction
 import io.github.koppor.koppter.todotxt.groupByColumns
@@ -165,7 +166,11 @@ class TodoController(
     // [impl->dsn~board~1]
     // [impl->dsn~board-defined-columns~1]
     val groups: List<Group>
-        get() = groupKey?.let { groupEntries(visible, it, today()) } ?: groupByColumns(visible, boardColumns, today())
+        get() = groupKey?.let { key ->
+            val groups = groupEntries(visible, key, today())
+            if (key != GroupKey.PRIORITY) groups
+            else groups.map { group -> group.value?.singleOrNull()?.let { group.copy(title = priorityNames.name(it)) } ?: group }
+        } ?: groupByColumns(visible, boardColumns, today())
 
     val projects: List<String> get() = file.entries.flatMap { it.task.projects }.distinct().sorted()
     /** The contexts of the file and the contexts above them, a context directly before those below it. */
@@ -201,13 +206,30 @@ class TodoController(
     fun updateBoardColumns(text: String) {
         val columns = parseBoardColumns(text)
         if (columns == boardColumns) return
+        writeConfig(ConfigFile.withBoardColumns(config.orEmpty(), columns), "Edit board columns")
+    }
+
+    private fun writeConfig(text: String, message: String) {
         guarded {
-            (storage as? CompanionFiles)?.writeCompanion(ConfigFile.NAME, ConfigFile.withBoardColumns(config.orEmpty(), columns)) ?: return@guarded
+            (storage as? CompanionFiles)?.writeCompanion(ConfigFile.NAME, text) ?: return@guarded
             // The storage records the files next to the todo.txt file with a change of that file.
-            storage.write(file.serialize(), "Edit board columns")
+            storage.write(file.serialize(), message)
             loadedVersion = storage.version()
         }
         loadConfig()
+    }
+
+    /** The names under which the priorities are shown. */
+    // [impl->dsn~priority-names~1]
+    val priorityNames: PriorityNames get() = PriorityNames.of(ConfigFile.entries(config.orEmpty(), ConfigFile.PRIORITIES))
+
+    /** The names of the priorities, one per line as `letter = name`; `null` if the storage keeps no configuration file. */
+    val priorityNamesText: String? get() = config?.let { ConfigFile.toLines(ConfigFile.entries(it, ConfigFile.PRIORITIES)) }
+
+    fun updatePriorityNames(text: String) {
+        val names = ConfigFile.parseLines(text)
+        if (names == ConfigFile.entries(config.orEmpty(), ConfigFile.PRIORITIES)) return
+        writeConfig(ConfigFile.withEntries(config.orEmpty(), ConfigFile.PRIORITIES, names), "Edit names of priorities")
     }
 
     /** The state of the plan of an open task and a text that tells its start; `null` if nothing was planned yet. */
@@ -310,12 +332,7 @@ class TodoController(
     fun updateShareActions(text: String) {
         val actions = ShareAction.parse(text)
         if (actions == shareActions) return
-        guarded {
-            (storage as? CompanionFiles)?.writeCompanion(ConfigFile.NAME, ConfigFile.withShareActions(config.orEmpty(), actions)) ?: return@guarded
-            storage.write(file.serialize(), "Edit share actions")
-            loadedVersion = storage.version()
-        }
-        loadConfig()
+        writeConfig(ConfigFile.withShareActions(config.orEmpty(), actions), "Edit share actions")
     }
 
     /**
@@ -423,7 +440,7 @@ class TodoController(
         write(file.add(task.created(today(), settings.writeDates)), "Add task: ${task.description}")
     }
 
-    fun add(line: String) = add(Task.parse(line).withContextSwitcherTags())
+    fun add(line: String) = add(Task.parse(priorityNames.toLetters(line)).withContextSwitcherTags())
 
     fun toggle(entry: Entry) {
         val index = locate(entry) ?: return

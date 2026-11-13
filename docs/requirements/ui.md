@@ -51,6 +51,20 @@ Covers:
 
 Needs: dsn
 
+### Names for priorities
+`req~priority-names~1`
+
+The user gives priorities names, such as the numbers 1, 2, 3, 5 and 8 for A to E.
+The application shows the names where it shows a priority, offers the named priorities for a task, and accepts a name where a line is typed.
+The file keeps the letters of the todo.txt format.
+
+Covers:
+
+* `feat~task-list~1`
+* `feat~task-editing~1`
+
+Needs: dsn
+
 ### Line of the edit dialog
 `req~edit-line~1`
 
@@ -237,6 +251,21 @@ Covers:
 
 Needs: impl, utest
 
+### Names for priorities
+`dsn~priority-names~1`
+
+The key `priorities` of `koppter.yml` maps the letter of a priority to its name; the settings dialog edits it, one priority per line as `letter = name`.
+`PriorityNames` gives the name of a priority, which is its letter if it has none, and the priorities to offer: those with a name, or A to F without names.
+The label of a priority, the filter panel, the titles of the board columns by priority and the edit dialog show the name.
+`TodoController.add` replaces a name in parentheses at the start of a typed line by its letter.
+
+Covers:
+
+* `req~priority-names~1`
+* `adr~priority-names~1`
+
+Needs: impl, utest
+
 ### Line of the edit dialog
 `dsn~edit-line~1`
 
@@ -376,7 +405,7 @@ Needs: impl
 ### Settings dialog
 `dsn~settings-dialog~1`
 
-`SettingsDialog` edits the location of the todo.txt file, the switch for writing dates, the number of top tasks, the board columns defined by filters and the colors.
+`SettingsDialog` edits the location of the todo.txt file, the switch for writing dates, the number of top tasks, the board columns defined by filters, the names of the priorities and the colors.
 A changed location makes the controller load the other file.
 
 Covers:

@@ -288,7 +288,7 @@ class AppTest {
         start()
         onNodeWithTag("open-settings").performClick()
         onNodeWithTag("settings-write-dates").performClick()
-        onNodeWithTag("settings-save").performClick()
+        onNodeWithTag("settings-save").performScrollTo().performClick()
         onAllNodesWithTag("task-done")[0].performClick()
         assertEquals("x 2026-11-12 Thank Mom @phone due:2026-11-20 pri:A", storage.text.lines()[2])
     }
@@ -357,6 +357,28 @@ class AppTest {
         onNodeWithTag("edit-dialog").assertDoesNotExist()
         onAllNodesWithTag("task").assertCountEquals(1)
         onNodeWithTag("filter-context-research>reading").assertIsOn()
+    }
+
+    // [utest->dsn~priority-names~1]
+    @Test
+    fun prioritiesAreShownAndTypedWithTheNamesFromTheSettingsAndTheFileKeepsTheLetters() = runComposeUiTest {
+        start()
+        onNodeWithTag("open-settings").performClick()
+        onNodeWithTag("settings-priorities").performScrollTo().performTextInput("A = 1\nB = 2\nC = 3\nD = 5\nE = 8")
+        onNodeWithTag("settings-save").performScrollTo().performClick()
+        assertEquals(true, storage.companions.getValue("koppter.yml").contains("priorities:\n  \"A\": \"1\""))
+
+        onNodeWithTag("quick-add").performTextInput("(5) Buy milk @shop")
+        onNodeWithTag("quick-add").performKeyInput { pressKey(Key.Enter) }
+        assertEquals("(D) Buy milk @shop", storage.text.trim().lines().last())
+        onNode(hasText("5") and hasAnyAncestor(hasTestTag("task-labels")), useUnmergedTree = true).assertExists()
+
+        openTask("Buy milk")
+        onNodeWithTag("edit-priority-D").assertTextEquals("5")
+        onNodeWithTag("edit-priority-F").assertDoesNotExist()
+        onNodeWithTag("edit-priority-E").performClick()
+        onNodeWithTag("edit-save").performScrollTo().performClick()
+        assertEquals("(E) Buy milk @shop", storage.text.trim().lines().last())
     }
 
     // [utest->dsn~share-actions~1]
@@ -918,7 +940,7 @@ class AppTest {
 
         onNodeWithTag("open-settings").performClick()
         onNodeWithTag("settings-board-columns").performTextInput("Phone = @phone\nSoon = due:<2w\nNothing = +Nowhere")
-        onNodeWithTag("settings-save").performClick()
+        onNodeWithTag("settings-save").performScrollTo().performClick()
         assertEquals(
             "# Configuration of koppter for the todo.txt file in this directory\n" +
                 "board-columns:\n  \"Phone\": \"@phone\"\n  \"Soon\": \"due:<2w\"\n  \"Nothing\": \"+Nowhere\"\n",

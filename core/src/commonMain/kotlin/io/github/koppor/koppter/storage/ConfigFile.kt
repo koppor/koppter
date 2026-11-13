@@ -18,6 +18,7 @@ import io.github.koppor.koppter.todotxt.ShareAction
  *
  * The key `share-actions` maps the title of each share action to its template in the same way,
  * and so do the keys `time-maps`, `context-time-maps` and `barriers` for planning.
+ * The key `priorities` maps the letter of a priority to the name it is shown with.
  */
 // ponytail: reads the subset of YAML that it writes (one line per column, plain or quoted scalars, the escapes \" and \\);
 // a YAML library when the file gets nested content.
@@ -32,6 +33,7 @@ object ConfigFile {
     const val CONTEXT_TIME_MAPS = "context-time-maps:"
     const val BARRIERS = "barriers:"
     const val LIMITS = "limits:"
+    const val PRIORITIES = "priorities:"
     private const val HEADER = "# Configuration of koppter for the todo.txt file in this directory"
 
     /** The columns in the order of the file. */

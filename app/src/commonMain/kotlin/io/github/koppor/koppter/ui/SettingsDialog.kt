@@ -57,7 +57,9 @@ fun SettingsDialog(
     boardColumns: String?,
     /** The share actions; `null` if the storage cannot keep them. */
     shareActions: String?,
-    onSave: (Settings, boardColumns: String?, shareActions: String?) -> Unit,
+    /** The names of the priorities; `null` if the storage cannot keep them. */
+    priorityNames: String?,
+    onSave: (Settings, boardColumns: String?, shareActions: String?, priorityNames: String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -67,10 +69,11 @@ fun SettingsDialog(
     val topCountValue = topCount.trim().toIntOrNull()?.takeIf { it > 0 }
     var columns by remember { mutableStateOf(boardColumns) }
     var actions by remember { mutableStateOf(shareActions) }
+    var priorities by remember { mutableStateOf(priorityNames) }
     var theme by remember { mutableStateOf(settings.theme) }
     var appearance by remember { mutableStateOf(settings.appearance) }
 
-    val state = listOf(todoFile, writeDates, topCount, columns, actions, theme, appearance)
+    val state = listOf(todoFile, writeDates, topCount, columns, actions, priorities, theme, appearance)
     val initial = remember { state }
 
     GuardedDialog(changed = state != initial, onDismiss = onDismiss) {
@@ -120,6 +123,23 @@ fun SettingsDialog(
                         modifier = Modifier.fillMaxWidth().testTag("settings-board-columns"),
                     )
                 }
+                // [impl->dsn~priority-names~1]
+                priorities?.let { text ->
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { priorities = it },
+                        label = { Text("Names of the priorities") },
+                        supportingText = {
+                            Text(
+                                "One priority per line as letter = name, for example A = 1, B = 2, C = 3, D = 5 and E = 8, each on its line. " +
+                                    "The tasks show the names, and a task is given one of these priorities; the file keeps the letters. Kept in ${ConfigFile.NAME}.",
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        minLines = 2,
+                        modifier = Modifier.fillMaxWidth().testTag("settings-priorities"),
+                    )
+                }
                 // [impl->dsn~share-actions~1]
                 actions?.let { text ->
                     OutlinedTextField(
@@ -163,6 +183,7 @@ fun SettingsDialog(
                                 ),
                                 columns?.trim(),
                                 actions?.trim(),
+                                priorities?.trim(),
                             )
                         },
                         enabled = topCountValue != null,

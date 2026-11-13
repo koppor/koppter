@@ -106,7 +106,7 @@ It also maps the terms of SkedPal to those of the application.
 | --- | --- |
 | `todo.txt` | The tasks |
 | `notes/<name>.md` | The note of the task with the tag `note:<name>.md`, as Markdown |
-| `koppter.yml` | Configuration of this application that belongs to the `todo.txt` file: the [board columns defined by filters](#board), the [share actions](#sharing-to-koppter-on-android), and the time maps and barriers for [planning](#planning) |
+| `koppter.yml` | Configuration of this application that belongs to the `todo.txt` file: the [board columns defined by filters](#board), the [share actions](#sharing-to-koppter-on-android), the [names of the priorities](#names-for-priorities), and the time maps and barriers for [planning](#planning) |
 | `ice_recur.txt` | Schedules of [recurring tasks](#recurring-tasks) in the format of the ice_recur add-on, such as `weekly ; day Monday - (B) Plan the week` |
 | `calendar.txt` | The [plan](#planning): when the open tasks are worked on, one line per day |
 | `calendar.ics` | The plan as tentative events, for import into a calendar program |
@@ -141,7 +141,7 @@ The column *Source* names the tool or document that defines each of them; those 
 The *Top* switch above the list restricts it to the first tasks, whose number is a setting, as the add-on [top](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#top-see-the-top-tasks) of the todo.txt command line does.
 There is no notation for a most important task as the add-ons [mit](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#mit-most-important-task) and [mitf](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#mitf-most-important-task-in-the-future) have it: priority `(A)` together with a due date serves that purpose ([decision 0009](docs/decisions/0009-no-notation-for-most-important-tasks.md)).
 
-Notes, `ice_recur.txt` and the board columns by filter need a `todo.txt` file in a folder or a git repository.
+Notes, `ice_recur.txt`, the board columns by filter and the names of the priorities need a `todo.txt` file in a folder or a git repository.
 They are not available for a file chosen through the document picker of Android, as the application then has access to that one file only.
 
 ### Recurring tasks
@@ -229,6 +229,28 @@ The application differs from the add-on in these points:
 * Each device remembers on its own when it last ran the schedules.
   In a git repository, a task that any device added since then counts as existing, also when it is completed already.
   Without git, a second device may add a task again that was added and completed on the first.
+
+## Names for priorities
+
+The todo.txt format has the priorities `(A)` to `(Z)`, of which A is the highest.
+For another scale, such as numbers, *Names of the priorities* in the settings takes one priority per line as `letter = name`:
+
+```text
+A = 1
+B = 2
+C = 3
+D = 5
+E = 8
+```
+
+* The labels of the tasks, the filter panel, the board by priority and the edit dialog then show 1, 2, 3, 5 and 8.
+* The edit dialog offers the priorities that have a name, here five; without names, it offers A to F.
+* A line typed above the list may start with a name: `(5) Call the dentist` is written as `(D) Call the dentist`.
+* The file keeps the letters, so that other todo.txt tools read the priorities and order by them ([decision 0024](docs/decisions/0024-names-for-priorities-kept-in-the-configuration-file.md)).
+* The order is that of the letters: the name of A is the highest priority, so `A = 8` to `E = 1` makes 8 the highest.
+
+The names are kept in `koppter.yml` and are therefore the same on every device that synchronizes the file.
+The filters of board columns, such as `(>C)`, the line of the edit dialog and `ice_recur.txt` use the letters.
 
 ## Overview of the contexts
 
