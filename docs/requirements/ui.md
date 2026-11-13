@@ -55,7 +55,8 @@ Needs: dsn
 `req~priority-names~1`
 
 The user gives priorities names, such as the numbers 1, 2, 3, 5 and 8 for A to E.
-The application shows the names where it shows a priority, offers the named priorities for a task, and accepts a name where a line is typed.
+The application shows the names where it shows a priority, offers the named priorities for a task, and accepts a name where a line or a filter is typed.
+The settings offer scales to choose with one click: numbers and steps of the Fibonacci sequence.
 The file keeps the letters of the todo.txt format.
 
 Covers:
@@ -258,6 +259,8 @@ The key `priorities` of `koppter.yml` maps the letter of a priority to its name;
 `PriorityNames` gives the name of a priority, which is its letter if it has none, and the priorities to offer: those with a name, or A to F without names.
 The label of a priority, the filter panel, the titles of the board columns by priority and the edit dialog show the name.
 `TodoController.add` replaces a name in parentheses at the start of a typed line by its letter.
+`TodoController.boardColumns` does the same for the priority terms of the filters, so that a filter names a priority by its name or by its letter, and the settings keep the filter as it was typed.
+Below the field for the names, the settings dialog has one button per scale, which fills the field.
 
 Covers:
 

@@ -116,11 +116,15 @@ class TodoController(
     /** Gives a task of the inbox its context. */
     fun assignContext(entry: Entry, context: String) = replace(entry, entry.task.edit(contexts = listOf(context)))
 
-    /** The columns the user defined. */
-    val boardColumns: List<BoardColumn> get() = ConfigFile.boardColumns(config.orEmpty())
+    /** The columns the user defined, as the configuration states them. */
+    private val definedColumns: List<BoardColumn> get() = ConfigFile.boardColumns(config.orEmpty())
+
+    /** The columns the user defined; their filters name a priority by its letter, also where the configuration uses its name. */
+    // [impl->dsn~priority-names~1]
+    val boardColumns: List<BoardColumn> get() = definedColumns.map { it.copy(expression = priorityNames.toLettersInFilter(it.expression)) }
 
     /** The columns the user defined, one per line as `title = filter expression`; `null` if the storage cannot keep them. */
-    val boardColumnsText: String? get() = config?.let { boardColumns.joinToString("\n") { "${it.title} = ${it.expression}" } }
+    val boardColumnsText: String? get() = config?.let { definedColumns.joinToString("\n") { "${it.title} = ${it.expression}" } }
 
     /** The state of the synchronization; `null` if the storage does not synchronize. */
     var syncStatus by mutableStateOf<SyncStatus?>(null)
@@ -205,7 +209,7 @@ class TodoController(
     /** Replaces the columns the user defined by those in the text, one per line as `title = filter expression`. */
     fun updateBoardColumns(text: String) {
         val columns = parseBoardColumns(text)
-        if (columns == boardColumns) return
+        if (columns == definedColumns) return
         writeConfig(ConfigFile.withBoardColumns(config.orEmpty(), columns), "Edit board columns")
     }
 

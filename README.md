@@ -243,6 +243,8 @@ D = 5
 E = 8
 ```
 
+The buttons below the field fill in a scale: the letters, the numbers 1 to 5, or five or eight steps of the Fibonacci sequence.
+
 * The labels of the tasks, the filter panel, the board by priority and the edit dialog then show 1, 2, 3, 5 and 8.
 * The edit dialog offers the priorities that have a name, here five; without names, it offers A to F.
 * A line typed above the list may start with a name: `(5) Call the dentist` is written as `(D) Call the dentist`.
@@ -250,7 +252,9 @@ E = 8
 * The order is that of the letters: the name of A is the highest priority, so `A = 8` to `E = 1` makes 8 the highest.
 
 The names are kept in `koppter.yml` and are therefore the same on every device that synchronizes the file.
-The filters of board columns, such as `(>C)`, the line of the edit dialog and `ice_recur.txt` use the letters.
+A filter of a board column names a priority by its name or by its letter: with the names above, `(>3)` and `(>C)` both select the priorities 1 and 2.
+The comparison reads *a higher priority than*, not *a greater number than*.
+The line of the edit dialog and `ice_recur.txt` use the letters.
 
 ## Overview of the contexts
 
@@ -458,7 +462,7 @@ Important = (>C)
 | Term | Matches a task |
 | --- | --- |
 | `+project`, `@context`, `#hashtag` | with this project, context or hashtag |
-| `(A)`, `(>B)`, `(<=C)` | with this priority, a higher one, this or a lower one |
+| `(A)`, `(>B)`, `(<=C)` | with this priority, a higher one, this or a lower one; a priority is named by its letter or by its [name](#names-for-priorities) |
 | `due:today`, `due:<1w`, `t:>=2026-12-01`, `status:doing` | whose tag has this value or compares so to it; dates are ISO dates, `today`, `tomorrow`, `yesterday` or an interval from today |
 | `-term` | that does not match the term |
 | any other word | whose line contains it |

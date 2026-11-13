@@ -34,7 +34,7 @@ The order of the priorities stays that of the letters: the name of `A` is the hi
 
 * Good, because the names also limit the choice: the edit dialog offers the priorities that have a name.
 * Good, because the names are synchronized with the tasks and are the same on every device.
-* Bad, because another program, a filter of a board column and the line of the edit dialog show the letters.
+* Bad, because another program and the line of the edit dialog show the letters.
 * Bad, because a file chosen through the document picker of Android has no configuration file and therefore no names.
 
 ## Pros and Cons of the Options

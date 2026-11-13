@@ -362,10 +362,21 @@ class AppTest {
     // [utest->dsn~priority-names~1]
     @Test
     fun prioritiesAreShownAndTypedWithTheNamesFromTheSettingsAndTheFileKeepsTheLetters() = runComposeUiTest {
-        start()
+        val controller = TodoController(Settings(), { storage }, today = { LocalDate(2026, 11, 12) })
+        setContent { App(controller, "todo.txt") }
         onNodeWithTag("open-settings").performClick()
-        onNodeWithTag("settings-priorities").performScrollTo().performTextInput("A = 1\nB = 2\nC = 3\nD = 5\nE = 8")
+        onNodeWithTag("settings-board-columns").performScrollTo().performTextInput("High = (>3)\nTop = (A)")
+        // The third scale offered: the first steps of the Fibonacci sequence.
+        onNodeWithTag("settings-priorities-preset-2").performScrollTo().performClick()
+        onNodeWithTag("settings-priorities").assertTextContains("A = 1\nB = 2\nC = 3\nD = 5\nE = 8")
         onNodeWithTag("settings-save").performScrollTo().performClick()
+        // A filter names a priority by its name or by its letter; the settings keep what was typed.
+        assertEquals("High = (>3)\nTop = (A)", controller.boardColumnsText)
+        controller.groupKey = null
+        assertEquals(
+            listOf("High" to listOf("Thank Mom", "Schedule pickup"), "Top" to listOf("Thank Mom")),
+            controller.groups.map { group -> group.title to group.entries.map { it.task.description } },
+        )
         assertEquals(true, storage.companions.getValue("koppter.yml").contains("priorities:\n  \"A\": \"1\""))
 
         onNodeWithTag("quick-add").performTextInput("(5) Buy milk @shop")

@@ -2,6 +2,8 @@ package io.github.koppor.koppter.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import io.github.koppor.koppter.storage.Appearance
 import io.github.koppor.koppter.storage.ColorTheme
 import io.github.koppor.koppter.storage.ConfigFile
+import io.github.koppor.koppter.todotxt.PriorityNames
 import io.github.koppor.koppter.storage.Settings
 import kotlinx.coroutines.launch
 
@@ -46,7 +50,16 @@ interface GitSetupActions {
     suspend fun clone(url: String): String
 }
 
+/** Scales offered for the names of the priorities: the letters of the format, numbers, and steps of the Fibonacci sequence. */
+private val PRIORITY_PRESETS = listOf(
+    emptyList(),
+    listOf("1", "2", "3", "4", "5"),
+    listOf("1", "2", "3", "5", "8"),
+    listOf("1", "2", "3", "5", "8", "13", "21", "34"),
+)
+
 // [impl->dsn~settings-dialog~1]
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsDialog(
     settings: Settings,
@@ -139,6 +152,15 @@ fun SettingsDialog(
                         minLines = 2,
                         modifier = Modifier.fillMaxWidth().testTag("settings-priorities"),
                     )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        PRIORITY_PRESETS.forEachIndexed { index, names ->
+                            AssistChip(
+                                onClick = { priorities = PriorityNames.lines(names) },
+                                label = { Text(if (names.isEmpty()) "Letters" else names.joinToString(", ")) },
+                                modifier = Modifier.testTag("settings-priorities-preset-$index"),
+                            )
+                        }
+                    }
                 }
                 // [impl->dsn~share-actions~1]
                 actions?.let { text ->
