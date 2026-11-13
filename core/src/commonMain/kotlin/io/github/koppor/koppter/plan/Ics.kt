@@ -21,7 +21,7 @@ object Ics {
         line("VERSION:2.0")
         line("PRODID:-//koppter//plan//EN")
         for (block in blocks) {
-            val text = CalendarTxt.text(block.entry.task)
+            val text = block.text
             val day = block.date.toString().replace("-", "")
             line("BEGIN:VEVENT")
             // The same block has the same id in every export, so that a calendar that knows the id replaces the event.

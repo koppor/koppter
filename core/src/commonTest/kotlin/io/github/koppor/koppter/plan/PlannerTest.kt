@@ -59,7 +59,7 @@ class PlannerTest {
     private fun plan(todo: String, config: PlanConfig = PlanConfig(maps), busy: Map<LocalDate, List<Span>> = emptyMap(), now: String = "07:00") =
         plan(TodoFile.parse(todo.trimIndent()).entries, config, busy, today, minutes(now))
 
-    private fun Plan.lines() = blocks.map { "${it.date} ${it.span.start / 60}:${(it.span.start % 60).toString().padStart(2, '0')} ${it.span.length} ${it.entry.task.description}" }
+    private fun Plan.lines() = blocks.map { "${it.date} ${it.span.start / 60}:${(it.span.start % 60).toString().padStart(2, '0')} ${it.span.length} ${if (it.travel) "Travel: " else ""}${it.entry.task.description}" }
 
     // [utest->dsn~planner~1]
     @Test
@@ -277,6 +277,39 @@ class PlannerTest {
         assertEquals(emptyList(), plan.unplaced)
         assertEquals(null, Task.parse("Lunch at:25:00").at)
         assertEquals(null, Task.parse("Lunch at:noon").at)
+    }
+
+    // [utest->dsn~travel-time~1]
+    @Test
+    fun theWayToATaskAndBackIsKeptFreeBeforeAndAfterItAndTheTaskIsNotCut() {
+        val plan = plan(
+            """
+            (A) Fetch the parcel @errands dur:30m tt:20m
+            (B) Write the report dur:4h
+            Dentist at:15:00 dur:1h tt:30m
+            Visit the archive dur:5h tt:1h
+            """,
+        )
+        assertEquals(
+            listOf(
+                "2026-11-12 8:00 20 Travel: Fetch the parcel",
+                "2026-11-12 8:20 30 Fetch the parcel",
+                "2026-11-12 8:50 20 Travel: Fetch the parcel",
+                "2026-11-12 9:10 170 Write the report",
+                // The report ends before the way to the dentist.
+                "2026-11-12 13:00 70 Write the report",
+                "2026-11-12 14:30 30 Travel: Dentist",
+                "2026-11-12 15:00 60 Dentist",
+                "2026-11-12 16:00 30 Travel: Dentist",
+            ),
+            plan.lines(),
+        )
+        // Seven hours in one piece are free on no day.
+        assertEquals(listOf("Visit the archive"), plan.unplaced.map { it.task.description })
+        assertEquals(
+            "2026-11-12 w46 Thu  08:00-08:20 Travel: Fetch the parcel @errands. 08:20-08:50 Fetch the parcel @errands. 08:50-09:10 Travel: Fetch the parcel @errands. 09:10-12:00 Write the report",
+            CalendarTxt.write("", plan.blocks, today).substringBefore(". 13:00"),
+        )
     }
 
     // [utest->dsn~dependencies~1]

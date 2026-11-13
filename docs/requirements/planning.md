@@ -93,6 +93,18 @@ Covers:
 
 Needs: dsn
 
+### Travel time
+`req~travel-time~1`
+
+A task can state the time that the way to it takes.
+Planning keeps that time free before and after the task.
+
+Covers:
+
+* `feat~planning~1`
+
+Needs: dsn
+
 ### Plan as a file
 `req~plan-file~1`
 
@@ -249,6 +261,21 @@ Covers:
 
 * `req~due-time~1`
 * `adr~due-time-tag~1`
+
+Needs: impl, utest
+
+### Travel time
+`dsn~travel-time~1`
+
+The tag `tt:` holds a time in the form of the tag `dur:`; `Task.travel` reads it, and the edit dialog has a field for it that rejects what is no time.
+The planner gives a task with that tag a free time that holds the way there, the task and the way back, and does not cut the task into parts.
+A task with a fixed time gets the ways before and after its block, whatever is planned or busy there.
+The ways are blocks of their own, marked as travel: the plan shows them as `Travel:` followed by the text of the task, and they do not count for the limits of the task.
+
+Covers:
+
+* `req~travel-time~1`
+* `adr~travel-time-tag~1`
 
 Needs: impl, utest
 

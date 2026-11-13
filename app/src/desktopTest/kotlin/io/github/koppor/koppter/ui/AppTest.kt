@@ -201,6 +201,18 @@ class AppTest {
         assertEquals("(B) Post the signs +GarageSale custom:kept", storage.text.lines()[1])
     }
 
+    // [utest->dsn~travel-time~1]
+    @Test
+    fun theDialogSetsTheTravelTime() = runComposeUiTest {
+        start()
+        openTask("Post signs")
+        onNodeWithTag("edit-travel").performScrollTo().performTextInput("far")
+        onNodeWithTag("edit-save").performScrollTo().assertIsNotEnabled()
+        onNodeWithTag("edit-travel").performScrollTo().performTextReplacement("30m")
+        onNodeWithTag("edit-save").performScrollTo().performClick()
+        assertEquals("Post signs +GarageSale tt:30m", storage.text.lines()[1])
+    }
+
     // [utest->dsn~due-time~1]
     @Test
     fun theDialogSetsTheTimeByWhichATaskIsDue() = runComposeUiTest {

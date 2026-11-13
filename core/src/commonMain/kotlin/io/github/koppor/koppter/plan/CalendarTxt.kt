@@ -47,7 +47,7 @@ object CalendarTxt {
         val byDay = blocks.groupBy { it.date }
         val days = generateSequence(today) { it.plus(DatePeriod(days = 1)) }.takeWhile { day -> blocks.any { it.date >= day } }
         val planned = days.map { day ->
-            val events = byDay[day].orEmpty().sortedBy { it.span.start }.joinToString(". ") { "${timesText(it.span)} ${text(it.entry.task)}" }
+            val events = byDay[day].orEmpty().sortedBy { it.span.start }.joinToString(". ") { "${timesText(it.span)} ${it.text}" }
             "$day w${week(day).toString().padStart(2, '0')} ${WEEKDAYS[day.dayOfWeek.isoDayNumber - 1]}  $events".trimEnd()
         }
         return (kept + planned).joinToString("\n", postfix = "\n")

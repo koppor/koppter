@@ -119,8 +119,15 @@ class PlanConfig(
     }
 }
 
-/** A time in which a task is to be worked on. */
-data class Block(val date: LocalDate, val span: Span, val entry: Entry)
+/**
+ * A time in which a task is to be worked on.
+ *
+ * @param travel whether the time is the way to the task or back from it
+ */
+data class Block(val date: LocalDate, val span: Span, val entry: Entry, val travel: Boolean = false) {
+    /** What the plan shows for the block. */
+    val text: String get() = (if (travel) "Travel: " else "") + CalendarTxt.text(entry.task)
+}
 
 /**
  * @param unplaced the tasks that do not fit before their barrier
@@ -148,13 +155,24 @@ private const val UPCOMING_DAYS = 27
 private fun fixedBlocks(open: List<Entry>, upcoming: List<Pair<LocalDate, Task>>, today: LocalDate, now: Int): List<Block> =
     // What a schedule adds gets an index that no line of the file has.
     (open.map { (it.task.due ?: it.task.threshold ?: today) to it } + upcoming.mapIndexed { index, (date, task) -> date to Entry(-1 - index, task) })
-        .mapNotNull { (date, entry) ->
-            val start = entry.task.at ?: return@mapNotNull null
+        .flatMap { (date, entry) ->
+            val start = entry.task.at ?: return@flatMap emptyList()
             val end = minOf(start + (entry.task.duration ?: DEFAULT_DURATION).inWholeMinutes.toInt(), 24 * 60)
-            Block(date, Span(start, end), entry).takeIf { date > today || (date == today && end > now) }
+            if (date > today || (date == today && end > now)) withTravel(Block(date, Span(start, end), entry)) else emptyList()
         }
         // A task that is in the list already for a later day is not planned a second time for its schedule.
-        .distinctBy { Triple(it.date, it.span, CalendarTxt.text(it.entry.task)) }
+        .distinctBy { Triple(it.date, it.span, it.text) }
+
+/** The block of a task with the times before and after it that the way there and the way back take. */
+// [impl->dsn~travel-time~1]
+private fun withTravel(block: Block): List<Block> {
+    val travel = block.entry.task.travel?.inWholeMinutes?.toInt() ?: return listOf(block)
+    return listOf(
+        block.copy(span = Span(maxOf(block.span.start - travel, 0), block.span.start), travel = true),
+        block,
+        block.copy(span = Span(block.span.end, minOf(block.span.end + travel, 24 * 60)), travel = true),
+    ).filter { it.span.length > 0 }
+}
 
 private fun monday(date: LocalDate) = date.minus(DatePeriod(days = date.dayOfWeek.isoDayNumber - 1))
 
@@ -226,7 +244,8 @@ private class Planning(
     init {
         for (block in fixed) {
             taken.getOrPut(block.date) { mutableListOf() } += block.span
-            use(block, 1)
+            // The way to a task is no time of its project or context.
+            if (!block.travel) use(block, 1)
             if (block.entry in left) blocks.getOrPut(block.entry) { mutableListOf() } += block
         }
         // A task with a time is not moved: nothing of it is left for a free time, also when its time is over.
@@ -262,6 +281,7 @@ private class Planning(
         val limits = config.limitsOf(task)
         val block = config.blockOf(task)
         val map = config.mapOf(task)
+        val travel = task.travel?.inWholeMinutes?.toInt() ?: 0
         var missing = wanted
         var date = from.first
         while (missing > 0 && left.getValue(entry) > 0 && date <= until) {
@@ -276,14 +296,17 @@ private class Planning(
                         (limit.maxWeek ?: Int.MAX_VALUE) - (usedWeek[limit.key to monday(date)] ?: 0),
                     )
                 } ?: Int.MAX_VALUE
-                val shortest = minOf(block, rest)
-                var length = minOf(free.end - start, maxOf(missing, shortest), rest, allowed)
+                // A task with a way to it is not cut: each part would need the way.
+                val shortest = if (travel > 0) rest else minOf(block, rest)
+                var length = minOf(free.end - start - 2 * travel, maxOf(missing, shortest), rest, allowed)
                 // What stays of the task for later is a whole block as well.
                 if (rest - length in 1 until block) length = rest - block
                 if (length < shortest) continue
-                val part = Block(date, Span(start, start + length), entry)
-                blocks.getOrPut(entry) { mutableListOf() } += part
-                taken.getOrPut(date) { mutableListOf() } += part.span
+                val part = Block(date, Span(start + travel, start + travel + length), entry)
+                for (placed in withTravel(part)) {
+                    blocks.getOrPut(entry) { mutableListOf() } += placed
+                    taken.getOrPut(date) { mutableListOf() } += placed.span
+                }
                 count(part, 1)
                 missing -= length
             }
@@ -322,7 +345,7 @@ private class Planning(
                 // plan again without the task if that leaves too much free.
                 blocks.remove(entry).orEmpty().forEach {
                     taken.getValue(it.date) -= it.span
-                    count(it, -1)
+                    if (!it.travel) count(it, -1)
                 }
                 unplaced += entry
             }
@@ -343,6 +366,7 @@ private class Planning(
  * A task is cut into parts if a free time is too short for it or a limit of its project or context allows no more on a day or in a week.
  * A limit with a time for each week gets that time first, in the weeks up to the day on which its tasks would be done without it.
  *
+ * A task with a travel time gets that time before and after its block, and is not cut into parts.
  * A task with a time of the day is not moved: it takes that time, whatever the time maps and the calendars say, and the other tasks are planned around it.
  *
  * @param busy the times that are taken, by day

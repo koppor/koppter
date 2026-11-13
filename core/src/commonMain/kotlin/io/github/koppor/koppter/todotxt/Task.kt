@@ -68,6 +68,10 @@ data class Task(
     // [impl->dsn~fixed-time~1]
     val at: Int? get() = tag(AT)?.let(::parseTime)
 
+    /** The time that the way to the task takes, and the way back as well. */
+    // [impl->dsn~travel-time~1]
+    val travel: Duration? get() = tag(TRAVEL)?.let(::parseDuration)
+
     /** The minutes of the due date by which the task is due, for a task that is due at a time of that day. */
     // [impl->dsn~due-time~1]
     val by: Int? get() = tag(BY)?.let(::parseTime)
@@ -190,6 +194,7 @@ data class Task(
         const val DURATION = "dur"
         const val AT = "at"
         const val BY = "by"
+        const val TRAVEL = "tt"
 
         /** As topydo writes dependencies: a task with [ID] waits for the tasks whose [PARENT] has the same value. */
         const val ID = "id"

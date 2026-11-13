@@ -48,6 +48,7 @@ koppter writes tasks in that order, so a line written the same way does not chan
 | `by:14:00` | The time of the due date by which the task has to be done | Only next to `due:`: "the slides have to be ready for the call on Monday at 14:00". |
 | `t:2027-01-10` | The day from which the task is worth looking at | The task is hidden and not planned before. Use it for "not now" and "some day". |
 | `dur:1h30m` | The time the task takes | Without it, the plan assumes half an hour. Give it when the user states it or the task clearly takes longer. |
+| `tt:30m` | The time that the way to the task takes; the way back counts the same | Only when the user states it for a task that takes place somewhere else. The plan keeps it free before and after the task. |
 | `at:14:00` | The time of the day at which the task takes place | Only for what has its time: an appointment, lunch, a training. The plan does not move the task. The day is `due:`, else `t:`, else today. |
 | `#hashtag` | A property shared across areas | `#money`, `#quick`. Starts with a letter. |
 | `id:1`, `p:1` | Order between tasks | The task with `id:1` waits for the tasks with `p:1`. Pick a value that the file does not use yet: `grep -o ' id:[^ ]*' todo.txt`. |

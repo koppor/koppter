@@ -133,6 +133,7 @@ The application understands the following extensions, which other todo.txt tools
 | `dur:1h30m` | The time the task is expected to take, in hours and minutes | Field *Duration* in the edit dialog, or typed into the task. [Planning](#planning) gives the task that much time ([decision 0018](docs/decisions/0018-tag-for-the-duration-of-a-task.md)). |
 | `by:14:00` | The time of the due date by which the task has to be done | Field *Due time* in the edit dialog, or typed into the task next to `due:`. Among the tasks of a day, the earlier time comes first, and the icon of the [plan](#planning) is red if the task is planned to end later ([decision 0022](docs/decisions/0022-tag-for-the-time-by-which-a-task-is-due.md)). |
 | `at:12:00` | The time of the day at which the task takes place | Field *Fixed time* in the edit dialog, or typed into the task. [Planning](#fixed-times) gives the task that time and plans the others around it ([decision 0021](docs/decisions/0021-tag-for-the-fixed-time-of-a-task.md)). |
+| `tt:30m` | The time that the way to the task takes, and the way back as well | Field *Travel time* in the edit dialog, or typed into the task. [Planning](#travel-time) keeps that time free before and after the task ([decision 0023](docs/decisions/0023-tag-for-the-travel-time-of-a-task.md)). |
 | `id:1`, `p:1` | The task with `id:1` waits for the tasks with `p:1`, as topydo writes dependencies | Typed into the task. [Planning](#planning) gives the task its times after those it waits for ([decision 0020](docs/decisions/0020-dependencies-with-the-tags-of-topydo.md)). |
 | `cs:jabref/fix-npe` | The task of [ContextSwitcher](https://github.com/contextswitcher/contextswitcher) that holds the working context | Entered in the field *ContextSwitcher task* of the edit dialog or typed into the task, as the id or as the link that *Copy link* of ContextSwitcher gives, which becomes the tag. A click on the label switches to the task in ContextSwitcher, on a computer where it has registered its links ([decision 0016](docs/decisions/0016-tag-for-the-task-of-contextswitcher.md)). |
 | `pri:A` | The priority a completed task had | Written when a task with a priority is completed, as the format has no priority for completed tasks; reopening the task restores the priority. |
@@ -315,6 +316,19 @@ Use it for what has its time, such as lunch, a training or an appointment, so th
 * A time that is over is not planned any more.
 * The time counts for a budget of the project and the contexts of the task.
 
+### Travel time
+
+A task with the tag `tt:` takes place somewhere else: the plan keeps the stated time free before and after it, for the way there and the way back.
+
+| Line | Planned |
+| --- | --- |
+| `Dentist at:15:00 dur:1h tt:30m due:2026-11-20` | the way from 14:30, the dentist from 15:00 to 16:00, the way back until 16:30 |
+| `Fetch the parcel @errands dur:30m tt:20m` | a free time of 70 minutes: 20 minutes for the way, 30 for the parcel, 20 for the way back |
+
+* The ways are blocks of their own, which the plan shows as `Travel:` followed by the task.
+* A task with a travel time is not cut into parts, so it needs a free time that holds it with both ways.
+* The ways do not count for a budget of the project and the contexts of the task.
+
 ### Agenda and week
 
 *Agenda* above the tasks shows the blocks of today and of the six days after it, each with its task, which is completed and opened there as in the list.
@@ -348,6 +362,7 @@ The application only reads the calendars and writes nothing to them.
 * A due date, with or without a time, does not move a task forward in the plan: the order of the task list decides, and the icon tells when the plan ends too late.
   A higher priority gives the task earlier times.
 * The list marks a task as overdue from the day after its due date on, not from the time by which it was due.
+* The travel time is one flat value per task: two tasks at the same place after each other each get both ways, and a way that is longer in one direction cannot be stated.
 * A task with a fixed time and without a date counts for today as long as it is open: a training of Tuesday that was not completed is planned again on Wednesday.
   Complete or delete it when its day is over.
 * A task with `rec:` and a fixed time takes its time on its current due date only; the later ones follow when it is completed.

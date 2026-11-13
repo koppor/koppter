@@ -287,7 +287,7 @@ class TodoController(
             storage.write(file.serialize(), "Update the plan")
             loadedVersion = storage.version()
             // By the text, as each day of a schedule is a task of its own.
-            val tasks = plan.blocks.map { CalendarTxt.text(it.entry.task) }.distinct().size
+            val tasks = plan.blocks.filterNot { it.travel }.map { it.text }.distinct().size
             result = PlanResult(
                 if (plan.blocks.isEmpty()) "Nothing was planned." else "Planned $tasks tasks until ${plan.blocks.last().date}.",
                 problems + planConfig.problems + plan.problems,

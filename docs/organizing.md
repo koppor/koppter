@@ -15,6 +15,7 @@ It is a suggestion, not a rule of the application: the file is yours.
 | `t:` | From when on is it worth looking at? | `t:2027-01-10` |
 | `dur:` | How long does it take? | `dur:2h` |
 | `at:` | At which time does it take place, if it has one? | `at:12:00` |
+| `tt:` | How long is the way there, if it is somewhere else? | `tt:30m` |
 | `by:` | By which time of the due date does it have to be done? | `by:14:00` |
 | Hashtag `#` | Which property does it share with tasks of other areas? | `#money` |
 
