@@ -10,6 +10,37 @@ class DatePhraseTest {
 
     private fun typed(line: String) = Task.parse(line).withDates(friday).toLine()
 
+    /** The phrases as the documentation of SkedPal lists them, all but `flexible`, which is a task without dates here. */
+    @Test
+    fun thePhrasesOfSkedPalAreRead() {
+        mapOf(
+            "today" to "due:2026-11-13",
+            "tomorrow" to "due:2026-11-14",
+            "this week" to "due:2026-11-15",
+            "next week" to "t:2026-11-16 due:2026-11-22",
+            "this month" to "due:2026-11-30",
+            "weekend" to "t:2026-11-14 due:2026-11-15",
+            "on Wed" to "t:2026-11-18 due:2026-11-18",
+            "Wed" to "t:2026-11-18 due:2026-11-18",
+            "by Wed" to "due:2026-11-18",
+            "on Sep 15" to "t:2027-09-15 due:2027-09-15",
+            "Sept 15" to "due:2027-09-15",
+            "in 4 days" to "t:2026-11-17",
+            "tomorrow 3pm" to "due:2026-11-14 at:15:00",
+            "15 Jul 14:00" to "due:2027-07-15 at:14:00",
+            "due by Sept 15th" to "due:2027-09-15",
+            "from tomorrow to Wed" to "t:2026-11-14 due:2026-11-18",
+            "from Sep 15 to Sep 17" to "t:2027-09-15 due:2027-09-17",
+            "start in two weeks" to "t:2026-11-27",
+            "begin in two weeks" to "t:2026-11-27",
+            "no earlier than Jan 18" to "t:2027-01-18",
+            "the week of Jul 5" to "t:2027-07-05 due:2027-07-11",
+            "delay until Jan 18" to "t:2027-01-18",
+            "start on Jan 18" to "t:2027-01-18",
+            "from Jan 18" to "t:2027-01-18",
+        ).forEach { (phrase, tags) -> assertEquals("Write the report $tags", typed("Write the report $phrase"), phrase) }
+    }
+
     @Test
     fun aDayOrAPeriodAtTheEndOfTheTextBecomesDates() {
         mapOf(
