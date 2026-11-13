@@ -55,10 +55,10 @@ class TaskTest {
     // [utest->dsn~task-model~1]
     @Test
     fun separatesDescriptionFromMetadata() {
-        val task = Task.parse("Test due:2026-12-12 t:2026-11-19 +test @Stuttgart hallo du rec:1m")
-        assertEquals("Test hallo du", task.description)
-        assertEquals(listOf("test"), task.projects)
-        assertEquals(listOf("Stuttgart"), task.contexts)
+        val task = Task.parse("Water due:2026-12-12 t:2026-11-19 +Garden @home the plants rec:m")
+        assertEquals("Water the plants", task.description)
+        assertEquals(listOf("Garden"), task.projects)
+        assertEquals(listOf("home"), task.contexts)
         assertEquals(LocalDate(2026, 12, 12), task.due)
         assertEquals(LocalDate(2026, 11, 19), task.threshold)
         assertEquals(Recurrence(1, Recurrence.Unit.MONTH), task.recurrence)
@@ -189,5 +189,50 @@ class TaskTest {
     fun theNextOccurrenceOfACompletedTaskIsOpenWithItsPriority() {
         val completed = Task.parse("(A) 2026-11-01 Water plants rec:1w").complete(today, writeDate = true)
         assertEquals("(A) Water plants rec:1w due:2026-11-19", completed.nextOccurrence(today)!!.toLine())
+    }
+
+    // [utest->dsn~hashtags~1]
+    @Test
+    fun hashtagsAreMetadataAndStartWithALetter() {
+        val task = Task.parse("Fix #123 in C# for #release +App #Release #release #2go # x#y")
+
+        assertEquals(listOf("release", "Release"), task.hashtags)
+        assertEquals("Fix #123 in C# for #2go # x#y", task.description)
+    }
+
+    // [utest->dsn~hashtags~1]
+    // [utest->dsn~canonical-order-on-edit~1]
+    @Test
+    fun editingWritesHashtagsBetweenContextsAndTags() {
+        val task = Task.parse("Call #family Mom due:2026-11-20 @phone +Home")
+
+        assertEquals("Call Mom +Home @phone #family #urgent due:2026-11-20", task.edit(hashtags = task.hashtags + "urgent").toLine())
+        assertEquals("Call Mom +Home @phone due:2026-11-20", task.edit(hashtags = emptyList()).toLine())
+        assertEquals(task, task.edit(hashtags = listOf("family")))
+    }
+
+    // [utest->dsn~duration~1]
+    @Test
+    fun theDurationIsReadFromItsTag() {
+        assertEquals(90, Task.parse("Read the survey dur:1h30m").duration?.inWholeMinutes)
+        assertEquals(45, Task.parse("Read the survey dur:45m").duration?.inWholeMinutes)
+        assertEquals(120, Task.parse("Read the survey dur:2h").duration?.inWholeMinutes)
+        for (none in listOf("Read the survey", "Read dur:long", "Read dur:0m", "Read dur:-1h", "Read dur:90")) {
+            assertEquals(null, Task.parse(none).duration, none)
+        }
+    }
+
+    // [utest->dsn~context-switcher-tag~1]
+    @Test
+    fun aLinkOfContextSwitcherBecomesATagThatGivesTheLinkToSwitch() {
+        val task = Task.parse("(B) Review contextswitcher://task/jabref/fix-npe the comments +JabRef due:2026-11-20").withContextSwitcherTags()
+
+        assertEquals("(B) Review the comments +JabRef due:2026-11-20 cs:jabref/fix-npe", task.toLine())
+        assertEquals("Review the comments", task.description)
+        assertEquals("contextswitcher://switch/jabref/fix-npe", Task.contextSwitcherLink(task.tag(Task.CONTEXT_SWITCHER)!!))
+        assertEquals(task, task.withContextSwitcherTags())
+        assertEquals(null, Task.parse("Review cs: https://example.org/x").withContextSwitcherTags().tag(Task.CONTEXT_SWITCHER))
+        assertEquals("jabref/fix-npe", Task.contextSwitcherId(" contextswitcher://switch/jabref/fix-npe "))
+        assertEquals("My%20Category/task", Task.contextSwitcherId("My Category/task"))
     }
 }

@@ -1,0 +1,7 @@
+(A) Submit the travel expense report +Work @work>admin due:2026-11-20
+Prepare the slides for the team meeting +Work @work dur:2h
+Read the survey on program repair +FirstPaper @research>reading dur:3h
+Renew the library card @errands>city
+Call the landlord about the heating @home>flat @phone
+Water the plants @home due:2026-11-19 rec:1w
+x Thank Mom for the meatballs @family

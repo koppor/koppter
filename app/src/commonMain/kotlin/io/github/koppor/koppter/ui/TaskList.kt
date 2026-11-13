@@ -7,6 +7,33 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.IntOffset
+import kotlin.math.roundToInt
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -91,14 +118,24 @@ fun TaskCard(entry: Entry, today: LocalDate, onToggle: () -> Unit, onOpen: () ->
 /**
  * The tasks as a board: one column per group, side by side, each a list of task cards.
  * The board scrolls horizontally, each column vertically.
+ *
+ * A card is dragged to another column with the mouse, or with the finger after a long press,
+ * as a plain drag with the finger scrolls. While a card is dragged, its description follows the pointer
+ * and the column under the pointer is marked.
+ *
+ * @param canMove whether a card can be dropped on a column
+ * @param onMove called when a card is dropped on a column that takes it
  */
 // [impl->dsn~board~1]
+// [impl->dsn~board-drag~1]
 @Composable
 fun Board(
     groups: List<Group>,
     today: LocalDate,
     onToggle: (Entry) -> Unit,
     onOpen: (Entry) -> Unit,
+    canMove: (Entry, from: Group, to: Group) -> Boolean,
+    onMove: (Entry, from: Group, to: Group) -> Unit,
     emptyText: String,
     modifier: Modifier = Modifier,
 ) {
@@ -108,25 +145,81 @@ fun Board(
         }
         return
     }
-    Row(
-        modifier.fillMaxSize().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp).testTag("board"),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        for (group in groups) {
-            Column(Modifier.width(320.dp).fillMaxHeight().testTag("board-column")) {
-                Text(
-                    "${group.title} (${group.entries.size})",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp).testTag("board-column-title"),
-                )
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 88.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    items(group.entries, key = { it.index }) { entry ->
-                        TaskCard(entry, today, onToggle = { onToggle(entry) }, onOpen = { onOpen(entry) })
+    val currentGroups by rememberUpdatedState(groups)
+    var dragged by remember { mutableStateOf<Pair<Entry, Group>?>(null) }
+    // Positions in the coordinates of the window, in which the columns report their bounds.
+    var pointer by remember { mutableStateOf(Offset.Zero) }
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    val columnBounds = remember { mutableStateMapOf<Int, Rect>() }
+    fun columnUnderPointer(): Group? =
+        currentGroups.indices.firstOrNull { columnBounds[it]?.contains(pointer) == true }?.let(currentGroups::get)
+    val target = dragged?.let { (entry, from) -> columnUnderPointer()?.takeIf { canMove(entry, from, it) } }
+
+    Box(modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot() }) {
+        Row(
+            Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp).testTag("board"),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            groups.forEachIndexed { index, group ->
+                // A column of another title is another column: it starts at its top instead of where its predecessor was scrolled to.
+                key(group.title) {
+                    Column(
+                        Modifier.width(320.dp).fillMaxHeight()
+                            .onGloballyPositioned { columnBounds[index] = it.boundsInRoot() }
+                            .background(
+                                if (group == target) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent,
+                                MaterialTheme.shapes.medium,
+                            )
+                            .testTag("board-column"),
+                    ) {
+                        Text(
+                            "${group.title} (${group.entries.size})",
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp).testTag("board-column-title"),
+                        )
+                        LazyColumn(
+                            contentPadding = PaddingValues(bottom = 88.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            items(group.entries, key = { it.index }) { entry ->
+                                var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+                                val drag = Modifier.onGloballyPositioned { coordinates = it }.pointerInput(entry, group) {
+                                    awaitEachGesture {
+                                        val down = awaitFirstDown(requireUnconsumed = false)
+                                        val start = if (down.type == PointerType.Mouse) {
+                                            awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+                                        } else {
+                                            awaitLongPressOrCancellation(down.id)
+                                        } ?: return@awaitEachGesture
+                                        pointer = coordinates?.localToRoot(start.position) ?: return@awaitEachGesture
+                                        dragged = entry to group
+                                        val dropped = drag(start.id) { change ->
+                                            pointer += change.positionChange()
+                                            change.consume()
+                                        }
+                                        val to = columnUnderPointer()
+                                        dragged = null
+                                        if (dropped && to != null && canMove(entry, group, to)) onMove(entry, group, to)
+                                    }
+                                }
+                                Box(drag) {
+                                    TaskCard(entry, today, onToggle = { onToggle(entry) }, onOpen = { onOpen(entry) })
+                                }
+                            }
+                        }
                     }
                 }
+            }
+        }
+        dragged?.let { (entry, _) ->
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                shadowElevation = 6.dp,
+                modifier = Modifier
+                    .offset { IntOffset((pointer.x - origin.x).roundToInt() + 12, (pointer.y - origin.y).roundToInt() + 12) }
+                    .testTag("board-dragged"),
+            ) {
+                Text(entry.task.description, maxLines = 1, modifier = Modifier.padding(8.dp))
             }
         }
     }

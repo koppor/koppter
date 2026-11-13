@@ -1,15 +1,12 @@
 package io.github.koppor.koppter.android
 
+import android.content.res.Configuration
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import io.github.koppor.koppter.storage.Settings
-import io.github.koppor.koppter.storage.SettingsFile
-import io.github.koppor.koppter.storage.TodoStorage
 import io.github.koppor.koppter.sync.GitSetup
 import io.github.koppor.koppter.ui.App
 import io.github.koppor.koppter.ui.GitSetupActions
@@ -17,7 +14,6 @@ import io.github.koppor.koppter.ui.TodoController
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDate
 
 class MainActivity : ComponentActivity() {
     private var picked: CompletableDeferred<String?>? = null
@@ -51,23 +47,20 @@ class MainActivity : ComponentActivity() {
         override suspend fun clone(url: String): String = withContext(Dispatchers.IO) { gitSetup.clone(url).toString() }
     }
 
-    // [impl->dsn~android-locations~1]
-    private fun storageFor(settings: Settings): TodoStorage = when {
-        settings.todoFile.isBlank() -> gitSetup.storageFor(filesDir.toPath().resolve("todo.txt"))
-        settings.todoFile.startsWith("content:") -> DocumentStorage(contentResolver, Uri.parse(settings.todoFile))
-        else -> gitSetup.storageFor(java.nio.file.Paths.get(settings.todoFile))
-    }
+    private lateinit var controller: TodoController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val settingsFile = SettingsFile(filesDir.toPath().resolve("settings.properties"))
-        val controller = TodoController(
-            settings = settingsFile.load(),
-            storageFor = ::storageFor,
-            saveSettings = settingsFile::save,
-            today = { java.time.LocalDate.now().let { LocalDate(it.year, it.monthValue, it.dayOfMonth) } },
-        )
-        setContent { App(controller, "todo.txt in the storage of the application", chooseFile = ::chooseFile, git = gitActions) }
+        controller = todoController(gitSetup)
+        publishShareTargets(controller.shareActions)
+        val keyboard = resources.configuration.keyboard != Configuration.KEYBOARD_NOKEYS
+        setContent { App(controller, "todo.txt in the storage of the application", chooseFile = ::chooseFile, git = gitActions, keyboard = keyboard) }
+    }
+
+    // The share actions may have been edited in the settings.
+    override fun onStop() {
+        super.onStop()
+        publishShareTargets(controller.shareActions)
     }
 }

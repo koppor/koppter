@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: after-completion-uses-rec
+expected_outcome: |
+  todo.txt gets a task for descaling with a due date on 14 or 15 November 2026 and rec:3m; ice_recur.txt gets 'monthly ; day_of_month -1 - <time sheet task>'.
+context:
+  scaffold_script: place-files.sh

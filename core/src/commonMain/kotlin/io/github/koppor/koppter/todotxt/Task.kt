@@ -4,12 +4,13 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
+import kotlin.time.Duration
 
 /**
  * One task line of a todo.txt file.
  *
  * [body] is everything after the completion marker, priority and dates, kept verbatim.
- * Description, projects, contexts and tags are views on it, so that a change of the
+ * Description, projects, contexts, hashtags and tags are views on it, so that a change of the
  * header (completing, setting the priority) leaves the user's wording untouched.
  */
 // [impl->dsn~task-model~1]
@@ -28,15 +29,30 @@ data class Task(
     /** Context names without the leading `@`, in order of appearance. */
     val contexts: List<String> get() = tokens.filter(::isContext).map { it.substring(1) }.distinct()
 
+    /**
+     * Hashtag names without the leading `#`, in order of appearance.
+     * A hashtag starts with a letter, so that a number such as `#123` stays a word of the description.
+     */
+    // [impl->dsn~hashtags~1]
+    val hashtags: List<String> get() = tokens.filter(::isHashtag).map { it.substring(1) }.distinct()
+
     /** The `key:value` tags in order of appearance; a key may occur more than once. */
     val tags: List<Pair<String, String>>
         get() = tokens.filter(::isTag).map { it.substringBefore(':') to it.substringAfter(':') }
 
-    /** The body without projects, contexts and tags. */
+    /** The body without projects, contexts, hashtags and tags. */
     val description: String get() = tokens.filterNot(::isMetadata).joinToString(" ")
 
     /** The value of the first tag with the given key. */
     fun tag(key: String): String? = tags.firstOrNull { it.first == key }?.second
+
+    /** Replaces links that were copied from ContextSwitcher by `cs:` tags behind the other metadata. */
+    // [impl->dsn~context-switcher-tag~1]
+    fun withContextSwitcherTags(): Task {
+        val ids = tokens.mapNotNull { CONTEXT_SWITCHER_LINK.matchEntire(it)?.groupValues?.get(1) }
+        if (ids.isEmpty()) return this
+        return copy(body = (tokens.filterNot(CONTEXT_SWITCHER_LINK::matches) + ids.map { "$CONTEXT_SWITCHER:$it" }).joinToString(" "))
+    }
 
     val due: LocalDate? get() = tag(DUE)?.let(::parseDate)
 
@@ -44,6 +60,21 @@ data class Task(
     val threshold: LocalDate? get() = tag(THRESHOLD)?.let(::parseDate)
 
     val recurrence: Recurrence? get() = tag(RECURRENCE)?.let(Recurrence::parse)
+
+    /** The time the task is expected to take. */
+    val duration: Duration? get() = tag(DURATION)?.let(::parseDuration)
+
+    /** The minutes of the day at which the task takes place, for a task with a fixed time. */
+    // [impl->dsn~fixed-time~1]
+    val at: Int? get() = tag(AT)?.let(::parseTime)
+
+    /** The time that the way to the task takes, and the way back as well. */
+    // [impl->dsn~travel-time~1]
+    val travel: Duration? get() = tag(TRAVEL)?.let(::parseDuration)
+
+    /** The minutes of the due date by which the task is due, for a task that is due at a time of that day. */
+    // [impl->dsn~due-time~1]
+    val by: Int? get() = tag(BY)?.let(::parseTime)
 
     // [impl->dsn~task-serializer~1]
     fun toLine(): String = buildString {
@@ -83,7 +114,7 @@ data class Task(
 
     /**
      * Replaces description and metadata.
-     * The body is rebuilt in a fixed order: description, projects, contexts, tags.
+     * The body is rebuilt in a fixed order: description, projects, contexts, hashtags, tags.
      */
     // [impl->dsn~canonical-order-on-edit~1]
     fun edit(
@@ -92,9 +123,10 @@ data class Task(
         projects: List<String> = this.projects,
         contexts: List<String> = this.contexts,
         tags: List<Pair<String, String>> = this.tags,
+        hashtags: List<String> = this.hashtags,
     ): Task {
         if (description == this.description && priority == this.priority && projects == this.projects &&
-            contexts == this.contexts && tags == this.tags
+            contexts == this.contexts && tags == this.tags && hashtags == this.hashtags
         ) {
             return this
         }
@@ -102,6 +134,7 @@ data class Task(
             add(description.trim().replace(WHITESPACE, " "))
             projects.distinct().forEach { add("+$it") }
             contexts.distinct().forEach { add("@$it") }
+            hashtags.distinct().forEach { add("#$it") }
             tags.forEach { (key, value) -> add("$key:$value") }
         }
         return copy(priority = priority, body = parts.filter { it.isNotEmpty() }.joinToString(" "))
@@ -157,6 +190,38 @@ data class Task(
         const val RECURRENCE = "rec"
         const val PRIORITY = "pri"
         const val NOTE = "note"
+        const val CONTEXT_SWITCHER = "cs"
+        const val DURATION = "dur"
+        const val AT = "at"
+        const val BY = "by"
+        const val TRAVEL = "tt"
+
+        /** As topydo writes dependencies: a task with [ID] waits for the tasks whose [PARENT] has the same value. */
+        const val ID = "id"
+        const val PARENT = "p"
+
+        private val TIME = Regex("^([01]?\\d|2[0-3]):([0-5]\\d)$")
+
+        /** Reads a time of the day such as `9:30` or `12:00` as the minutes since midnight; `null` if the text is none. */
+        fun parseTime(text: String): Int? = TIME.matchEntire(text)?.destructured?.let { (hours, minutes) -> hours.toInt() * 60 + minutes.toInt() }
+
+        /** Reads a duration such as `45m`, `2h` or `1h30m`; `null` if the text is none or not positive. */
+        // [impl->dsn~duration~1]
+        fun parseDuration(text: String): Duration? = Duration.parseOrNull(text)?.takeIf { it.isPositive() && it.isFinite() }
+
+        /**
+         * The link that makes ContextSwitcher switch to the task that a tag `cs:` names.
+         * The tag holds the id as a link of ContextSwitcher has it, so the link needs no encoding.
+         */
+        // [impl->dsn~context-switcher-tag~1]
+        fun contextSwitcherLink(id: String) = "contextswitcher://switch/$id"
+
+        /** The value of the tag `cs:` for what the user entered: the id itself or a link of ContextSwitcher. */
+        // [impl->dsn~context-switcher-tag~1]
+        fun contextSwitcherId(input: String): String =
+            input.trim().let { CONTEXT_SWITCHER_LINK.matchEntire(it)?.groupValues?.get(1) ?: it }.replace(WHITESPACE, "%20")
+
+        private val CONTEXT_SWITCHER_LINK = Regex("^contextswitcher://(?:task|switch)/(.+)$")
 
         private val WHITESPACE = Regex("\\s+")
         private val PRIORITY_PREFIX = Regex("^\\(([A-Z])\\) ")
@@ -200,9 +265,10 @@ data class Task(
 
         private fun isProject(token: String) = token.length > 1 && token.startsWith('+')
         private fun isContext(token: String) = token.length > 1 && token.startsWith('@')
+        private fun isHashtag(token: String) = token.length > 1 && token.startsWith('#') && token[1].isLetter()
 
         // "http://example.org" and "12:30" are words, not tags.
         private fun isTag(token: String) = TAG.matches(token) && !token.first().isDigit()
-        private fun isMetadata(token: String) = isProject(token) || isContext(token) || isTag(token)
+        private fun isMetadata(token: String) = isProject(token) || isContext(token) || isHashtag(token) || isTag(token)
     }
 }

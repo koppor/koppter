@@ -69,6 +69,47 @@ class IceRecurTest {
         """.trimIndent()
         val thursday = LocalDate(2026, 11, 12)
         val existing = listOf(Task.parse("(A) 2026-11-11 Check mail"), Task.parse("x Water plants +home"))
-        assertEquals(listOf("Water plants +home"), iceRecurTasks(schedule, thursday, existing).map { it.toLine() })
+        assertEquals(listOf(thursday to "Water plants +home"), iceRecurTasks(schedule, thursday..thursday, existing).map { (day, task) -> day to task.toLine() })
+    }
+
+    // [utest->dsn~ice-recur-run~1]
+    @Test
+    fun daysWithoutARunAreCaughtUpAndEachTaskIsAddedOnce() {
+        val schedule = """
+            daily - Check mail
+            weekly ; day Monday - (B) Plan the week
+            weekly ; day Saturday - Clean the kitchen
+        """.trimIndent()
+        val friday = LocalDate(2026, 11, 6)
+        val thursday = LocalDate(2026, 11, 12)
+
+        assertEquals(
+            listOf(friday to "Check mail", LocalDate(2026, 11, 7) to "Clean the kitchen", LocalDate(2026, 11, 9) to "(B) Plan the week"),
+            iceRecurTasks(schedule, friday..thursday, emptyList()).map { (day, task) -> day to task.toLine() },
+        )
+    }
+
+    // [utest->dsn~ice-recur-run~1]
+    @Test
+    fun aTaskThatDiffersInPriorityDatesOrChangingTagsExistsAlready() {
+        val today = LocalDate(2026, 11, 12)
+        fun added(entry: String, existing: String) = iceRecurTasks("daily - $entry", today..today, listOf(Task.parse(existing))).size
+
+        assertEquals(0, added("(B) Pay the rent +Home", "(A) 2026-11-01 Pay the rent +Home due:2026-11-15 t:2026-11-10 note:abc.txt"))
+        // Projects and contexts are part of the text.
+        assertEquals(1, added("Pay the rent +Home", "Pay the rent"))
+        assertEquals(1, added("Pay the rent", "Pay the rent rec:1m"))
+    }
+
+    // [utest->dsn~ice-recur-editor~1]
+    @Test
+    fun theLinesOfAScheduleTellTheirNextDayOrThatTheyAreNotUnderstood() {
+        val thursday = LocalDate(2026, 11, 12)
+        val lines = iceRecurLines("# Household\n\nweekly ; day Monday - Plan the week\nsometimes - Dream\n@@2026-11-01 daily - Rake the leaves\n")
+
+        assertEquals(listOf(3, 4, 5), lines.map { it.number })
+        assertEquals(LocalDate(2026, 11, 16), lines[0].entry?.next(thursday))
+        assertEquals(null, lines[1].entry)
+        assertEquals(null, lines[2].entry!!.next(thursday))
     }
 }

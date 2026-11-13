@@ -1,5 +1,14 @@
 package io.github.koppor.koppter.ui
 
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Arrangement
@@ -17,11 +26,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -36,31 +47,37 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import io.github.koppor.koppter.storage.Appearance
 import io.github.koppor.koppter.storage.SyncState
 import io.github.koppor.koppter.storage.SyncStatus
 import io.github.koppor.koppter.todotxt.Entry
+import io.github.koppor.koppter.todotxt.Completion
+import io.github.koppor.koppter.todotxt.Filter
 import io.github.koppor.koppter.todotxt.GroupKey
 import io.github.koppor.koppter.todotxt.Task
+import io.github.koppor.koppter.todotxt.contextStates
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -73,6 +90,7 @@ private const val RELOAD_INTERVAL_MILLIS = 2_000L
  * @param chooseFile lets the user pick the todo.txt file with the file dialog of the platform and returns its location,
  *   or `null` if the user cancelled.
  * @param git offered in the settings on platforms where the application has to bring its own git access
+ * @param keyboard whether the device has a keyboard, see [LocalKeyboard]
  */
 @Composable
 fun App(
@@ -80,14 +98,48 @@ fun App(
     defaultTodoFile: String,
     chooseFile: (suspend () -> String?)? = null,
     git: GitSetupActions? = null,
+    keyboard: Boolean = true,
 ) {
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
-        MainScreen(controller, defaultTodoFile, chooseFile, git)
+    val dark = when (controller.settings.appearance) {
+        Appearance.SYSTEM -> isSystemInDarkTheme()
+        Appearance.LIGHT -> false
+        Appearance.DARK -> true
+    }
+    // A link without a program that handles it, such as one of ContextSwitcher on a device without it, is reported.
+    val platform = LocalUriHandler.current
+    val uriHandler = remember(platform) {
+        object : UriHandler {
+            override fun openUri(uri: String) = try {
+                platform.openUri(uri)
+            } catch (e: Exception) {
+                controller.error = "Not opened: $uri"
+            }
+        }
+    }
+    MaterialTheme(colorScheme = colorScheme(controller.settings.theme, dark)) {
+        CompositionLocalProvider(
+            LocalUriHandler provides uriHandler,
+            LocalShowContext provides { controller.filter = controller.filter.copy(contexts = setOf(it)) },
+            LocalFineColor provides fineColor(controller.settings.theme, dark),
+            LocalPlanOf provides controller::planOf,
+            LocalKeyboard provides keyboard,
+        ) {
+            MainScreen(controller, defaultTodoFile, chooseFile, git)
+        }
     }
 }
 
 /** The task whose edit dialog is open; `entry` is null for a task that is not in the file yet. */
+/**
+ * Whether the device has a keyboard. With one, the field that is typed into next gets the focus when it appears;
+ * without one, that would only cover the screen with the keyboard of the touch screen.
+ */
+val LocalKeyboard = staticCompositionLocalOf { true }
+
 private data class Editing(val entry: Entry?)
+
+/** Ctrl with the n-th of these keys shows the n-th view. */
+private val VIEW_KEYS = listOf(Key.One, Key.Two, Key.Three, Key.Four, Key.Five, Key.Six)
 
 // [impl->dsn~main-screen~1]
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,9 +152,57 @@ private fun MainScreen(
 ) {
     var editing by remember { mutableStateOf<Editing?>(null) }
     var showSettings by remember { mutableStateOf(false) }
+    var schedule by remember { mutableStateOf<String?>(null) }
+    var planning by remember { mutableStateOf<PlanSettings?>(null) }
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
+    val rootFocus = remember { FocusRequester() }
+    val quickAddFocus = remember { FocusRequester() }
+    val filterFocus = remember { FocusRequester() }
+    // Keys reach the shortcuts only through a focused element, so the screen takes the focus whenever none of its elements has it:
+    // at the start, after the element with the focus went away with its view, after a dialog closed, and after a touch took the focus away.
+    var focused by remember { mutableStateOf(false) }
+    val dialog = editing != null || showSettings || schedule != null || planning != null
+    LaunchedEffect(focused, dialog) { if (!focused && !dialog) rootFocus.requestFocus() }
+
+    // [impl->dsn~keyboard-shortcuts~1]
+    fun shortcut(event: KeyEvent): Boolean {
+        if (event.type != KeyEventType.KeyDown || !(event.isCtrlPressed || event.isMetaPressed) || event.isAltPressed) return false
+        val view = VIEW_KEYS.indexOf(event.key)
+        // In a narrow window, the filter panel is in the drawer and has no field to focus.
+        fun search(all: Boolean) {
+            if (all) {
+                // Every task: also the completed ones and those before their threshold date, and not only the top ones.
+                controller.filter = Filter(completion = Completion.ALL, hideFuture = false)
+                controller.topOnly = false
+                controller.view = View.LIST
+            }
+            // The agenda and the week show the plan, which the filter does not apply to.
+            if (controller.view == View.AGENDA || controller.view == View.WEEK) controller.view = View.LIST
+            try {
+                filterFocus.requestFocus()
+            } catch (_: IllegalStateException) {
+                scope.launch { drawer.open() }
+            }
+        }
+        when {
+            !event.isShiftPressed && event.key == Key.N -> editing = Editing(null)
+            // The key of OneNote for its search.
+            !event.isShiftPressed && event.key == Key.E -> search(all = true)
+            !event.isShiftPressed && view >= 0 -> controller.view = View.entries[view]
+            !event.isShiftPressed -> return false
+            event.key == Key.A -> quickAddFocus.requestFocus()
+            event.key == Key.F -> search(all = false)
+            // The keys of SkedPal for its outline, today list, calendar and plan.
+            event.key == Key.O -> controller.view = View.LIST
+            event.key == Key.Y -> controller.view = View.AGENDA
+            event.key == Key.C -> controller.view = View.WEEK
+            event.key == Key.L && controller.canSchedule -> planning = controller.planSettings
+            else -> return false
+        }
+        return true
+    }
 
     LaunchedEffect(controller) {
         while (true) {
@@ -124,11 +224,13 @@ private fun MainScreen(
             priorities = controller.priorities,
             projects = controller.projects,
             contexts = controller.contexts,
+            hashtags = controller.hashtags,
             modifier = modifier,
+            textModifier = Modifier.focusRequester(filterFocus),
         )
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize().focusRequester(rootFocus).onFocusChanged { focused = it.hasFocus }.focusable().onPreviewKeyEvent(::shortcut).testTag("main-screen")) {
         val wide = maxWidth >= WIDE
         ModalNavigationDrawer(
             drawerState = drawer,
@@ -148,6 +250,11 @@ private fun MainScreen(
                         },
                         actions = {
                             controller.syncStatus?.let { SyncIndicator(it, onSync = controller::sync) }
+                            if (controller.canSchedule) {
+                                IconButton(onClick = { schedule = controller.schedule() }, modifier = Modifier.testTag("open-schedule")) {
+                                    Icon(Icons.Default.DateRange, contentDescription = "Scheduled tasks")
+                                }
+                            }
                             IconButton(onClick = { showSettings = true }, modifier = Modifier.testTag("open-settings")) {
                                 Icon(Icons.Default.Settings, contentDescription = "Settings")
                             }
@@ -167,11 +274,25 @@ private fun MainScreen(
                         VerticalDivider()
                     }
                     Column(Modifier.weight(1f)) {
-                        QuickAdd(onAdd = controller::add)
-                        ViewOptions(controller)
+                        QuickAdd(onAdd = controller::add, focus = quickAddFocus)
+                        ViewOptions(controller, onPlan = { planning = controller.planSettings })
                         val emptyText = if (controller.file.entries.isEmpty()) "No tasks" else "No task matches the filter"
-                        if (controller.board) {
-                            Board(controller.groups, controller.today(), controller::toggle, { editing = Editing(it) }, emptyText)
+                        val open: (Entry) -> Unit = { editing = Editing(it) }
+                        if (controller.view == View.OVERVIEW) {
+                            Overview(contextStates(controller.visible, controller.today()), controller.today(), open, emptyText)
+                        } else if (controller.view == View.AGENDA) {
+                            Agenda(controller.planBlocks, controller.dueUnplanned, controller::entryOf, controller.today(), controller::toggle, open)
+                        } else if (controller.view == View.WEEK) {
+                            Week(controller.planBlocks, controller::entryOf, controller.today(), open)
+                        } else if (controller.view == View.INBOX) {
+                            Inbox(controller.inbox, controller.contexts, controller::assignContext, open)
+                        } else if (controller.board) {
+                            Board(
+                                controller.groups, controller.today(), controller::toggle, onOpen = { editing = Editing(it) },
+                                canMove = { entry, from, to -> controller.moved(entry, from, to) != null },
+                                onMove = controller::move,
+                                emptyText = emptyText,
+                            )
                         } else {
                             TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, emptyText)
                         }
@@ -190,6 +311,7 @@ private fun MainScreen(
             newNoteName = remember(entry) { controller.newNoteName() },
             knownProjects = controller.projects,
             knownContexts = controller.contexts,
+            knownHashtags = controller.hashtags,
             onSave = { task, note ->
                 if (entry == null) controller.add(task, note) else controller.replace(entry, task, note)
                 editing = null
@@ -201,14 +323,33 @@ private fun MainScreen(
             onDismiss = { editing = null },
         )
     }
+    planning?.let {
+        PlanDialog(settings = it, calendars = controller.calendars, onPlan = controller::planWithCalendars, onDismiss = { planning = null })
+    }
+    schedule?.let {
+        ScheduleDialog(
+            schedule = it,
+            today = controller.today(),
+            onSave = { text ->
+                controller.updateSchedule(text)
+                schedule = null
+            },
+            onDismiss = { schedule = null },
+        )
+    }
     if (showSettings) {
         SettingsDialog(
             settings = controller.settings,
             defaultTodoFile = defaultTodoFile,
             chooseFile = chooseFile,
             git = git,
-            onSave = {
-                controller.updateSettings(it)
+            boardColumns = controller.boardColumnsText,
+            shareActions = controller.shareActionsText,
+            onSave = { settings, boardColumns, shareActions ->
+                // The columns and share actions belong to the file that was open when the dialog was opened.
+                boardColumns?.let(controller::updateBoardColumns)
+                shareActions?.let(controller::updateShareActions)
+                controller.updateSettings(settings)
                 showSettings = false
             },
             onDismiss = { showSettings = false },
@@ -216,11 +357,11 @@ private fun MainScreen(
     }
 }
 
-/** The switches above the tasks: only the top tasks, list or board, and the attribute that forms the columns of the board. */
+/** The switches above the tasks: only the top tasks, the view that replaces the list, and what forms the columns of the board. */
 // [impl->dsn~view-options~1]
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ViewOptions(controller: TodoController) {
+private fun ViewOptions(controller: TodoController, onPlan: () -> Unit) {
     FlowRow(Modifier.padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         FilterChip(
             selected = controller.topOnly,
@@ -228,12 +369,18 @@ private fun ViewOptions(controller: TodoController) {
             label = { Text("Top ${controller.settings.topCount}") },
             modifier = Modifier.testTag("top"),
         )
-        FilterChip(
-            selected = controller.board,
-            onClick = { controller.board = !controller.board },
-            label = { Text("Board") },
-            modifier = Modifier.testTag("board-switch"),
-        )
+        for (view in View.entries - View.LIST) {
+            FilterChip(
+                selected = controller.view == view,
+                onClick = { controller.view = if (controller.view == view) View.LIST else view },
+                label = { Text(if (view == View.INBOX && controller.inbox.isNotEmpty()) "${view.title} ${controller.inbox.size}" else view.title) },
+                modifier = Modifier.testTag("${view.name.lowercase()}-switch"),
+            )
+        }
+        // [impl->dsn~plan-dialog~1]
+        if (controller.canSchedule) {
+            AssistChip(onClick = onPlan, label = { Text("Plan") }, modifier = Modifier.testTag("open-plan"))
+        }
         if (controller.board) {
             for (key in GroupKey.entries) {
                 FilterChip(
@@ -241,6 +388,14 @@ private fun ViewOptions(controller: TodoController) {
                     onClick = { controller.groupKey = key },
                     label = { Text("by ${key.label.lowercase()}") },
                     modifier = Modifier.testTag("group-${key.name}"),
+                )
+            }
+            if (controller.boardColumns.isNotEmpty()) {
+                FilterChip(
+                    selected = controller.groupKey == null,
+                    onClick = { controller.groupKey = null },
+                    label = { Text("by filter") },
+                    modifier = Modifier.testTag("group-FILTER"),
                 )
             }
         }
@@ -272,7 +427,7 @@ private fun SyncIndicator(status: SyncStatus, onSync: () -> Unit) {
 /** A line that adds a task from text in todo.txt syntax, for input without opening the dialog. */
 // [impl->dsn~quick-add~1]
 @Composable
-private fun QuickAdd(onAdd: (String) -> Unit) {
+private fun QuickAdd(onAdd: (String) -> Unit, focus: FocusRequester) {
     var text by remember { mutableStateOf("") }
     fun submit() {
         onAdd(text)
@@ -285,7 +440,7 @@ private fun QuickAdd(onAdd: (String) -> Unit) {
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { submit() }),
-        modifier = Modifier.fillMaxWidth().padding(8.dp).testTag("quick-add")
+        modifier = Modifier.fillMaxWidth().padding(8.dp).focusRequester(focus).testTag("quick-add")
             // The Enter key of a hardware keyboard does not trigger the IME action on the desktop.
             .onPreviewKeyEvent {
                 if (it.key == Key.Enter && it.type == KeyEventType.KeyDown) {

@@ -14,6 +14,17 @@ Architectural decisions are recorded as [Markdown Architectural Decision Records
 | [0007](0007-ssh-key-created-in-the-application.md) | SSH key created in the application on devices without SSH configuration |
 | [0008](0008-board-columns-by-attribute.md) | Board columns are the values of an attribute |
 | [0009](0009-no-notation-for-most-important-tasks.md) | No separate notation for most important tasks |
+| [0010](0010-signing-key-as-repository-secret.md) | Signing key of the Android application as a repository secret |
+| [0011](0011-onedrive-through-the-platform.md) | OneDrive through the file access of the platform |
+| [0012](0012-board-columns-by-filter-in-a-file.md) | Board columns defined by filters are kept in a configuration file next to the todo.txt file |
+| [0013](0013-smallest-change-on-drop-on-a-filter-column.md) | A task dropped on a column defined by a filter gets the smallest change that makes it match |
+| [0014](0014-hashtags-as-a-third-kind-of-label.md) | Hashtags are a third kind of label next to projects and contexts |
+| [0015](0015-colors-from-published-palettes.md) | Colors come from the palettes Nord and Everforest |
+| [0016](0016-tag-for-the-task-of-contextswitcher.md) | A tag names the task of ContextSwitcher |
+| [0017](0017-levels-of-a-context-separated-by-a-greater-than-sign.md) | The levels of a context are separated by a greater-than sign |
+| [0018](0018-tag-for-the-duration-of-a-task.md) | A tag holds the duration of a task |
+| [0019](0019-the-plan-is-derived-and-kept-in-calendar-txt.md) | The plan is derived from the tasks and kept in calendar.txt |
+| [0020](0020-dependencies-with-the-tags-of-topydo.md) | Dependencies between tasks use the tags of topydo |
 
 ## Conventions
 

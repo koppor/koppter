@@ -12,6 +12,9 @@ class RecurrenceTest {
         assertEquals(Recurrence(1, Recurrence.Unit.MONTH), Recurrence.parse("1m"))
         assertEquals(Recurrence(2, Recurrence.Unit.WEEK, strict = true), Recurrence.parse("+2w"))
         assertEquals("+2w", Recurrence.parse("+2w").toString())
+        assertEquals(Recurrence(1, Recurrence.Unit.WEEK), Recurrence.parse("w"))
+        assertEquals(Recurrence(1, Recurrence.Unit.MONTH, strict = true), Recurrence.parse("+m"))
+        assertEquals(Recurrence(3, Recurrence.Unit.BUSINESS_DAY), Recurrence.parse("3b"))
     }
 
     @Test
@@ -19,6 +22,8 @@ class RecurrenceTest {
         assertNull(Recurrence.parse("monthly"))
         assertNull(Recurrence.parse("0d"))
         assertNull(Recurrence.parse("1h"))
+        assertNull(Recurrence.parse("+"))
+        assertNull(Recurrence.parse("ww"))
     }
 
     @Test

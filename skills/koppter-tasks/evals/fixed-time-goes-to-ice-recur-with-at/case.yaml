@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: fixed-time-goes-to-ice-recur-with-at
+expected_outcome: |
+  ice_recur.txt gets a weekly entry for Monday to Friday whose task carries at:12:00 and dur:45m; todo.txt gets a task for the dentist with due:2026-11-20, at:14:00 and dur:1h.
+context:
+  scaffold_script: place-files.sh

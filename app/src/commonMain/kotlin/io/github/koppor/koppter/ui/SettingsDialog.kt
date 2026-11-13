@@ -31,7 +31,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import io.github.koppor.koppter.storage.Appearance
+import io.github.koppor.koppter.storage.ColorTheme
+import io.github.koppor.koppter.storage.ConfigFile
 import io.github.koppor.koppter.storage.Settings
 import kotlinx.coroutines.launch
 
@@ -51,7 +53,11 @@ fun SettingsDialog(
     defaultTodoFile: String,
     chooseFile: (suspend () -> String?)?,
     git: GitSetupActions?,
-    onSave: (Settings) -> Unit,
+    /** The definitions of the board columns; `null` if the storage cannot keep them. */
+    boardColumns: String?,
+    /** The share actions; `null` if the storage cannot keep them. */
+    shareActions: String?,
+    onSave: (Settings, boardColumns: String?, shareActions: String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -59,8 +65,15 @@ fun SettingsDialog(
     var writeDates by remember { mutableStateOf(settings.writeDates) }
     var topCount by remember { mutableStateOf(settings.topCount.toString()) }
     val topCountValue = topCount.trim().toIntOrNull()?.takeIf { it > 0 }
+    var columns by remember { mutableStateOf(boardColumns) }
+    var actions by remember { mutableStateOf(shareActions) }
+    var theme by remember { mutableStateOf(settings.theme) }
+    var appearance by remember { mutableStateOf(settings.appearance) }
 
-    Dialog(onDismissRequest = onDismiss) {
+    val state = listOf(todoFile, writeDates, topCount, columns, actions, theme, appearance)
+    val initial = remember { state }
+
+    GuardedDialog(changed = state != initial, onDismiss = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large, tonalElevation = 6.dp, modifier = Modifier.widthIn(max = 560.dp).testTag("settings-dialog")) {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Settings", style = MaterialTheme.typography.titleLarge)
@@ -94,6 +107,39 @@ fun SettingsDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag("settings-top-count"),
                 )
+                columns?.let { text ->
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { columns = it },
+                        label = { Text("Board columns by filter") },
+                        supportingText = {
+                            Text("One column per line as title = filter, for example: Today = due:<=today -@waiting. Kept in ${ConfigFile.NAME} next to the todo.txt file.")
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        minLines = 3,
+                        modifier = Modifier.fillMaxWidth().testTag("settings-board-columns"),
+                    )
+                }
+                // [impl->dsn~share-actions~1]
+                actions?.let { text ->
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { actions = it },
+                        label = { Text("Share actions") },
+                        supportingText = {
+                            Text(
+                                "What sharing a text to koppter on Android adds: one action per line as title = task, for example: " +
+                                    "reading = {} @research>reading due:2w dur:1h. {} stands for the shared text. Kept in ${ConfigFile.NAME}.",
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        minLines = 2,
+                        modifier = Modifier.fillMaxWidth().testTag("settings-share-actions"),
+                    )
+                }
+                Text("Colors", style = MaterialTheme.typography.titleMedium)
+                RadioRow(ColorTheme.entries.map { it to it.title }, theme, tag = "settings-theme", onSelect = { theme = it })
+                RadioRow(Appearance.entries.map { it to it.title }, appearance, tag = "settings-appearance", onSelect = { appearance = it })
                 Text(
                     "A file in a git repository is committed after every change and synchronized with the remote repository.",
                     style = MaterialTheme.typography.bodySmall,
@@ -106,7 +152,19 @@ fun SettingsDialog(
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = onDismiss) { Text("Cancel") }
                     Button(
-                        onClick = { onSave(settings.copy(todoFile = todoFile.trim(), writeDates = writeDates, topCount = topCountValue ?: settings.topCount)) },
+                        onClick = {
+                            onSave(
+                                settings.copy(
+                                    todoFile = todoFile.trim(),
+                                    writeDates = writeDates,
+                                    topCount = topCountValue ?: settings.topCount,
+                                    theme = theme,
+                                    appearance = appearance,
+                                ),
+                                columns?.trim(),
+                                actions?.trim(),
+                            )
+                        },
                         enabled = topCountValue != null,
                         modifier = Modifier.testTag("settings-save"),
                     ) { Text("Save") }

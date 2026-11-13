@@ -55,6 +55,27 @@ class FilterTest {
         assertEquals(listOf("Plan holiday"), descriptions(Filter(text = "holiday", hideFuture = false)))
     }
 
+    // [utest->dsn~context-hierarchy~1]
+    @Test
+    fun aContextIncludesTheContextsBelowIt() {
+        val tasks = listOf("Read the survey @research>reading", "Review a paper @research", "Read the manual @researching", "Call @phone").map(Task::parse)
+        fun matching(vararg contexts: String) = tasks.filter { Filter(contexts = contexts.toSet()).matches(it, today) }.map { it.description }
+
+        assertEquals(listOf("Read the survey", "Review a paper"), matching("research"))
+        assertEquals(listOf("Read the survey"), matching("research>reading"))
+        assertEquals(listOf("a", "a>b", "a>b>c"), "a>b>c".withAncestors())
+        assertEquals("c", "a>b>c".lastLevel)
+        // A context stands directly before the contexts below it, not behind a name that only starts alike.
+        assertEquals(listOf("a", "a>b", "a1"), listOf("a1", "a>b", "a").sortedWith(hierarchyOrder))
+    }
+
+    // [utest->dsn~due-time~1]
+    @Test
+    fun onTheSameDueDateTheTaskThatIsDueAtAnEarlierTimeComesFirst() {
+        val tasks = TodoFile.parse("Pack due:2026-11-16\nPrepare the slides due:2026-11-16 by:14:00\nPrint the agenda due:2026-11-16 by:9:00\nBook a room due:2026-11-15")
+        assertEquals(listOf("Book a room", "Print the agenda", "Prepare the slides", "Pack"), tasks.entries.sortedWith(listOrder).map { it.task.description })
+    }
+
     // [utest->dsn~sort-order~1]
     @Test
     fun ordersByCompletionPriorityDueDateAndPosition() {
@@ -62,5 +83,15 @@ class FilterTest {
             listOf("Pay bill", "Thank Mom", "Schedule pickup", "Post signs", "Plan holiday", "Call Mom"),
             file.entries.sortedWith(listOrder).map { it.task.description },
         )
+    }
+
+    // [utest->dsn~filter~1]
+    @Test
+    fun hashtagsRestrictLikeProjectsAndContexts() {
+        val tasks = listOf("Call Mom #family", "Pay bill #money #urgent", "Post signs").map(Task::parse)
+        fun matching(filter: Filter) = tasks.filter { filter.matches(it, today) }.map { it.description }
+
+        assertEquals(listOf("Call Mom", "Pay bill"), matching(Filter(hashtags = setOf("family", "urgent"))))
+        assertEquals(listOf("Call Mom", "Pay bill", "Post signs"), matching(Filter()))
     }
 }

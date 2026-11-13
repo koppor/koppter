@@ -28,6 +28,30 @@ Covers:
 
 Needs: dsn
 
+### File in OneDrive
+`req~onedrive-file~1`
+
+The user uses a todo.txt file that is stored in OneDrive: on Android by choosing it in the document picker, on the desktop by choosing it in the folder that the OneDrive client synchronizes.
+
+Covers:
+
+* `feat~sync-onedrive~1`
+
+Needs: dsn
+
+### Sharing to the application
+`req~share-actions~1`
+
+On Android, the user shares a text from another application, such as the link of an article, to koppter, which adds it as a task without asking anything.
+The user defines share actions: each has a name and states what the task gets besides the shared text, such as a context, a due date relative to the day of sharing and a duration.
+Each share action is a target of its own where the system offers that.
+
+Covers:
+
+* `feat~platforms~1`
+
+Needs: dsn
+
 ## Design
 
 ### Shared UI as an Android library
@@ -66,6 +90,8 @@ Covers:
 
 * `req~document-provider-file~1`
 * `req~external-changes~1`
+* `req~onedrive-file~1`
+* `adr~onedrive-through-platform~1`
 
 Needs: impl
 
@@ -80,5 +106,35 @@ Covers:
 
 * `req~document-provider-file~1`
 * `req~choose-file~1`
+* `req~onedrive-file~1`
+* `adr~onedrive-through-platform~1`
+
+Needs: impl
+
+### Share actions
+`dsn~share-actions~1`
+
+A `ShareAction` has a title and a template, a line in todo.txt syntax in which `{}` stands for the shared text; without `{}`, the shared text stands in front.
+The values of `due:` and `t:` in the template may be relative to the day of sharing, as in the filter expressions: `due:2w`.
+The shared text becomes the body of the task as it is, with line breaks as blanks.
+The actions are kept in `koppter.yml` under the key `share-actions` and edited in the settings dialog, one per line as `title = template`.
+`TodoController.share` applies the action with the given title, or the first one, and adds the task; without actions, the shared text is the task.
+
+Covers:
+
+* `req~share-actions~1`
+
+Needs: impl, utest
+
+### Share target on Android
+`dsn~android-share-target~1`
+
+`ShareActivity` receives text that is shared to the application, adds the task through a controller of its own, tells the result in a toast and finishes without showing a screen.
+`MainActivity` publishes one shortcut per share action; from Android 10 on, the share sheet offers these shortcuts as targets, and the id of the chosen shortcut names the action.
+The entry of the application itself in the share sheet applies the first action.
+
+Covers:
+
+* `req~share-actions~1`
 
 Needs: impl

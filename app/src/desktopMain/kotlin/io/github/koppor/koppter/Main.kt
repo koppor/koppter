@@ -1,9 +1,14 @@
 package io.github.koppor.koppter
 
+import androidx.compose.ui.graphics.decodeToImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import io.github.koppor.koppter.plan.fetchCalendar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import io.github.koppor.koppter.storage.SettingsFile
 import io.github.koppor.koppter.sync.storageForFile
 import io.github.koppor.koppter.ui.App
@@ -37,11 +42,16 @@ fun main() {
         storageFor = { storageForFile(it.todoFile.takeIf(String::isNotBlank)?.let(::Path) ?: defaultTodoFile) },
         saveSettings = settingsFile::save,
         today = { java.time.LocalDate.now().let { LocalDate(it.year, it.monthValue, it.dayOfMonth) } },
+        minuteOfDay = { java.time.LocalTime.now().toSecondOfDay() / 60 },
+        fetch = { address -> withContext(Dispatchers.IO) { fetchCalendar(address) } },
     )
+    // [impl->dsn~application-icon~1]
+    val icon = BitmapPainter(object {}.javaClass.getResourceAsStream("/koppter.png")!!.readBytes().decodeToImageBitmap())
     application {
         Window(
             onCloseRequest = ::exitApplication,
             title = "koppter",
+            icon = icon,
             state = rememberWindowState(width = 1100.dp, height = 760.dp),
         ) {
             App(controller, defaultTodoFile.toString(), chooseFile = { chooseFile(window) })
