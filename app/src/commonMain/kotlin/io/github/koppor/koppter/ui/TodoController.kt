@@ -444,7 +444,10 @@ class TodoController(
         write(file.add(task.created(today(), settings.writeDates)), "Add task: ${task.description}")
     }
 
-    fun add(line: String) = add(Task.parse(priorityNames.toLetters(line)).withWeek(today()).withContextSwitcherTags())
+    fun add(line: String) = add(Task.parse(priorityNames.toLetters(line)).withDates(today()).withContextSwitcherTags())
+
+    /** The line that [add] writes for the typed one, if words of it become dates; `null` otherwise. */
+    fun datesPreview(line: String): String? = Task.parse(priorityNames.toLetters(line)).let { task -> task.withDates(today()).takeIf { it != task }?.toLine() }
 
     fun toggle(entry: Entry) {
         val index = locate(entry) ?: return

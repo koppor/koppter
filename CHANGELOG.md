@@ -12,7 +12,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Names for priorities, such as 1, 2, 3, 5 and 8 instead of A to E: the settings take them or fill in a scale at a click, the application shows and offers them, filters accept them, and the file keeps the letters.
 - Source of each extension of the todo.txt format in the README.
 - Comparison with other applications for tasks in plain text files in `docs/related-work.md`, starting with Beorg.
-- A line typed above the list that ends with `this week` or `next week` gives a task with the dates of that week.
+- Dates in words in the line typed above the list, such as `tomorrow`, `next week`, `by Wed` or `tomorrow 3pm`: the application shows and writes the tags they stand for.
 
 ## [2026-11-12] - 2026-11-12
 

@@ -108,11 +108,14 @@ class AppTest {
         onNodeWithText("Buy milk").assertExists()
     }
 
-    // [utest->dsn~quick-add-week~1]
+    // [utest->dsn~quick-add-dates~1]
     @Test
-    fun quickAddGivesATaskForNextWeekTheDatesOfThatWeek() = runComposeUiTest {
+    fun quickAddShowsAndWritesTheDatesOfTypedWords() = runComposeUiTest {
         start()
-        onNodeWithTag("quick-add").performTextInput("Write the report next week")
+        onNodeWithTag("quick-add").performTextInput("Write the report")
+        onNodeWithTag("quick-add-preview").assertDoesNotExist()
+        onNodeWithTag("quick-add").performTextInput(" next week")
+        onNodeWithTag("quick-add-preview", useUnmergedTree = true).assertTextEquals("Write the report t:2026-11-16 due:2026-11-22")
         onNodeWithTag("quick-add").performKeyInput { pressKey(Key.Enter) }
         assertEquals("Write the report t:2026-11-16 due:2026-11-22", storage.text.trim().lines().last())
     }

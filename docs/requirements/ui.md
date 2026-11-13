@@ -27,10 +27,12 @@ Covers:
 
 Needs: dsn
 
-### Name a week when adding a task
-`req~quick-add-week~1`
+### Dates in words when adding a task
+`req~quick-add-dates~1`
 
-A typed line that ends with `this week` or `next week` gives a task that is due at the end of that week and, for the next week, not relevant before its Monday.
+A typed line may name its dates in words at the end of its text, such as `tomorrow`, `next week`, `by Wed` or `tomorrow 3pm`.
+The task gets the due date, the threshold date and the times that the words name.
+The application shows the resulting line before the task is added.
 
 Covers:
 
@@ -246,17 +248,20 @@ Covers:
 
 Needs: impl, utest
 
-### Week in the quick add line
-`dsn~quick-add-week~1`
+### Dates in words in the quick add line
+`dsn~quick-add-dates~1`
 
-`TodoController.add` applies `Task.withWeek` to the typed line.
-It removes `this week` or `next week` from the end of the text, in any case of the letters, and sets `due:` to the Sunday of that week and, for the next week, `t:` to its Monday.
-A week runs from Monday to Sunday.
-A `due:` or `t:` tag that the line has stays, and the words elsewhere in the text stay text.
+`TodoController.add` applies `Task.withDates` to the typed line, which `DatePhrase` implements.
+The phrases are those that SkedPal reads in the title of a task, in English and in any case of the letters; the README lists them.
+A phrase is read at the end of the text only, where projects, contexts, hashtags and tags may follow it; the same words elsewhere stay text.
+It is removed from the text and becomes the tags `t:`, `due:`, `at:` and `by:`.
+A tag that the line already has stays.
+A weekday or a day of a month names the first such day from today on, and a week runs from Monday to Sunday.
+The quick add field shows the line that `TodoController.datesPreview` returns below the typed one, as there is no other sign that words become a date.
 
 Covers:
 
-* `req~quick-add-week~1`
+* `req~quick-add-dates~1`
 
 Needs: impl, utest
 

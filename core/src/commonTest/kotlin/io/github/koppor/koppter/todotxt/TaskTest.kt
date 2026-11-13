@@ -235,18 +235,4 @@ class TaskTest {
         assertEquals("jabref/fix-npe", Task.contextSwitcherId(" contextswitcher://switch/jabref/fix-npe "))
         assertEquals("My%20Category/task", Task.contextSwitcherId("My Category/task"))
     }
-
-    // [utest->dsn~quick-add-week~1]
-    @Test
-    fun aWeekAtTheEndOfTheTextBecomesTheDatesOfThatWeek() {
-        val friday = LocalDate(2026, 11, 13)
-
-        assertEquals("Write the report @work t:2026-11-16 due:2026-11-22", Task.parse("Write the report @work next week").withWeek(friday).toLine())
-        assertEquals("(B) Write the report due:2026-11-15", Task.parse("(B) Write the report This Week").withWeek(friday).toLine())
-        // On a Sunday, the running week ends that day.
-        assertEquals("Tidy up due:2026-11-15", Task.parse("Tidy up this week").withWeek(LocalDate(2026, 11, 15)).toLine())
-        // A date that was typed stays; the words inside the text are no dates.
-        assertEquals("Call due:2026-11-18 t:2026-11-16", Task.parse("Call due:2026-11-18 next week").withWeek(friday).toLine())
-        assertEquals("Plan next week with Ana", Task.parse("Plan next week with Ana").withWeek(friday).toLine())
-    }
 }

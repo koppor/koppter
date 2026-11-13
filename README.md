@@ -141,10 +141,6 @@ The column *Source* names the tool or document that defines each of them; those 
 The *Top* switch above the list restricts it to the first tasks, whose number is a setting, as the add-on [top](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#top-see-the-top-tasks) of the todo.txt command line does.
 There is no notation for a most important task as the add-ons [mit](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#mit-most-important-task) and [mitf](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#mitf-most-important-task-in-the-future) have it: priority `(A)` together with a due date serves that purpose ([decision 0009](docs/decisions/0009-no-notation-for-most-important-tasks.md)).
 
-A line typed above the list may end with `this week` or `next week` instead of dates.
-`Write the report next week` becomes `Write the report t:2026-11-16 due:2026-11-22` when typed in the week before: not relevant before the Monday and due on the Sunday of that week.
-`this week` sets the due date only.
-
 Notes, `ice_recur.txt`, the board columns by filter and the names of the priorities need a `todo.txt` file in a folder or a git repository.
 They are not available for a file chosen through the document picker of Android, as the application then has access to that one file only.
 
@@ -233,6 +229,37 @@ The application differs from the add-on in these points:
 * Each device remembers on its own when it last ran the schedules.
   In a git repository, a task that any device added since then counts as existing, also when it is completed already.
   Without git, a second device may add a task again that was added and completed on the first.
+
+## Dates in words
+
+A line typed above the list may name its dates in words instead of tags.
+`Write the report next week` is written as `Write the report t:2026-11-16 due:2026-11-22`.
+The phrases are those that [SkedPal](https://docs.skedpal.com/planning/setting-a-plan-for-a-task) reads in the title of a task; the examples are typed on Friday, 13 November 2026.
+
+| Typed at the end of the text | Written |
+| --- | --- |
+| `today`, `tomorrow` | `due:2026-11-13`, `due:2026-11-14` |
+| `this week`, `next week` | `due:2026-11-15`, `t:2026-11-16 due:2026-11-22` |
+| `this month`, `next month` | `due:2026-11-30`, `t:2026-12-01 due:2026-12-31` |
+| `weekend` | `t:2026-11-14 due:2026-11-15` |
+| `Wed`, `on Wed`, `on Sep 15` | `t:` and `due:` on that day |
+| `by Wed`, `due by Sep 15`, `Sep 15` | `due:` on that day |
+| `by Mon 14:00` | `due:2026-11-16 by:14:00` |
+| `tomorrow 3pm`, `15 Jul 14:00`, `on Wed at 9:30` | `due:` on that day and `at:15:00`, `at:14:00`, `at:9:30` |
+| `at 3pm` | `at:15:00` |
+| `in 4 days`, `start in two weeks`, `begin in a month` | `t:` that much later |
+| `from Jan 18`, `start on Jan 18`, `delay until Jan 18`, `no earlier than Jan 18` | `t:2027-01-18` |
+| `from tomorrow to Wed`, `from Dec 15 to Dec 17` | `t:` on the first and `due:` on the second day |
+| `the week of Dec 9` | `t:2026-12-07 due:2026-12-13` |
+
+* A day is `today`, `tomorrow`, a weekday, a day of a month such as `Sep 15`, `15 Sep` or `September 15th`, or a date such as `2026-12-24`.
+* A weekday or a day of a month is the first such day from today on; a week runs from Monday to Sunday.
+* The phrase stands at the end of the text; projects, contexts, hashtags and tags may follow it: `Buy milk tomorrow @shop`.
+* While typing, the field shows the line that will be written.
+  If words are not meant as a date, end the line with a full stop: `Buy tickets for the weekend.` stays as it is.
+* A `due:`, `t:`, `at:` or `by:` tag that is typed as well stays.
+* The phrases are English, and they are read in the line above the list only, not in the edit dialog.
+* Recurrence is not typed in words: use `rec:` or `ice_recur.txt`.
 
 ## Names for priorities
 
