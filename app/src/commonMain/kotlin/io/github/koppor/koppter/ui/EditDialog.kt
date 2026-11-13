@@ -10,7 +10,13 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -23,7 +29,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -82,18 +88,23 @@ fun EditDialog(
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var description by remember { mutableStateOf(original.description) }
-    var priority by remember { mutableStateOf(original.priority) }
-    var due by remember { mutableStateOf(original.tag(Task.DUE).orEmpty()) }
-    var threshold by remember { mutableStateOf(original.tag(Task.THRESHOLD).orEmpty()) }
-    var recurrence by remember { mutableStateOf(original.tag(Task.RECURRENCE).orEmpty()) }
-    var duration by remember { mutableStateOf(original.tag(Task.DURATION).orEmpty()) }
-    var at by remember { mutableStateOf(original.tag(Task.AT).orEmpty()) }
-    var by by remember { mutableStateOf(original.tag(Task.BY).orEmpty()) }
-    var contextSwitcher by remember { mutableStateOf(original.tag(Task.CONTEXT_SWITCHER).orEmpty()) }
-    var projects by remember { mutableStateOf(original.projects) }
-    var contexts by remember { mutableStateOf(original.contexts) }
-    var hashtags by remember { mutableStateOf(original.hashtags) }
+    // The task as the line was last typed; the fields start anew from it.
+    // [impl->dsn~edit-line~1]
+    var base by remember { mutableStateOf(original) }
+    /** The line while it is typed: what was typed stays, where the fields would write it in another form. */
+    var line by remember { mutableStateOf<String?>(null) }
+    var description by remember(base) { mutableStateOf(base.description) }
+    var priority by remember(base) { mutableStateOf(base.priority) }
+    var due by remember(base) { mutableStateOf(base.tag(Task.DUE).orEmpty()) }
+    var threshold by remember(base) { mutableStateOf(base.tag(Task.THRESHOLD).orEmpty()) }
+    var recurrence by remember(base) { mutableStateOf(base.tag(Task.RECURRENCE).orEmpty()) }
+    var duration by remember(base) { mutableStateOf(base.tag(Task.DURATION).orEmpty()) }
+    var at by remember(base) { mutableStateOf(base.tag(Task.AT).orEmpty()) }
+    var by by remember(base) { mutableStateOf(base.tag(Task.BY).orEmpty()) }
+    var contextSwitcher by remember(base) { mutableStateOf(base.tag(Task.CONTEXT_SWITCHER).orEmpty()) }
+    var projects by remember(base) { mutableStateOf(base.projects) }
+    var contexts by remember(base) { mutableStateOf(base.contexts) }
+    var hashtags by remember(base) { mutableStateOf(base.hashtags) }
     var note by remember { mutableStateOf(originalNote.orEmpty()) }
 
     val dueValid = due.isBlank() || Task.parseDate(due.trim()) != null
@@ -102,7 +113,7 @@ fun EditDialog(
     val durationValid = duration.isBlank() || Task.parseDuration(duration.trim()) != null
     val atValid = at.isBlank() || Task.parseTime(at.trim()) != null
     val byValid = by.isBlank() || Task.parseTime(by.trim()) != null
-    val result = original
+    val result = base
         .edit(description = description, priority = priority, projects = projects, contexts = contexts, hashtags = hashtags)
         .withTag(Task.DUE, due.trim())
         .withTag(Task.BY, by.trim())
@@ -114,14 +125,14 @@ fun EditDialog(
         .withTag(Task.CONTEXT_SWITCHER, Task.contextSwitcherId(contextSwitcher))
         .let { if (contextSwitcher.isBlank()) it.withContextSwitcherTags() else it }
         // [impl->dsn~notes~1]
-        .let { if (originalNote == null) it else it.withTag(Task.NOTE, if (note.isBlank()) null else original.tag(Task.NOTE) ?: newNoteName) }
+        .let { if (originalNote == null) it else it.withTag(Task.NOTE, if (note.isBlank()) null else base.tag(Task.NOTE) ?: newNoteName) }
     val valid = dueValid && thresholdValid && recurrenceValid && durationValid && atValid && byValid && result.body.isNotBlank()
 
     val descriptionFocus = remember { FocusRequester() }
     val keyboard = LocalKeyboard.current
     LaunchedEffect(Unit) { if (keyboard) descriptionFocus.requestFocus() }
 
-    val state = listOf(description, priority, due, threshold, recurrence, duration, at, by, contextSwitcher, projects, contexts, hashtags, note)
+    val state = result.toLine() to note
     val initial = remember { state }
 
     GuardedDialog(changed = state != initial, onDismiss = onDismiss) {
@@ -234,15 +245,18 @@ fun EditDialog(
                 }
 
                 Text("Line in todo.txt", style = MaterialTheme.typography.labelMedium)
+                // [impl->dsn~edit-line~1]
                 Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.small, modifier = Modifier.fillMaxWidth()) {
-                    SelectionContainer {
-                        Text(
-                            result.toLine(),
-                            fontFamily = FontFamily.Monospace,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(8.dp).testTag("edit-line"),
-                        )
-                    }
+                    BasicTextField(
+                        value = line ?: result.toLine(),
+                        onValueChange = { typed ->
+                            line = typed.replace('\n', ' ')
+                            base = Task.parse(line!!)
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.padding(8.dp).fillMaxWidth().onFocusChanged { if (!it.isFocused) line = null }.testTag("edit-line"),
+                    )
                 }
 
                 // [impl->dsn~dates-in-dialog~1]
@@ -308,7 +322,7 @@ private fun DateField(label: String, value: String, onChange: (String) -> Unit, 
     }
 }
 
-/** The projects, contexts or hashtags of the task as removable chips, a field to add one, and the known names as suggestions. */
+/** The projects, contexts or hashtags of the task as removable chips, the known names as suggestions, and a field of the size of a chip to add one. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NameList(
@@ -327,31 +341,38 @@ private fun NameList(
         if (clean.isNotEmpty() && clean !in names && valid(clean)) onChange(names + clean)
         input = ""
     }
-    Column {
-        OutlinedTextField(
+    // The names of the task first, then the known names that can be added with one click.
+    val suggestions = known.filter { it !in names && it.startsWith(input.trim().removePrefix(sign), ignoreCase = true) }.take(8)
+    val colors = MaterialTheme.colorScheme
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        for (name in names) {
+            InputChip(
+                selected = true,
+                onClick = { onChange(names - name) },
+                label = { Text("$sign$name") },
+                trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Remove $kind $name") },
+                modifier = Modifier.testTag("$tag-$name"),
+            )
+        }
+        for (name in suggestions) {
+            SuggestionChip(onClick = { add(name) }, label = { Text("$sign$name") }, modifier = Modifier.testTag("$tag-suggest-$name"))
+        }
+        BasicTextField(
             value = input,
             onValueChange = { if (it.endsWith(' ')) add(it) else input = it },
-            label = { Text("Add ${kind.lowercase()}") },
             singleLine = true,
+            textStyle = MaterialTheme.typography.labelLarge.copy(color = colors.onSurface),
+            cursorBrush = SolidColor(colors.primary),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { add(input) }),
-            modifier = Modifier.fillMaxWidth().testTag("$tag-add"),
+            modifier = Modifier.align(Alignment.CenterVertically).width(150.dp).height(32.dp)
+                .border(1.dp, colors.outline, MaterialTheme.shapes.small).testTag("$tag-add"),
+            decorationBox = { field ->
+                Box(Modifier.padding(horizontal = 12.dp), contentAlignment = Alignment.CenterStart) {
+                    if (input.isEmpty()) Text("Add ${kind.lowercase()}…", style = MaterialTheme.typography.labelLarge, color = colors.onSurfaceVariant)
+                    field()
+                }
+            },
         )
-        // The names of the task first, then the known names that can be added with one click.
-        val suggestions = known.filter { it !in names && it.startsWith(input.trim().removePrefix(sign), ignoreCase = true) }.take(8)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            for (name in names) {
-                InputChip(
-                    selected = true,
-                    onClick = { onChange(names - name) },
-                    label = { Text("$sign$name") },
-                    trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Remove $kind $name") },
-                    modifier = Modifier.testTag("$tag-$name"),
-                )
-            }
-            for (name in suggestions) {
-                SuggestionChip(onClick = { add(name) }, label = { Text("$sign$name") }, modifier = Modifier.testTag("$tag-suggest-$name"))
-            }
-        }
     }
 }

@@ -46,6 +46,7 @@ A click on a context shows its tasks, the most urgent first; the bar of a task f
 ![Plan dialog with time maps and barriers](docs/screenshots/plan.png)
 
 The edit dialog: the description without metadata at the top, the metadata below, then the note, the resulting line of the todo.txt file, and the date the task was added according to the git history.
+The line can be edited as text as well: the fields follow what is typed there.
 
 ![Edit dialog of a task](docs/screenshots/edit.png)
 

@@ -43,6 +43,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - A planned block starts on a quarter of an hour after an event of a calendar.
 - Planning leaves out the times of the events of calendars that are named by the address of their iCalendar file, as Outlook and Google Calendar publish it.
 - *Agenda* shows the planned blocks of today and the six days after it with the tasks that are due but not planned for today, and *Week* shows the plan of a week as a calendar.
+- The line that the edit dialog shows can be edited as text; the fields follow what is typed.
 - A task states the time of its due date by which it has to be done with the tag `by:14:00`; the task list orders by it, and the state of the plan tells whether the task is done by then.
 - A task states the time of the day at which it takes place with the tag `at:12:00`; planning gives it that time, also on the later days of an entry of `ice_recur.txt`, and plans the other tasks around it.
 - *Inbox* lists the tasks without context; a click on a context gives it to the task.

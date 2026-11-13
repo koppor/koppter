@@ -51,6 +51,17 @@ Covers:
 
 Needs: dsn
 
+### Line of the edit dialog
+`req~edit-line~1`
+
+The line that the edit dialog shows can be edited as text, and the fields of the dialog follow what is typed.
+
+Covers:
+
+* `feat~task-editing~1`
+
+Needs: dsn
+
 ### Filter panel
 `req~filter-panel~1`
 
@@ -214,6 +225,7 @@ Needs: impl, utest
 
 `EditDialog` keeps the edited values as dialog state and computes the resulting task with `Task.edit` and `Task.withTag` on every change.
 The resulting line is shown below the fields in a monospaced font.
+Projects, contexts and hashtags are chips: those of the task, then known ones to add with a click, then a field of the size of a chip for another name.
 *Save* is disabled while a date, the recurrence or the duration is invalid or the task is empty.
 The dialog also serves for a new task.
 
@@ -222,6 +234,19 @@ Covers:
 * `req~edit-dialog~1`
 * `req~complete-and-delete~1`
 * `adr~metadata-after-description~1`
+
+Needs: impl, utest
+
+### Line of the edit dialog
+`dsn~edit-line~1`
+
+The line of `EditDialog` is a text field.
+What is typed there is parsed as a task, from which the fields of the dialog start anew; a tag that has no field stays in the line.
+While the field has the focus, it shows the text as it was typed; a field that is edited afterwards changes the line as before.
+
+Covers:
+
+* `req~edit-line~1`
 
 Needs: impl, utest
 

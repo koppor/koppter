@@ -180,6 +180,27 @@ class AppTest {
         assertEquals("Post signs +GarageSale dur:1h30m", storage.text.lines()[1])
     }
 
+    // [utest->dsn~edit-line~1]
+    @Test
+    fun theLineOfTheDialogIsEditedAsTextAndTheFieldsFollow() = runComposeUiTest {
+        start()
+        openTask("Post signs")
+        onNodeWithTag("edit-line").performScrollTo().performTextReplacement("(B) Post the signs at the corner +GarageSale @errands due:2026-11-20 dur:45m custom:kept")
+        onNodeWithTag("edit-description").assertTextContains("Post the signs at the corner")
+        onNodeWithTag("edit-due").assertTextContains("2026-11-20")
+        onNodeWithTag("edit-duration").assertTextContains("45m")
+        onNodeWithTag("edit-context-errands").assertExists()
+        // A field that is edited afterwards changes the line that was typed.
+        onNodeWithTag("edit-duration").performTextReplacement("1h")
+        onNodeWithTag("edit-line").assertTextEquals("(B) Post the signs at the corner +GarageSale @errands due:2026-11-20 dur:1h custom:kept")
+        // What is no date keeps the task from being saved, as in the field.
+        onNodeWithTag("edit-line").performTextReplacement("Post signs due:soon")
+        onNodeWithTag("edit-save").performScrollTo().assertIsNotEnabled()
+        onNodeWithTag("edit-line").performTextReplacement("(B) Post the signs +GarageSale custom:kept")
+        onNodeWithTag("edit-save").performClick()
+        assertEquals("(B) Post the signs +GarageSale custom:kept", storage.text.lines()[1])
+    }
+
     // [utest->dsn~due-time~1]
     @Test
     fun theDialogSetsTheTimeByWhichATaskIsDue() = runComposeUiTest {
