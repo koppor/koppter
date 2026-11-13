@@ -86,6 +86,18 @@ Covers:
 
 Needs: dsn
 
+### Order by hand
+`req~list-step~1`
+
+The user moves a task one step up or down in the list, to order the tasks of the same priority and due date by hand.
+A step over the border to another priority gives the task that priority.
+
+Covers:
+
+* `feat~task-list~1`
+
+Needs: dsn
+
 ### Recurrence tag
 `req~recurrence-tag~1`
 
@@ -205,6 +217,22 @@ Needs: impl, utest
 Covers:
 
 * `req~list-order~1`
+
+Needs: impl, utest
+
+### Step in the list
+`dsn~list-step~1`
+
+Each task of the list has a button for a step up and one for a step down, which `TodoController.step` passes to `TodoFile.step` with the neighbor in the shown list.
+The order of the list stays as `listOrder` defines it; a step changes what that order is computed from.
+If the neighbor has the same priority, due date and due time, the line of the task is moved directly before the line of the neighbor, or behind it on the way down, and is written as it was.
+If the neighbor has another priority, the task takes that priority and its line is moved so that it stays on its side of the neighbor: one step crosses the border, the next one passes the neighbor.
+If the due date or due time differs as well, only the priority changes, as the due date then orders the two tasks.
+A neighbor with the same priority and another due date or due time cannot be passed, and neither can a completed task; `Task.canStepOver` tells that, and the button is disabled.
+
+Covers:
+
+* `req~list-step~1`
 
 Needs: impl, utest
 

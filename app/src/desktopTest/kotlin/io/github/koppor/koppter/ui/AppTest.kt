@@ -108,6 +108,28 @@ class AppTest {
         onNodeWithText("Buy milk").assertExists()
     }
 
+    // [utest->dsn~list-step~1]
+    @Test
+    fun theArrowsOfATaskMoveItsLineAndGiveItThePriorityOfTheTaskItMeets() = runComposeUiTest {
+        start()
+        // The list shows: Thank Mom (A, due), Schedule pickup (B), Post signs.
+        onAllNodesWithTag("task-up")[0].assertIsNotEnabled()
+        onAllNodesWithTag("task-down")[2].assertIsNotEnabled()
+        // At the border, the task takes the priority and stays below the task it met.
+        onAllNodesWithTag("task-up")[2].performClick()
+        assertEquals(listOf("(B) Schedule pickup +GarageSale @phone", "(B) Post signs +GarageSale", "(A) Thank Mom @phone due:2026-11-20"), storage.text.lines().take(3))
+        // Within the priority, the lines change places.
+        onAllNodesWithTag("task-up")[2].performClick()
+        assertEquals(listOf("(B) Post signs +GarageSale", "(B) Schedule pickup +GarageSale @phone"), storage.text.lines().take(2))
+        assertEquals("Move task up: Post signs", storage.changes.last())
+        // In the next priority, the due date orders the tasks, so the one without due date cannot pass.
+        onAllNodesWithTag("task-up")[1].performClick()
+        assertEquals("(A) Post signs +GarageSale", storage.text.lines()[0])
+        onAllNodesWithTag("task-up")[1].assertIsNotEnabled()
+        onAllNodesWithTag("task-down")[1].performClick()
+        assertEquals("(B) Post signs +GarageSale", storage.text.lines()[0])
+    }
+
     // [utest->dsn~quick-add-dates~1]
     @Test
     fun quickAddShowsAndWritesTheDatesOfTypedWords() = runComposeUiTest {

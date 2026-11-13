@@ -261,6 +261,18 @@ The phrases are those that [SkedPal](https://docs.skedpal.com/planning/setting-a
 * The phrases are English, and they are read in the line above the list only, not in the edit dialog.
 * Recurrence is not typed in words: use `rec:` or `ice_recur.txt`.
 
+## Order of the list
+
+The list shows the open tasks first, ordered by priority, then by due date and due time, then by the position of their lines in the file.
+The two arrows at the right of a task move it one step:
+
+* Past a task of the same priority and due date, the two lines change places in the file.
+  This orders the tasks that are equally important and due on the same day, such as those of a weekend.
+* At the border to another priority, the task takes that priority: `(B)` becomes `(A)` on the way up, and the next step passes the task above.
+* Within a priority, the due date keeps its order: a task cannot pass one that is due on another day, and its arrow is disabled.
+
+The arrows are in the list only, not on the board, where a task is dragged to another column.
+
 ## Names for priorities
 
 The todo.txt format has the priorities `(A)` to `(Z)`, of which A is the highest.

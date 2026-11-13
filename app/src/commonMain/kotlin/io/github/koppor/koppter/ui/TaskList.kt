@@ -42,8 +42,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -63,6 +71,7 @@ fun TaskList(
     today: LocalDate,
     onToggle: (Entry) -> Unit,
     onOpen: (Entry) -> Unit,
+    onStep: (entry: Entry, neighbor: Entry, up: Boolean) -> Unit,
     emptyText: String,
     modifier: Modifier = Modifier,
 ) {
@@ -77,8 +86,16 @@ fun TaskList(
         contentPadding = PaddingValues(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        items(entries, key = { it.index }) { entry ->
-            TaskCard(entry, today, onToggle = { onToggle(entry) }, onOpen = { onOpen(entry) })
+        itemsIndexed(entries, key = { _, entry -> entry.index }) { position, entry ->
+            // [impl->dsn~list-step~1]
+            fun step(up: Boolean): (() -> Unit)? =
+                entries.getOrNull(if (up) position - 1 else position + 1)?.takeIf { entry.task.canStepOver(it.task) }?.let { { onStep(entry, it, up) } }
+            TaskCard(entry, today, onToggle = { onToggle(entry) }, onOpen = { onOpen(entry) }) {
+                Column {
+                    StepButton(Icons.Default.KeyboardArrowUp, "Move up", "task-up", step(up = true))
+                    StepButton(Icons.Default.KeyboardArrowDown, "Move down", "task-down", step(up = false))
+                }
+            }
         }
     }
 }
@@ -90,7 +107,7 @@ fun TaskList(
 // [impl->dsn~task-card~1]
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TaskCard(entry: Entry, today: LocalDate, onToggle: () -> Unit, onOpen: () -> Unit) {
+fun TaskCard(entry: Entry, today: LocalDate, onToggle: () -> Unit, onOpen: () -> Unit, trailing: @Composable () -> Unit = {}) {
     val task = entry.task
     Card(onClick = onOpen, modifier = Modifier.fillMaxWidth().testTag("task")) {
         Row(Modifier.padding(end = 10.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -111,7 +128,16 @@ fun TaskCard(entry: Entry, today: LocalDate, onToggle: () -> Unit, onOpen: () ->
                     color = if (task.completed) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 )
             }
+            trailing()
         }
+    }
+}
+
+/** A button of half the usual height, so that two of them fit a card; without an action, it is disabled. */
+@Composable
+private fun StepButton(icon: ImageVector, description: String, tag: String, onClick: (() -> Unit)?) {
+    IconButton(onClick = onClick ?: {}, enabled = onClick != null, modifier = Modifier.padding(start = 4.dp).size(width = 40.dp, height = 26.dp).testTag(tag)) {
+        Icon(icon, contentDescription = description)
     }
 }
 

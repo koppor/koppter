@@ -494,6 +494,14 @@ class TodoController(
         write(file.replace(index, task), "Move task to ${to.title}: ${task.description}")
     }
 
+    /** Lets the task step over its neighbor in the list: see [TodoFile.step]. */
+    // [impl->dsn~list-step~1]
+    fun step(entry: Entry, neighbor: Entry, up: Boolean) {
+        val index = locate(entry) ?: return
+        val other = locate(neighbor) ?: return
+        write(file.step(index, other, up) ?: return, "Move task ${if (up) "up" else "down"}: ${entry.task.description}")
+    }
+
     fun delete(entry: Entry) {
         val index = locate(entry) ?: return
         write(file.remove(index), "Delete task: ${entry.task.description}")

@@ -295,7 +295,7 @@ private fun MainScreen(
                                 emptyText = emptyText,
                             )
                         } else {
-                            TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, emptyText)
+                            TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, controller::step, emptyText)
                         }
                     }
                 }
