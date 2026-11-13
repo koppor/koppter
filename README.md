@@ -489,11 +489,14 @@ The workflows build the release variant, signed with a key that is a secret of t
 | --- | --- |
 | [CHANGELOG.md](CHANGELOG.md) | User-visible changes, [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, [CalVer](https://calver.org/) releases |
 | [docs/organizing.md](docs/organizing.md) | A way to organize many tasks with contexts, projects, dates and the plan |
+| [docs/related-work.md](docs/related-work.md) | Comparison with other applications for tasks in plain text files |
 | [docs/requirements](docs/requirements/README.md) | Features, requirements and design, traced to code |
 | [docs/decisions](docs/decisions/README.md) | Architectural decisions as [MADR](https://adr.github.io/madr/) |
 | [CLAUDE.md](CLAUDE.md) | Conventions for development sessions with Claude Code |
 
 ## Related work
+
+These projects served as models; [docs/related-work.md](docs/related-work.md) compares koppter with further applications.
 
 * [todo.txt-cli](https://github.com/todotxt/todo.txt-cli) — `todo.sh`, the command line of the format.
   Its [add-on directory](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory) is the source of `note`, `top` and `ice_recur` and lists more that this application does not cover, such as [gimme](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#gimme-select-a-task-at-random-based-on-criteria), which selects a task at random.

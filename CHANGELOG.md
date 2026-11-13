@@ -10,6 +10,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 ### Added
 
 - Source of each extension of the todo.txt format in the README.
+- Comparison with other applications for tasks in plain text files in `docs/related-work.md`, starting with Beorg.
 
 ## [2026-11-12] - 2026-11-12
 
