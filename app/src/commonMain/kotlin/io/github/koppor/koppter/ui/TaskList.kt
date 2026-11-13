@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.offset
@@ -47,7 +48,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -190,12 +190,13 @@ private fun <K : Any> Modifier.cardDrag(state: CardDrag<K>, key: K, onDrop: () -
 
 /**
  * Scrolls the list while a card is held near its upper or lower edge, or beyond it: the nearer to the edge, the faster.
+ * With [sideways], these are the left and the right edge.
  *
  * @param area the bounds of the list in the coordinates of the window
  */
 // [impl->dsn~drag-scroll~1]
 @Composable
-private fun DragScroll(state: CardDrag<*>, list: LazyListState, area: () -> Rect?) {
+private fun DragScroll(state: CardDrag<*>, list: ScrollableState, sideways: Boolean = false, area: () -> Rect?) {
     val zone = with(LocalDensity.current) { 56.dp.toPx() }
     val step = with(LocalDensity.current) { 14.dp.toPx() }
     if (state.dragged == null) return
@@ -203,9 +204,10 @@ private fun DragScroll(state: CardDrag<*>, list: LazyListState, area: () -> Rect
         while (true) {
             delay(16)
             val bounds = area() ?: continue
-            val pointer = state.pointer
-            if (pointer.x !in bounds.left..bounds.right) continue
-            val pull = ((pointer.y - bounds.bottom + zone) / zone).coerceIn(0f, 1f) - ((bounds.top + zone - pointer.y) / zone).coerceIn(0f, 1f)
+            val (along, across) = state.pointer.let { if (sideways) it.x to it.y else it.y to it.x }
+            val (start, end) = if (sideways) bounds.left to bounds.right else bounds.top to bounds.bottom
+            if (across !in (if (sideways) bounds.top..bounds.bottom else bounds.left..bounds.right)) continue
+            val pull = ((along - end + zone) / zone).coerceIn(0f, 1f) - ((start + zone - along) / zone).coerceIn(0f, 1f)
             if (pull != 0f) list.scrollBy(pull * step)
         }
     }
@@ -333,9 +335,17 @@ fun Board(
     val drop = drop()
     val target = drop?.first?.takeIf { it != drag.dragged?.let { (from) -> groups.getOrNull(from) } }
 
-    Box(modifier.fillMaxSize().onGloballyPositioned { drag.origin = it.positionInRoot() }) {
+    val columns = rememberScrollState()
+    var area by remember { mutableStateOf<Rect?>(null) }
+    DragScroll(drag, columns, sideways = true) { area }
+    Box(
+        modifier.fillMaxSize().onGloballyPositioned {
+            drag.origin = it.positionInRoot()
+            area = it.boundsInRoot()
+        },
+    ) {
         Row(
-            Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp).testTag("board"),
+            Modifier.fillMaxSize().horizontalScroll(columns).padding(horizontal = 8.dp).testTag("board"),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             groups.forEachIndexed { index, group ->

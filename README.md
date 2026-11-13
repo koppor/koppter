@@ -277,8 +277,7 @@ A line shows where a dragged task would be put.
 
 On the [board](#board), a card is dragged to a place in its column in the same way.
 Dragged to another column, it changes what the column stands for and keeps its priority otherwise, so that it gets its place only among the cards of that priority.
-The list and the columns of the board scroll while a task is held at their upper or lower edge.
-The board does not scroll sideways while a card is dragged.
+The list and the columns of the board scroll while a task is held at their upper or lower edge, and the board scrolls sideways while a card is held at its left or right edge.
 
 ## Names for priorities
 

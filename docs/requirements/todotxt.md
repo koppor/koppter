@@ -257,7 +257,7 @@ Needs: impl, utest
 `dsn~drag-scroll~1`
 
 While a task is held within 56 dp of the upper or lower edge of the list, or beyond that edge, the list scrolls towards it, the faster the nearer the pointer is to the edge.
-The columns of the board scroll in the same way; the board does not scroll sideways.
+The columns of the board scroll in the same way, and the board scrolls sideways while a card is held at its left or right edge.
 The dragged card is pinned in its lazy list, as the list would otherwise drop it, and its gesture with it, when it leaves the window.
 
 Covers:

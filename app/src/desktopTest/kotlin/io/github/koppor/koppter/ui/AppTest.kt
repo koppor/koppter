@@ -213,6 +213,27 @@ class AppTest {
         assertEquals(listOf("Task 39", "Task 40", "Task 1"), storage.text.trim().lines().takeLast(3))
     }
 
+    // [utest->dsn~drag-scroll~1]
+    @Test
+    fun theBoardScrollsSidewaysWhileACardIsHeldAtItsEdge() = runComposeUiTest {
+        storage.text = "(A) Alpha\n(B) Beta\n(C) Gamma\n(D) Delta\n(E) Epsilon\n(F) Zeta\nEta\n"
+        start()
+        onNodeWithTag("board-switch").performClick()
+        val board = onNodeWithTag("board").fetchSemanticsNode().boundsInRoot
+        val card = onNodeWithText("Alpha").fetchSemanticsNode().boundsInRoot
+        onNodeWithText("Alpha").performMouseInput {
+            moveTo(center)
+            press()
+            moveBy(Offset(10f, 0f))
+            moveBy(Offset(board.right - 30 - card.center.x, 0f))
+        }
+        // Held at the right edge, the board scrolls to its last column, which takes the card.
+        mainClock.advanceTimeBy(8_000)
+        onNodeWithTag("board").performMouseInput { release() }
+        assertEquals(listOf("Eta", "Alpha"), storage.text.trim().lines().takeLast(2))
+        assertEquals("Move task to No priority: Alpha", storage.changes.last())
+    }
+
     // [utest->dsn~board-drag-position~1]
     @Test
     fun draggingACardOntoAnotherCardOfTheBoardPutsItThere() = runComposeUiTest {
