@@ -11,6 +11,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 
 - The field for the file in the settings takes the address of a git repository, also on the desktop: the application clones it into its data directory and uses its `todo.txt` file.
 - Examples in the empty fields for board columns, names of priorities and share actions in the settings.
+- Packages of the desktop application for Linux (deb), Windows (msi) and macOS (dmg) with the release of a day.
 
 ### Changed
 

@@ -1,4 +1,4 @@
-personal_ws-1.1 en 104 utf-8
+personal_ws-1.1 en 107 utf-8
 APIs
 APK
 appdirs
@@ -103,3 +103,6 @@ URI
 utest
 worktree
 YAML
+Dependabot
+dmg
+msi

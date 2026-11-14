@@ -1,0 +1,20 @@
+# One pull request per week and kind, against the branch on which the work happens.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    target-branch: experimental
+    schedule:
+      interval: weekly
+    groups:
+      gradle:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: experimental
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

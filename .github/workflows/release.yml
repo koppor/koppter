@@ -3,7 +3,8 @@ name: Daily release
 # Every morning: merge experimental into main and, when CHANGELOG.md has an
 # [Unreleased] section, turn it into the CalVer release of the previous day,
 # the day the changes were made. Each release tag gets a release on GitHub with
-# its section of the changelog and the signed Android APK.
+# its section of the changelog, the signed Android APK and the packages of the
+# desktop application.
 # [impl->adr~calver-changelog~1]
 on:
   schedule:
@@ -103,4 +104,51 @@ jobs:
               gh release create "$tag" --verify-tag --title "$d" --notes-file "$RUNNER_TEMP/notes.md"
             fi
             gh release upload "$tag" "$RUNNER_TEMP/koppter-$d.apk" --clobber
+          done
+
+  # The package of the desktop application for each system, for every release that has none of it yet.
+  desktop:
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            extension: deb
+          - os: windows-latest
+            extension: msi
+          - os: macos-latest
+            extension: dmg
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Publish the package
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXTENSION: ${{ matrix.extension }}
+        run: |
+          set -euo pipefail
+          for tag in $(git tag --list 'v[0-9]*' --sort=version:refname); do
+            # The releases from before the packaging stay without packages.
+            git grep --quiet nativeDistributions "$tag" -- app/build.gradle.kts || continue
+            assets=$(gh release view "$tag" --json assets --jq '.assets[].name') || continue
+            if grep --quiet "\\.$EXTENSION\$" <<< "$assets"; then
+              continue
+            fi
+            git checkout --quiet "$tag"
+            KOPPTER_VERSION=${tag#v} ./gradlew :app:packageDistributionForCurrentOS
+            gh release upload "$tag" app/build/compose/binaries/main/"$EXTENSION"/*."$EXTENSION" --clobber
           done

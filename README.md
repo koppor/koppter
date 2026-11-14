@@ -527,9 +527,19 @@ The application writes all filters quoted.
 
 ## Installing
 
-The [latest release](https://github.com/koppor/koppter/releases/latest) carries the Android application as the file `koppter-<date>.apk`.
+The [latest release](https://github.com/koppor/koppter/releases/latest) carries the application as files to install:
+
+| File | System |
+| --- | --- |
+| `koppter-<date>.apk` | Android |
+| `koppter_<version>_amd64.deb` | Linux with Debian packages, such as Debian and Ubuntu |
+| `koppter-<version>.msi` | Windows; installs for the current user |
+| `koppter-<version>.dmg` | macOS on Apple Silicon |
+
 There is one release per day on which something changed, named after that day.
-The desktop application is not packaged yet; it is started from the sources, see [running](#running).
+The version of a desktop package is that day as `YY.M.D`, such as `26.11.14`.
+The desktop packages bring their own Java runtime.
+They are not signed: Windows and macOS warn before they open them, and macOS opens the application only after it is allowed under *Privacy & Security* in the system settings.
 
 ## Building
 
