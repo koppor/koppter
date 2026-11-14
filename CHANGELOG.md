@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Calendar Versioning](https://calver.org/) with the scheme `YYYY-0M-0D`.
 
+## [Unreleased]
+
+### Changed
+
+- Texts are a tenth smaller, and a field keeps its height when its first character is typed.
+- The filter panel has the heading *Filter*, and its text field shows *Search text* instead of the label *Text*.
+- The week stretches over the height of the window.
+
 ## [2026-11-13] - 2026-11-13
 
 ### Added
@@ -15,12 +23,6 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Order by hand: a task is dragged to its place in the list or in its column of the board, or moved one step with the arrows at its right; among tasks of the same priority and due date this orders the lines in the file, and next to a task of another priority the task takes that priority.
 - Labels of the plan dialog that say that its fields are optional, in a smaller size, and the times and the barrier that hold without an entry.
 - Dates in words in the line typed above the list, such as `tomorrow`, `next week`, `by Wed` or `tomorrow 3pm`: the application shows and writes the tags they stand for.
-
-### Changed
-
-- Texts are a tenth smaller, and a field keeps its height when its first character is typed.
-- The filter panel has the heading *Filter*, and its text field shows *Search text* instead of the label *Text*.
-- The week stretches over the height of the window.
 
 ## [2026-11-12] - 2026-11-12
 
@@ -75,5 +77,6 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - The release of a day on GitHub carries the signed Android application as an APK file.
 - Project infrastructure: Gradle build with a Kotlin Multiplatform `core` module, requirements tracing, decision records and continuous integration.
 
+[Unreleased]: https://github.com/koppor/koppter/compare/v2026-11-13...experimental
 [2026-11-13]: https://github.com/koppor/koppter/compare/v2026-11-12...v2026-11-13
 [2026-11-12]: https://github.com/koppor/koppter/releases/tag/v2026-11-12
