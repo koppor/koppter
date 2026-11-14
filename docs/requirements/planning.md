@@ -310,7 +310,7 @@ Needs: impl, utest
 `dsn~busy-times~1`
 
 `busyTimes` reads the events of an iCalendar file and gives the times they take by day, in the time zone of the device.
-Events of whole days, cancelled events, events marked as free and the blocks that the application exported itself are left out.
+Events of whole days, canceled events, events marked as free and the blocks that the application exported itself are left out.
 Repeating events are followed for the frequencies daily, weekly, monthly and yearly with interval, end, count, days of the week, days of the month and excluded dates.
 A time zone that the platform does not know by name counts as that of the device.
 An occurrence of a repeating event that was moved counts at its old and at its new time, as the entries that move occurrences are not matched to their series.

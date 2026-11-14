@@ -1,6 +1,7 @@
 [files]
 # gradle-daemon-jvm.properties is generated and consists of identifiers of JDK downloads.
-extend-exclude = ["gradlew", "gradlew.bat", "*.keystore", "gradle/gradle-daemon-jvm.properties"]
+# .aspell.en.pws is the word list of the dictionary check and holds parts of words, such as "ons" of "add-ons".
+extend-exclude = ["gradlew", "gradlew.bat", "*.keystore", "gradle/gradle-daemon-jvm.properties", ".aspell.en.pws"]
 
 [default.extend-words]
 # "mit" and "mitf" are todo.txt add-ons (most important task)

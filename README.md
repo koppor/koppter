@@ -423,7 +423,7 @@ A block whose task was completed, deleted or edited since shows the text it was 
 ### Calendars
 
 *Calendars with busy times* in the plan dialog takes the addresses at which calendar services publish a calendar as an iCalendar file, one per line.
-Nothing is planned into the times of their events; events of whole days, cancelled events and events marked as free do not count.
+Nothing is planned into the times of their events; events of whole days, canceled events and events marked as free do not count.
 
 * Outlook on the web: *Settings → Calendar → Shared calendars → Publish a calendar*, then the ICS link.
 * Google Calendar: *Settings → the calendar → Integrate calendar → Secret address in iCal format*.

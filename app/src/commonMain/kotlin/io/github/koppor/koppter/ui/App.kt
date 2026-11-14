@@ -88,7 +88,7 @@ private const val RELOAD_INTERVAL_MILLIS = 2_000L
 
 /**
  * @param chooseFile lets the user pick the todo.txt file with the file dialog of the platform and returns its location,
- *   or `null` if the user cancelled.
+ *   or `null` if the user canceled.
  * @param git offered in the settings on platforms where the application has to bring its own git access
  * @param keyboard whether the device has a keyboard, see [LocalKeyboard]
  */

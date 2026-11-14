@@ -102,6 +102,17 @@ jobs:
 
       - uses: crate-ci/typos@276087d9a4f06398b3e04825487805e2d7375888 # v1.52.2
 
+      # typos knows common misspellings only; aspell reports every word that is neither in its dictionary nor in the word list.
+      - name: Check the Markdown files against a dictionary
+        run: |
+          sudo apt-get update --quiet
+          sudo apt-get install --yes --no-install-recommends aspell aspell-en
+          unknown=$(git ls-files '*.md' | while IFS= read -r file; do
+            aspell --mode=markdown -l en_US --encoding=utf-8 -p ./.aspell.en.pws list < "$file" | sort -u | sed "s|^|$file: |"
+          done)
+          echo "$unknown"
+          test -z "$unknown"
+
   markdown:
     runs-on: ubuntu-latest
     timeout-minutes: 10

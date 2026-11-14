@@ -24,7 +24,9 @@
   Check: `jbang madrlint@adr/madrlint --no-warn 11,12 <file>` (needs Java 25).
 * Markdown: one sentence per line.
   Check: `npx markdownlint-cli2`.
-* Spelling: `typos` (configuration in `.typos.toml`).
+* Spelling: `typos` (configuration in `.typos.toml`), and `aspell` for the Markdown files in American English.
+  A name or term that it does not know goes into `.aspell.en.pws`, whose first line states the number of words.
+  Check: `for f in $(git ls-files '*.md'); do aspell --mode=markdown -l en_US --encoding=utf-8 -p ./.aspell.en.pws list < "$f" | sort -u | sed "s|^|$f: |"; done` prints nothing.
 * Prose in documents, comments, commit messages and UI texts: precise and sober, no marketing language.
 * Code comments explain a non-obvious *why*, not the *what*.
 * Kotlin, official code style, package `io.github.koppor.koppter`.

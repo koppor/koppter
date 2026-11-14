@@ -16,7 +16,7 @@ import kotlin.time.Duration
 /**
  * The times that the events of an iCalendar file take, by day, in the given time zone.
  *
- * Counted are events with a start time that are neither cancelled nor marked as free.
+ * Counted are events with a start time that are neither canceled nor marked as free.
  * Events that last whole days are left out, as are the blocks that [Ics] wrote itself.
  * Repeating events are followed for the frequencies daily, weekly, monthly and yearly with interval, end, count,
  * days of the week, days of the month and excluded dates.
