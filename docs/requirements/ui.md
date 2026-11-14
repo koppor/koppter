@@ -315,7 +315,7 @@ Needs: impl, utest
 ### Filter panel
 `dsn~filter-panel~1`
 
-`FilterPanel` shows the criteria of `Filter`: the text as a text field and the threshold date as a checkbox at the top, and the completion state as the two switches *Open* and *Done* at the bottom, of which at least one is on.
+`FilterPanel` shows the criteria of `Filter` under the heading *Filter*: the text as a text field and the threshold date as a checkbox at the top, and the completion state as the two switches *Open* and *Done* at the bottom, of which at least one is on.
 Priorities, projects, contexts and hashtags are shown as the labels that the task list uses for them.
 The selected values stand beside the title of the criterion and the other values below it, both sorted; a click on a label moves it to the other group.
 From a width of 840 dp on, the main screen places the panel beside the list; below that, the panel is the content of a navigation drawer.
@@ -331,6 +331,7 @@ Needs: impl, utest
 
 The main screen consists of the top bar, the filter panel, the quick add field, the task list and a button for a new task.
 Errors of the storage are shown in a snackbar.
+The texts use the type scale of Material reduced by a tenth (`compactTypography`), which suits a window on a desktop and keeps a field of one line at the same height whether it is empty or filled.
 
 Covers:
 

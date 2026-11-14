@@ -16,6 +16,12 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - Labels of the plan dialog that say that its fields are optional, in a smaller size, and the times and the barrier that hold without an entry.
 - Dates in words in the line typed above the list, such as `tomorrow`, `next week`, `by Wed` or `tomorrow 3pm`: the application shows and writes the tags they stand for.
 
+### Changed
+
+- Texts are a tenth smaller, and a field keeps its height when its first character is typed.
+- The filter panel has the heading *Filter*, and its text field shows *Search text* instead of the label *Text*.
+- The week stretches over the height of the window.
+
 ## [2026-11-12] - 2026-11-12
 
 ### Added

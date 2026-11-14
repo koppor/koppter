@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -117,7 +118,7 @@ fun Agenda(
     }
 }
 
-private val HOUR_HEIGHT = 48.dp
+private val MIN_HOUR_HEIGHT = 48.dp
 
 /** The blocks of the plan of one week as a calendar: one column per day, the time running down. */
 // [impl->dsn~agenda~1]
@@ -143,13 +144,15 @@ fun Week(blocks: List<TextBlock>?, entryOf: (TextBlock) -> Entry?, today: LocalD
             if (monday != thisWeek) TextButton(onClick = { monday = thisWeek }, modifier = Modifier.testTag("week-today")) { Text("This week") }
         }
         if (blocks == null) Text(NO_PLAN, Modifier.padding(8.dp))
-        BoxWithConstraints(Modifier.verticalScroll(rememberScrollState())) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
             // On a phone, the days keep a readable width and the week scrolls sideways.
             val dayWidth = maxOf(110.dp, (maxWidth - 44.dp) / 7)
-            Row(Modifier.horizontalScroll(rememberScrollState())) {
-                Column(Modifier.width(44.dp).padding(top = 28.dp)) {
+            // The hours share the height that is left; in a low window they keep a readable height and the week scrolls.
+            val hourHeight = maxOf(MIN_HOUR_HEIGHT, (maxHeight - 28.dp) / (lastHour - firstHour))
+            Row(Modifier.verticalScroll(rememberScrollState()).horizontalScroll(rememberScrollState())) {
+                Column(Modifier.width(44.dp).padding(top = 28.dp).testTag("week-hours")) {
                     for (hour in firstHour until lastHour) {
-                        Text("${hour.toString().padStart(2, '0')}:00", Modifier.height(HOUR_HEIGHT), style = MaterialTheme.typography.labelSmall)
+                        Text("${hour.toString().padStart(2, '0')}:00", Modifier.height(hourHeight), style = MaterialTheme.typography.labelSmall)
                     }
                 }
                 for (day in days) {
@@ -161,10 +164,10 @@ fun Week(blocks: List<TextBlock>?, entryOf: (TextBlock) -> Entry?, today: LocalD
                             modifier = Modifier.height(28.dp).padding(start = 4.dp),
                         )
                         Box(
-                            Modifier.fillMaxWidth().height(HOUR_HEIGHT * (lastHour - firstHour))
+                            Modifier.fillMaxWidth().height(hourHeight * (lastHour - firstHour))
                                 .background(if (day == today) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent),
                         ) {
-                            for (hour in 0 until lastHour - firstHour) HorizontalDivider(Modifier.offset(y = HOUR_HEIGHT * hour))
+                            for (hour in 0 until lastHour - firstHour) HorizontalDivider(Modifier.offset(y = hourHeight * hour))
                             for (block in ofWeek.filter { it.date == day }) {
                                 val entry = entryOf(block)
                                 Surface(
@@ -172,8 +175,8 @@ fun Week(blocks: List<TextBlock>?, entryOf: (TextBlock) -> Entry?, today: LocalD
                                     contentColor = if (entry != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                                     shape = MaterialTheme.shapes.extraSmall,
                                     modifier = Modifier.padding(horizontal = 2.dp).fillMaxWidth()
-                                        .offset(y = HOUR_HEIGHT * (block.span.start - firstHour * 60) / 60)
-                                        .height(HOUR_HEIGHT * block.span.length / 60)
+                                        .offset(y = hourHeight * (block.span.start - firstHour * 60) / 60)
+                                        .height(hourHeight * block.span.length / 60)
                                         .clickable(enabled = entry != null) { entry?.let(onOpen) }
                                         .testTag("week-block"),
                                 ) {

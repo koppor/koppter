@@ -49,10 +49,11 @@ fun FilterPanel(
     textModifier: Modifier = Modifier,
 ) {
     Column(modifier.verticalScroll(rememberScrollState()).padding(12.dp).testTag("filter-panel")) {
+        Text("Filter", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp).testTag("filter-heading"))
         OutlinedTextField(
             value = filter.text,
             onValueChange = { onChange(filter.copy(text = it)) },
-            label = { Text("Text") },
+            placeholder = { Text("Search text") },
             singleLine = true,
             modifier = textModifier.fillMaxWidth().testTag("filter-text"),
         )

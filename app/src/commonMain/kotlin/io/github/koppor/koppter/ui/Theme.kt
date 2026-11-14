@@ -1,12 +1,14 @@
 package io.github.koppor.koppter.ui
 
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.text.TextStyle
 import io.github.koppor.koppter.storage.ColorTheme
 
 /** The colors of the light or the dark variant of a published palette, named by their use in the application. */
@@ -158,4 +160,21 @@ fun colorScheme(theme: ColorTheme, dark: Boolean): ColorScheme {
             surfaceContainerHighest = raised,
         )
     }
+}
+
+/**
+ * The type scale of Material, a tenth smaller: its sizes are made for phones and look coarse in a window on a desktop.
+ * The smaller size also keeps a field of one line at its minimum height.
+ * Compose measures an empty line higher than a filled one, so a field of the default size shrinks with the first character typed.
+ */
+// [impl->dsn~main-screen~1]
+val compactTypography: Typography = Typography().run {
+    fun TextStyle.compact() = copy(fontSize = fontSize * 0.9f, lineHeight = lineHeight * 0.9f)
+    Typography(
+        displayLarge.compact(), displayMedium.compact(), displaySmall.compact(),
+        headlineLarge.compact(), headlineMedium.compact(), headlineSmall.compact(),
+        titleLarge.compact(), titleMedium.compact(), titleSmall.compact(),
+        bodyLarge.compact(), bodyMedium.compact(), bodySmall.compact(),
+        labelLarge.compact(), labelMedium.compact(), labelSmall.compact(),
+    )
 }

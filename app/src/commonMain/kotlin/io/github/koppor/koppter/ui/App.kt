@@ -116,7 +116,7 @@ fun App(
             }
         }
     }
-    MaterialTheme(colorScheme = colorScheme(controller.settings.theme, dark)) {
+    MaterialTheme(colorScheme = colorScheme(controller.settings.theme, dark), typography = compactTypography) {
         CompositionLocalProvider(
             LocalUriHandler provides uriHandler,
             LocalShowContext provides { controller.filter = controller.filter.copy(contexts = setOf(it)) },

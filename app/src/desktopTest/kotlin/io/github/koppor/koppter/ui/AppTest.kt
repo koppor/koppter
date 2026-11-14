@@ -45,6 +45,7 @@ import io.github.koppor.koppter.storage.TodoStorage
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 private class MemoryStorage(var text: String) : TodoStorage, CompanionFiles {
     val companions = mutableMapOf<String, String>()
@@ -414,10 +415,21 @@ class AppTest {
         assertEquals("Water plants @home", storage.text.trim().lines().last())
     }
 
+    @Test
+    fun aFieldOfOneLineKeepsItsHeightWhenTextIsTyped() = runComposeUiTest {
+        start()
+        for (tag in listOf("filter-text", "quick-add")) {
+            val empty = onNodeWithTag(tag).fetchSemanticsNode().size.height
+            onNodeWithTag(tag).performTextInput("mom")
+            assertEquals(empty, onNodeWithTag(tag).fetchSemanticsNode().size.height, tag)
+        }
+    }
+
     // [utest->dsn~filter-panel~1]
     @Test
     fun theFilterPanelRestrictsTheList() = runComposeUiTest {
         start()
+        onNodeWithTag("filter-heading").assertTextEquals("Filter")
         onNodeWithTag("filter-project-GarageSale").assertIsOff().performClick()
         onAllNodesWithTag("task").assertCountEquals(2)
         onNodeWithTag("filter-project-GarageSale").assertIsOn()
@@ -720,6 +732,9 @@ class AppTest {
 
         onNodeWithTag("week-title").assertTextEquals("Week 46 · 2026-11-09 to 2026-11-15")
         onAllNodesWithTag("week-block").assertCountEquals(3)
+        // The hours share the height of the window.
+        val window = onNodeWithTag("main-screen").fetchSemanticsNode().boundsInRoot.bottom
+        assertTrue(onNodeWithTag("week-hours").fetchSemanticsNode().boundsInRoot.bottom > window - 24f)
         onNodeWithTag("week-next").performClick()
         onAllNodesWithTag("week-block").assertCountEquals(0)
         onNodeWithTag("week-next").performClick()
