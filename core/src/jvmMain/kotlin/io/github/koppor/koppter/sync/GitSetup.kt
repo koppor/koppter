@@ -19,8 +19,10 @@ import kotlin.io.path.writeText
 /**
  * Git access for a device without an SSH configuration of its own, such as a phone:
  * a key pair and the known hosts in a directory of the application, and a clone of the repository next to it.
+ *
+ * @param ownKey `false` on a device with an SSH configuration of the user: the clone then uses that one, as [storageForFile] does.
  */
-class GitSetup(private val directory: Path) {
+class GitSetup(private val directory: Path, private val ownKey: Boolean = true) {
     private val sshDirectory = directory.resolve("ssh")
     private val privateKey = sshDirectory.resolve("id_ecdsa")
     private val publicKeyFile = sshDirectory.resolve("id_ecdsa.pub")
@@ -77,7 +79,7 @@ class GitSetup(private val directory: Path) {
             Git.cloneRepository()
                 .setURI(url)
                 .setDirectory(repositoryDirectory.toFile())
-                .setTransportConfigCallback { if (it is SshTransport) it.sshSessionFactory = ssh }
+                .setTransportConfigCallback { if (ownKey && it is SshTransport) it.sshSessionFactory = ssh }
                 .call()
                 .close()
         }

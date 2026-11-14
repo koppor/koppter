@@ -347,6 +347,8 @@ private fun MainScreen(
             boardColumns = controller.boardColumnsText,
             shareActions = controller.shareActionsText,
             priorityNames = controller.priorityNamesText,
+            // [impl->dsn~color-themes~1]
+            onColors = { theme, appearance -> controller.updateSettings(controller.settings.copy(theme = theme, appearance = appearance)) },
             onSave = { settings, boardColumns, shareActions, priorityNames ->
                 // The columns, share actions and names belong to the file that was open when the dialog was opened.
                 boardColumns?.let(controller::updateBoardColumns)

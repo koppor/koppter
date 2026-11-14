@@ -8,6 +8,7 @@ compose-material-icons = "1.7.3"
 agp = "9.5.1"
 androidx-activity = "1.13.0"
 jgit = "7.8.1.202611041320-r"
+appdirs = "1.5.0"
 openfasttrace = "3.5.0"
 
 [libraries]
@@ -24,6 +25,7 @@ compose-material-icons = { module = "org.jetbrains.compose.material:material-ico
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
 jgit-ssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
+appdirs = { module = "net.harawata:appdirs", version.ref = "appdirs" }
 jgit-junit-ssh = { module = "org.eclipse.jgit:org.eclipse.jgit.junit.ssh", version.ref = "jgit" }
 
 [plugins]

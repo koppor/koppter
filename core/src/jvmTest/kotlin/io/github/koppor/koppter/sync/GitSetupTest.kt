@@ -2,10 +2,12 @@ package io.github.koppor.koppter.sync
 
 import org.eclipse.jgit.api.Git
 import java.nio.file.Files
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class GitSetupTest {
@@ -46,5 +48,9 @@ class GitSetupTest {
         file.writeText("Call Mom\nNot yet committed\n")
         assertEquals(file, setup.clone(url))
         assertEquals("Call Mom\nNot yet committed\n", file.readText())
+
+        // With the SSH configuration of the user, the application creates no key.
+        assertEquals("Call Mom\n", GitSetup(root.resolve("desktop"), ownKey = false).clone(url).readText())
+        assertFalse(root.resolve("desktop/ssh").exists())
     }
 }

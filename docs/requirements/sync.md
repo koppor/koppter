@@ -77,7 +77,7 @@ Needs: dsn
 ### Clone in the application
 `req~clone-in-app~1`
 
-On a device without a git program, the user enters the address of a repository, and the application clones it and uses its todo.txt file.
+The user enters the address of a repository instead of the location of a file, and the application clones it and uses its todo.txt file.
 
 Covers:
 
@@ -227,6 +227,7 @@ Needs: impl, utest
 `dsn~clone~1`
 
 `GitSetup.clone` clones the repository into a directory of the application and returns the location of `todo.txt` in it.
+With `ownKey = false`, it uses the SSH configuration of the user instead of the key of the application.
 An existing clone of the same repository is kept, including changes that are not pushed yet; a clone of another repository is replaced.
 
 Covers:
@@ -238,9 +239,10 @@ Needs: impl, utest
 ### Git section of the settings dialog
 `dsn~git-setup-dialog~1`
 
-Where the platform passes `GitSetupActions` to `App`, the settings dialog shows the public key of the device, a field for the address of the repository and a button that clones it.
-After a successful clone, the location of the todo.txt file of the repository is put into the file field.
-The Android application passes the actions; the desktop application does not.
+Where the platform passes `GitSetupActions` to `App`, the field for the file in the settings dialog also takes the address of a repository: a URL with the scheme `ssh`, `git`, `http` or `https`, or the form `user@host:path` (`isGitAddress`).
+Saving clones such an address and saves the location of the todo.txt file of the clone; if the clone fails, the dialog stays open and shows the reason.
+The dialog shows the public key of the device where the actions have one.
+The Android application passes actions with the key of the application; the desktop application passes actions without a key, which clone into the data directory with the SSH configuration of the user.
 
 Covers:
 

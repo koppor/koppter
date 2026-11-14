@@ -41,14 +41,20 @@ import io.github.koppor.koppter.todotxt.PriorityNames
 import io.github.koppor.koppter.storage.Settings
 import kotlinx.coroutines.launch
 
-/** Git access on a device that has no git and no SSH configuration of its own. */
+/** Git access that the application brings along, for a repository that is not cloned yet. */
 interface GitSetupActions {
-    /** The public SSH key of this device, to be registered with the git server. */
-    fun publicKey(): String
+    /**
+     * The public SSH key of this device, to be registered with the git server;
+     * `null` where the application uses the SSH configuration of the user.
+     */
+    fun publicKey(): String?
 
     /** Clones the repository and returns the location of its todo.txt file. */
     suspend fun clone(url: String): String
 }
+
+/** Whether the text names a git repository on a server rather than a file: a URL, or the form `user@host:path` of SSH. */
+internal fun isGitAddress(text: String): Boolean = Regex("(ssh|git|https?)://.+|[\\w.-]+@[\\w.-]+:.+").matches(text)
 
 /** Scales offered for the names of the priorities: the letters of the format, numbers, and steps of the Fibonacci sequence. */
 private val PRIORITY_PRESETS = listOf(
@@ -72,6 +78,8 @@ fun SettingsDialog(
     shareActions: String?,
     /** The names of the priorities; `null` if the storage cannot keep them. */
     priorityNames: String?,
+    /** Called when the user chooses colors: they apply at once, so that the user sees them behind the dialog. */
+    onColors: (ColorTheme, Appearance) -> Unit,
     onSave: (Settings, boardColumns: String?, shareActions: String?, priorityNames: String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -83,10 +91,10 @@ fun SettingsDialog(
     var columns by remember { mutableStateOf(boardColumns) }
     var actions by remember { mutableStateOf(shareActions) }
     var priorities by remember { mutableStateOf(priorityNames) }
-    var theme by remember { mutableStateOf(settings.theme) }
-    var appearance by remember { mutableStateOf(settings.appearance) }
+    var cloning by remember { mutableStateOf(false) }
+    var cloneMessage by remember { mutableStateOf("") }
 
-    val state = listOf(todoFile, writeDates, topCount, columns, actions, priorities, theme, appearance)
+    val state = listOf(todoFile, writeDates, topCount, columns, actions, priorities)
     val initial = remember { state }
 
     GuardedDialog(changed = state != initial, onDismiss = onDismiss) {
@@ -96,12 +104,20 @@ fun SettingsDialog(
                 OutlinedTextField(
                     value = todoFile,
                     onValueChange = { todoFile = it },
-                    label = { Text("todo.txt file") },
+                    label = { Text(if (git == null) "todo.txt file" else "todo.txt file or address of a git repository") },
                     placeholder = { Text(defaultTodoFile) },
-                    supportingText = { Text("Empty: $defaultTodoFile") },
+                    supportingText = {
+                        Text(
+                            "Empty: $defaultTodoFile" +
+                                if (git == null) "" else "\nAn address such as git@github.com:user/todo.git is cloned on Save, and the todo.txt file of the clone is used.",
+                        )
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag("settings-file"),
                 )
+                if (cloneMessage.isNotEmpty()) {
+                    Text(cloneMessage, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("settings-clone-message"))
+                }
                 if (chooseFile != null) {
                     OutlinedButton(onClick = { scope.launch { chooseFile()?.let { todoFile = it } } }, modifier = Modifier.testTag("settings-choose-file")) {
                         Text("Choose file")
@@ -124,33 +140,17 @@ fun SettingsDialog(
                     modifier = Modifier.fillMaxWidth().testTag("settings-top-count"),
                 )
                 columns?.let { text ->
-                    OutlinedTextField(
-                        value = text,
-                        onValueChange = { columns = it },
-                        label = { Text("Board columns by filter") },
-                        supportingText = {
-                            Text("One column per line as title = filter, for example: Today = due:<=today -@waiting. Kept in ${ConfigFile.NAME} next to the todo.txt file.")
-                        },
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                        minLines = 3,
-                        modifier = Modifier.fillMaxWidth().testTag("settings-board-columns"),
+                    ConfigField(
+                        "Board columns by filter", text, { columns = it }, "Today = due:<=today -@waiting\nWaiting = @waiting",
+                        "One column per line as title = filter.", "settings-board-columns",
                     )
                 }
                 // [impl->dsn~priority-names~1]
                 priorities?.let { text ->
-                    OutlinedTextField(
-                        value = text,
-                        onValueChange = { priorities = it },
-                        label = { Text("Names of the priorities") },
-                        supportingText = {
-                            Text(
-                                "One priority per line as letter = name, for example A = 1, B = 2, C = 3, D = 5 and E = 8, each on its line. " +
-                                    "The tasks show the names, and a task is given one of these priorities; the file keeps the letters. Kept in ${ConfigFile.NAME}.",
-                            )
-                        },
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                        minLines = 2,
-                        modifier = Modifier.fillMaxWidth().testTag("settings-priorities"),
+                    ConfigField(
+                        "Names of the priorities", text, { priorities = it }, "A = 1\nB = 2\nC = 3",
+                        "One priority per line as letter = name. The tasks show the names, and a task is given one of these priorities; the file keeps the letters.",
+                        "settings-priorities",
                     )
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         PRIORITY_PRESETS.forEachIndexed { index, names ->
@@ -164,51 +164,51 @@ fun SettingsDialog(
                 }
                 // [impl->dsn~share-actions~1]
                 actions?.let { text ->
-                    OutlinedTextField(
-                        value = text,
-                        onValueChange = { actions = it },
-                        label = { Text("Share actions") },
-                        supportingText = {
-                            Text(
-                                "What sharing a text to koppter on Android adds: one action per line as title = task, for example: " +
-                                    "reading = {} @research>reading due:2w dur:1h. {} stands for the shared text. Kept in ${ConfigFile.NAME}.",
-                            )
-                        },
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                        minLines = 2,
-                        modifier = Modifier.fillMaxWidth().testTag("settings-share-actions"),
+                    ConfigField(
+                        "Share actions", text, { actions = it }, "reading = {} @research>reading due:2w dur:1h",
+                        "What sharing a text to koppter on Android adds: one action per line as title = task; {} stands for the shared text.",
+                        "settings-share-actions",
                     )
                 }
                 Text("Colors", style = MaterialTheme.typography.titleMedium)
-                RadioRow(ColorTheme.entries.map { it to it.title }, theme, tag = "settings-theme", onSelect = { theme = it })
-                RadioRow(Appearance.entries.map { it to it.title }, appearance, tag = "settings-appearance", onSelect = { appearance = it })
+                RadioRow(ColorTheme.entries.map { it to it.title }, settings.theme, tag = "settings-theme", onSelect = { onColors(it, settings.appearance) })
+                RadioRow(Appearance.entries.map { it to it.title }, settings.appearance, tag = "settings-appearance", onSelect = { onColors(settings.theme, it) })
                 Text(
                     "A file in a git repository is committed after every change and synchronized with the remote repository.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (git != null) {
-                    GitSection(git, onCloned = { todoFile = it })
+                    GitSection(git)
                 }
                 Row(Modifier.fillMaxWidth()) {
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = onDismiss) { Text("Cancel") }
+                    fun save(file: String) = onSave(
+                        settings.copy(todoFile = file, writeDates = writeDates, topCount = topCountValue ?: settings.topCount),
+                        columns?.trim(),
+                        actions?.trim(),
+                        priorities?.trim(),
+                    )
                     Button(
                         onClick = {
-                            onSave(
-                                settings.copy(
-                                    todoFile = todoFile.trim(),
-                                    writeDates = writeDates,
-                                    topCount = topCountValue ?: settings.topCount,
-                                    theme = theme,
-                                    appearance = appearance,
-                                ),
-                                columns?.trim(),
-                                actions?.trim(),
-                                priorities?.trim(),
-                            )
+                            val file = todoFile.trim()
+                            if (git != null && isGitAddress(file)) {
+                                cloning = true
+                                cloneMessage = "Cloning"
+                                scope.launch {
+                                    try {
+                                        save(git.clone(file))
+                                    } catch (e: Exception) {
+                                        cloneMessage = "Not cloned: ${e.message ?: e}"
+                                    }
+                                    cloning = false
+                                }
+                            } else {
+                                save(file)
+                            }
                         },
-                        enabled = topCountValue != null,
+                        enabled = topCountValue != null && !cloning,
                         modifier = Modifier.testTag("settings-save"),
                     ) { Text("Save") }
                 }
@@ -217,15 +217,33 @@ fun SettingsDialog(
     }
 }
 
-/** The public key of the device and a field to clone a repository, whose todo.txt file becomes the file of the application. */
+/** A field for a block of the configuration file: lines of the form `key = value`, with an example shown while it is empty. */
+@Composable
+private fun ConfigField(title: String, value: String, onChange: (String) -> Unit, example: String, help: String, tag: String) {
+    val style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace)
+    Column {
+        // The title stands above the field: as a label in it, it would hide the example until the field has the focus.
+        Text(title, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 4.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = onChange,
+            // Paler than the placeholder of Material, which is hard to tell from lines that were typed.
+            placeholder = { Text(example, style = style, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+            supportingText = {
+                Text("$help ${if (value.isEmpty()) "The pale lines are an example. " else ""}Kept in ${ConfigFile.NAME} next to the todo.txt file.")
+            },
+            textStyle = style,
+            minLines = maxOf(2, example.lines().size),
+            modifier = Modifier.fillMaxWidth().testTag(tag),
+        )
+    }
+}
+
+/** The public key of the device, where the application has a key of its own. */
 // [impl->dsn~git-setup-dialog~1]
 @Composable
-private fun GitSection(git: GitSetupActions, onCloned: (String) -> Unit) {
-    val scope = rememberCoroutineScope()
-    var url by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
-    var cloning by remember { mutableStateOf(false) }
-    val publicKey = remember { runCatching(git::publicKey).getOrElse { "No key: ${it.message}" } }
+private fun GitSection(git: GitSetupActions) {
+    val publicKey = remember { runCatching(git::publicKey).getOrElse { "No key: ${it.message}" } } ?: return
 
     Text("Git repository", style = MaterialTheme.typography.titleMedium)
     Text("Public SSH key of this device. Register it with the git server, for GitHub as a deploy key with write access.", style = MaterialTheme.typography.bodySmall)
@@ -238,35 +256,5 @@ private fun GitSection(git: GitSetupActions, onCloned: (String) -> Unit) {
                 modifier = Modifier.padding(8.dp).testTag("settings-public-key"),
             )
         }
-    }
-    OutlinedTextField(
-        value = url,
-        onValueChange = { url = it.trim() },
-        label = { Text("Repository") },
-        placeholder = { Text("git@github.com:user/todo.git") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth().testTag("settings-git-url"),
-    )
-    OutlinedButton(
-        enabled = url.isNotBlank() && !cloning,
-        onClick = {
-            cloning = true
-            message = "Cloning"
-            scope.launch {
-                message = try {
-                    onCloned(git.clone(url))
-                    "Cloned. Save to use the todo.txt file of the repository."
-                } catch (e: Exception) {
-                    "Not cloned: ${e.message ?: e}"
-                }
-                cloning = false
-            }
-        },
-        modifier = Modifier.testTag("settings-clone"),
-    ) {
-        Text("Clone")
-    }
-    if (message.isNotEmpty()) {
-        Text(message, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("settings-clone-message"))
     }
 }

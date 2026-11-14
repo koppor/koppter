@@ -112,6 +112,8 @@ It also maps the terms of SkedPal to those of the application.
 | `calendar.ics` | The plan as tentative events, for import into a calendar program |
 
 If these files lie in a git repository, the application commits every change and synchronizes with the remote repository.
+A repository that is not cloned yet is given by its address, such as `git@github.com:user/todo.git`, in the field for the file in the settings: the application clones it into its own directory and uses the `todo.txt` file of the clone.
+On the desktop, it uses the SSH configuration of the user for that; on Android, the key that the settings show.
 
 A file in OneDrive, or in another storage service, is used through the platform ([decision 0011](docs/decisions/0011-onedrive-through-the-platform.md)): on Android, choose it with *Choose file* in the settings; on the desktop, choose it in the synchronized folder.
 
@@ -549,7 +551,8 @@ The Gradle wrapper downloads everything else, including that JDK and the Android
 ```
 
 starts the desktop application.
-It reads `todo.txt` in the home directory unless another file is set in the settings.
+It reads the file that is set in the settings, which may also be given as the address of a git repository, see [Files](#files).
+Without one, it reads `todo.txt` in the home directory if that file exists, and otherwise `todo.txt` in its data directory: `%APPDATA%\koppter` on Windows, `~/.local/share/koppter` on Linux ([decision 0025](docs/decisions/0025-locations-on-the-desktop-from-appdirs.md)).
 
 ```shell
 ./gradlew :android:assembleDebug

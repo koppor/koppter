@@ -34,6 +34,7 @@ kotlin {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation(libs.kotlinx.coroutines.swing)
+                implementation(libs.appdirs)
             }
         }
         named("desktopTest") {

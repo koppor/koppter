@@ -7,7 +7,15 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 
 ## [Unreleased]
 
+### Added
+
+- The field for the file in the settings takes the address of a git repository, also on the desktop: the application clones it into its data directory and uses its `todo.txt` file.
+- Examples in the empty fields for board columns, names of priorities and share actions in the settings.
+
 ### Changed
+
+- Colors chosen in the settings apply at once.
+- Without a file in the settings and without `todo.txt` in the home directory, the desktop application keeps `todo.txt` in its data directory.
 
 - Texts are a tenth smaller, and a field keeps its height when its first character is typed.
 - The filter panel has the heading *Filter*, and its text field shows *Search text* instead of the label *Text*.

@@ -415,6 +415,7 @@ Needs: impl, utest
 `colorScheme` fills the roles of the Material color scheme with the colors of the chosen palette in its light or dark variant.
 A container color is the color of its role mixed into the color of the cards; the text on an accent color is the end of the palette with the higher contrast.
 The palette and the variant are settings; `App` asks the system for the variant if the setting leaves it to the system.
+A choice in the settings dialog is saved and applied at once, so that the user sees the colors behind the dialog.
 
 Covers:
 
@@ -441,6 +442,7 @@ Needs: impl
 
 `SettingsDialog` edits the location of the todo.txt file, the switch for writing dates, the number of top tasks, the board columns defined by filters, the names of the priorities and the colors.
 A changed location makes the controller load the other file.
+The fields for the blocks of the configuration file show an example in a pale color while they are empty.
 
 Covers:
 
@@ -452,8 +454,9 @@ Needs: impl, utest
 ### Locations on the desktop
 `dsn~desktop-locations~1`
 
-On the desktop, the settings file is `settings.properties` in `%APPDATA%\koppter` on Windows and in `$XDG_CONFIG_HOME/koppter` or `~/.config/koppter` elsewhere.
-Without a configured location, the todo.txt file is `todo.txt` in the home directory.
+On the desktop, the settings file is `settings.properties` in `%APPDATA%\koppter` on Windows and in `$XDG_CONFIG_HOME/koppter` or `~/.config/koppter` on Linux.
+The files that the application creates are in its data directory: `%APPDATA%\koppter` on Windows and `$XDG_DATA_HOME/koppter` or `~/.local/share/koppter` on Linux.
+Without a configured location, the todo.txt file is `todo.txt` in the home directory if that file exists, as earlier versions kept it there, and `todo.txt` in the data directory otherwise.
 
 Covers:
 
