@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Calendar Versioning](https://calver.org/) with the scheme `YYYY-0M-0D`.
 
+## [2026-11-13] - 2026-11-13
+
+### Added
+
+- Names for priorities, such as 1, 2, 3, 5 and 8 instead of A to E: the settings take them or fill in a scale at a click, the application shows and offers them, filters accept them, and the file keeps the letters.
+- Source of each extension of the todo.txt format in the README.
+- Comparison with other applications for tasks in plain text files in `docs/related-work.md`, starting with Beorg.
+- Order by hand: a task is dragged to its place in the list or in its column of the board, or moved one step with the arrows at its right; among tasks of the same priority and due date this orders the lines in the file, and next to a task of another priority the task takes that priority.
+- Labels of the plan dialog that say that its fields are optional, in a smaller size, and the times and the barrier that hold without an entry.
+- Dates in words in the line typed above the list, such as `tomorrow`, `next week`, `by Wed` or `tomorrow 3pm`: the application shows and writes the tags they stand for.
+
 ## [2026-11-12] - 2026-11-12
 
 ### Added
@@ -58,4 +69,5 @@ and this project adheres to [Calendar Versioning](https://calver.org/) with the 
 - The release of a day on GitHub carries the signed Android application as an APK file.
 - Project infrastructure: Gradle build with a Kotlin Multiplatform `core` module, requirements tracing, decision records and continuous integration.
 
+[2026-11-13]: https://github.com/koppor/koppter/compare/v2026-11-12...v2026-11-13
 [2026-11-12]: https://github.com/koppor/koppter/releases/tag/v2026-11-12

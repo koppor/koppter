@@ -2,6 +2,8 @@ package io.github.koppor.koppter.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import io.github.koppor.koppter.storage.Appearance
 import io.github.koppor.koppter.storage.ColorTheme
 import io.github.koppor.koppter.storage.ConfigFile
+import io.github.koppor.koppter.todotxt.PriorityNames
 import io.github.koppor.koppter.storage.Settings
 import kotlinx.coroutines.launch
 
@@ -46,7 +50,16 @@ interface GitSetupActions {
     suspend fun clone(url: String): String
 }
 
+/** Scales offered for the names of the priorities: the letters of the format, numbers, and steps of the Fibonacci sequence. */
+private val PRIORITY_PRESETS = listOf(
+    emptyList(),
+    listOf("1", "2", "3", "4", "5"),
+    listOf("1", "2", "3", "5", "8"),
+    listOf("1", "2", "3", "5", "8", "13", "21", "34"),
+)
+
 // [impl->dsn~settings-dialog~1]
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsDialog(
     settings: Settings,
@@ -57,7 +70,9 @@ fun SettingsDialog(
     boardColumns: String?,
     /** The share actions; `null` if the storage cannot keep them. */
     shareActions: String?,
-    onSave: (Settings, boardColumns: String?, shareActions: String?) -> Unit,
+    /** The names of the priorities; `null` if the storage cannot keep them. */
+    priorityNames: String?,
+    onSave: (Settings, boardColumns: String?, shareActions: String?, priorityNames: String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -67,10 +82,11 @@ fun SettingsDialog(
     val topCountValue = topCount.trim().toIntOrNull()?.takeIf { it > 0 }
     var columns by remember { mutableStateOf(boardColumns) }
     var actions by remember { mutableStateOf(shareActions) }
+    var priorities by remember { mutableStateOf(priorityNames) }
     var theme by remember { mutableStateOf(settings.theme) }
     var appearance by remember { mutableStateOf(settings.appearance) }
 
-    val state = listOf(todoFile, writeDates, topCount, columns, actions, theme, appearance)
+    val state = listOf(todoFile, writeDates, topCount, columns, actions, priorities, theme, appearance)
     val initial = remember { state }
 
     GuardedDialog(changed = state != initial, onDismiss = onDismiss) {
@@ -120,6 +136,32 @@ fun SettingsDialog(
                         modifier = Modifier.fillMaxWidth().testTag("settings-board-columns"),
                     )
                 }
+                // [impl->dsn~priority-names~1]
+                priorities?.let { text ->
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { priorities = it },
+                        label = { Text("Names of the priorities") },
+                        supportingText = {
+                            Text(
+                                "One priority per line as letter = name, for example A = 1, B = 2, C = 3, D = 5 and E = 8, each on its line. " +
+                                    "The tasks show the names, and a task is given one of these priorities; the file keeps the letters. Kept in ${ConfigFile.NAME}.",
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        minLines = 2,
+                        modifier = Modifier.fillMaxWidth().testTag("settings-priorities"),
+                    )
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        PRIORITY_PRESETS.forEachIndexed { index, names ->
+                            AssistChip(
+                                onClick = { priorities = PriorityNames.lines(names) },
+                                label = { Text(if (names.isEmpty()) "Letters" else names.joinToString(", ")) },
+                                modifier = Modifier.testTag("settings-priorities-preset-$index"),
+                            )
+                        }
+                    }
+                }
                 // [impl->dsn~share-actions~1]
                 actions?.let { text ->
                     OutlinedTextField(
@@ -163,6 +205,7 @@ fun SettingsDialog(
                                 ),
                                 columns?.trim(),
                                 actions?.trim(),
+                                priorities?.trim(),
                             )
                         },
                         enabled = topCountValue != null,

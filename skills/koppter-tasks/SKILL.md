@@ -43,7 +43,7 @@ koppter writes tasks in that order, so a line written the same way does not chan
 | Description | What is to be done, starting with a verb | Keep URLs as they are. |
 | `@context` | The area of work or life, which stays | One per task. Levels with `>`: `@research>reading`. `@waiting` in addition marks a task that waits for someone. |
 | `+Project` | An outcome that ends | Only if the task serves one. Not for areas. |
-| `(A)` | What has to happen this week | `(B)` for what should. Most tasks have none; ask rather than guess. |
+| `(A)` | What has to happen this week | `(B)` for what should. Most tasks have none; ask rather than guess. The file holds the letter also when the user names priorities otherwise: the key `priorities` of `koppter.yml` next to the file maps letters to their names, such as `"D": "5"`. |
 | `due:2026-12-01` | A deadline that someone else set | Not the day the user would like to do it: the plan finds that day. |
 | `by:14:00` | The time of the due date by which the task has to be done | Only next to `due:`: "the slides have to be ready for the call on Monday at 14:00". |
 | `t:2027-01-10` | The day from which the task is worth looking at | The task is hidden and not planned before. Use it for "not now" and "some day". |

@@ -327,6 +327,7 @@ Needs: impl, utest
 `dsn~plan-dialog~1`
 
 `PlanDialog` edits the time maps, the time maps of contexts, the barriers and the limits as lines of the form `name = value`.
+Each field shows what the configuration holds; all of them may stay empty, which their labels say, in the small style so that the label of an empty field does not read as its content.
 *Save and plan* makes `TodoController.plan` save them, plan from the current time rounded up to a quarter of an hour, and write `calendar.txt` and `calendar.ics` as one change of the storage.
 The dialog then tells how many tasks were planned and until when, what of the configuration and of the dependencies was not understood, and the tasks that do not fit before their barrier.
 A switch above the tasks opens the dialog if the storage keeps files next to the todo.txt file.

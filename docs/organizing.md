@@ -68,7 +68,7 @@ A task of more than a day of work is a project: split it into tasks of at most a
 * The contexts in the filter panel are a tree: a click on `@research` shows it with everything below it.
 * A click on the context label of a task shows the tasks of that context.
 * The [board](../README.md#board) with columns defined by filters keeps the searches that are needed every day, such as `Now = due:<=today -@waiting`.
-* The [overview](../README.md#overview) shows one tile per area and tells which area has overdue tasks.
+* The [overview](../README.md#overview-of-the-contexts) shows one tile per area and tells which area has overdue tasks.
 
 ## A rhythm
 

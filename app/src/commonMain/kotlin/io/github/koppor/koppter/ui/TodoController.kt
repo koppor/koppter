@@ -24,6 +24,7 @@ import io.github.koppor.koppter.todotxt.Filter
 import io.github.koppor.koppter.todotxt.Group
 import io.github.koppor.koppter.todotxt.BoardColumn
 import io.github.koppor.koppter.todotxt.GroupKey
+import io.github.koppor.koppter.todotxt.PriorityNames
 import io.github.koppor.koppter.todotxt.Query
 import io.github.koppor.koppter.todotxt.ShareAction
 import io.github.koppor.koppter.todotxt.groupByColumns
@@ -115,11 +116,15 @@ class TodoController(
     /** Gives a task of the inbox its context. */
     fun assignContext(entry: Entry, context: String) = replace(entry, entry.task.edit(contexts = listOf(context)))
 
-    /** The columns the user defined. */
-    val boardColumns: List<BoardColumn> get() = ConfigFile.boardColumns(config.orEmpty())
+    /** The columns the user defined, as the configuration states them. */
+    private val definedColumns: List<BoardColumn> get() = ConfigFile.boardColumns(config.orEmpty())
+
+    /** The columns the user defined; their filters name a priority by its letter, also where the configuration uses its name. */
+    // [impl->dsn~priority-names~1]
+    val boardColumns: List<BoardColumn> get() = definedColumns.map { it.copy(expression = priorityNames.toLettersInFilter(it.expression)) }
 
     /** The columns the user defined, one per line as `title = filter expression`; `null` if the storage cannot keep them. */
-    val boardColumnsText: String? get() = config?.let { boardColumns.joinToString("\n") { "${it.title} = ${it.expression}" } }
+    val boardColumnsText: String? get() = config?.let { definedColumns.joinToString("\n") { "${it.title} = ${it.expression}" } }
 
     /** The state of the synchronization; `null` if the storage does not synchronize. */
     var syncStatus by mutableStateOf<SyncStatus?>(null)
@@ -165,7 +170,11 @@ class TodoController(
     // [impl->dsn~board~1]
     // [impl->dsn~board-defined-columns~1]
     val groups: List<Group>
-        get() = groupKey?.let { groupEntries(visible, it, today()) } ?: groupByColumns(visible, boardColumns, today())
+        get() = groupKey?.let { key ->
+            val groups = groupEntries(visible, key, today())
+            if (key != GroupKey.PRIORITY) groups
+            else groups.map { group -> group.value?.singleOrNull()?.let { group.copy(title = priorityNames.name(it)) } ?: group }
+        } ?: groupByColumns(visible, boardColumns, today())
 
     val projects: List<String> get() = file.entries.flatMap { it.task.projects }.distinct().sorted()
     /** The contexts of the file and the contexts above them, a context directly before those below it. */
@@ -200,14 +209,31 @@ class TodoController(
     /** Replaces the columns the user defined by those in the text, one per line as `title = filter expression`. */
     fun updateBoardColumns(text: String) {
         val columns = parseBoardColumns(text)
-        if (columns == boardColumns) return
+        if (columns == definedColumns) return
+        writeConfig(ConfigFile.withBoardColumns(config.orEmpty(), columns), "Edit board columns")
+    }
+
+    private fun writeConfig(text: String, message: String) {
         guarded {
-            (storage as? CompanionFiles)?.writeCompanion(ConfigFile.NAME, ConfigFile.withBoardColumns(config.orEmpty(), columns)) ?: return@guarded
+            (storage as? CompanionFiles)?.writeCompanion(ConfigFile.NAME, text) ?: return@guarded
             // The storage records the files next to the todo.txt file with a change of that file.
-            storage.write(file.serialize(), "Edit board columns")
+            storage.write(file.serialize(), message)
             loadedVersion = storage.version()
         }
         loadConfig()
+    }
+
+    /** The names under which the priorities are shown. */
+    // [impl->dsn~priority-names~1]
+    val priorityNames: PriorityNames get() = PriorityNames.of(ConfigFile.entries(config.orEmpty(), ConfigFile.PRIORITIES))
+
+    /** The names of the priorities, one per line as `letter = name`; `null` if the storage keeps no configuration file. */
+    val priorityNamesText: String? get() = config?.let { ConfigFile.toLines(ConfigFile.entries(it, ConfigFile.PRIORITIES)) }
+
+    fun updatePriorityNames(text: String) {
+        val names = ConfigFile.parseLines(text)
+        if (names == ConfigFile.entries(config.orEmpty(), ConfigFile.PRIORITIES)) return
+        writeConfig(ConfigFile.withEntries(config.orEmpty(), ConfigFile.PRIORITIES, names), "Edit names of priorities")
     }
 
     /** The state of the plan of an open task and a text that tells its start; `null` if nothing was planned yet. */
@@ -310,12 +336,7 @@ class TodoController(
     fun updateShareActions(text: String) {
         val actions = ShareAction.parse(text)
         if (actions == shareActions) return
-        guarded {
-            (storage as? CompanionFiles)?.writeCompanion(ConfigFile.NAME, ConfigFile.withShareActions(config.orEmpty(), actions)) ?: return@guarded
-            storage.write(file.serialize(), "Edit share actions")
-            loadedVersion = storage.version()
-        }
-        loadConfig()
+        writeConfig(ConfigFile.withShareActions(config.orEmpty(), actions), "Edit share actions")
     }
 
     /**
@@ -423,7 +444,10 @@ class TodoController(
         write(file.add(task.created(today(), settings.writeDates)), "Add task: ${task.description}")
     }
 
-    fun add(line: String) = add(Task.parse(line).withContextSwitcherTags())
+    fun add(line: String) = add(Task.parse(priorityNames.toLetters(line)).withDates(today()).withContextSwitcherTags())
+
+    /** The line that [add] writes for the typed one, if words of it become dates; `null` otherwise. */
+    fun datesPreview(line: String): String? = Task.parse(priorityNames.toLetters(line)).let { task -> task.withDates(today()).takeIf { it != task }?.toLine() }
 
     fun toggle(entry: Entry) {
         val index = locate(entry) ?: return
@@ -463,11 +487,36 @@ class TodoController(
         return task?.takeIf { it != entry.task }
     }
 
-    /** Applies the move of a task from one column of the board to another. */
-    fun move(entry: Entry, from: Group, to: Group) {
-        val task = moved(entry, from, to) ?: return
+    /**
+     * Applies the move of a task from one column of the board to another, or within its column.
+     * With [at], the task is also put before or behind that task of the column.
+     * Within its column, it takes the priority of that task, as [drop] does it.
+     */
+    // [impl->dsn~board-drag-position~1]
+    fun move(entry: Entry, from: Group, to: Group, at: Entry? = null, before: Boolean = false) {
+        val task = moved(entry, from, to)
+        if (task == null && (from.title != to.title || at == null)) return
         val index = locate(entry) ?: return
-        write(file.replace(index, task), "Move task to ${to.title}: ${task.description}")
+        var new = task?.let { file.replace(index, it) } ?: file
+        // A move to another column changes what the column stands for and nothing else: the task gets its place only among tasks of its priority.
+        if (at != null && (task == null || task.priority == at.task.priority)) locate(at)?.let { other -> new.moveTo(index, other, before)?.let { new = it } }
+        write(new, if (task == null) "Move task: ${entry.task.description}" else "Move task to ${to.title}: ${task.description}")
+    }
+
+    /** Puts the task before or behind another one of the list: see [TodoFile.moveTo]. */
+    // [impl->dsn~list-drag~1]
+    fun drop(entry: Entry, target: Entry, before: Boolean) {
+        val index = locate(entry) ?: return
+        val other = locate(target) ?: return
+        write(file.moveTo(index, other, before) ?: return, "Move task: ${entry.task.description}")
+    }
+
+    /** Lets the task step over its neighbor in the list: see [TodoFile.step]. */
+    // [impl->dsn~list-step~1]
+    fun step(entry: Entry, neighbor: Entry, up: Boolean) {
+        val index = locate(entry) ?: return
+        val other = locate(neighbor) ?: return
+        write(file.step(index, other, up) ?: return, "Move task ${if (up) "up" else "down"}: ${entry.task.description}")
     }
 
     fun delete(entry: Entry) {

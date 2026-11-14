@@ -25,6 +25,10 @@ Architectural decisions are recorded as [Markdown Architectural Decision Records
 | [0018](0018-tag-for-the-duration-of-a-task.md) | A tag holds the duration of a task |
 | [0019](0019-the-plan-is-derived-and-kept-in-calendar-txt.md) | The plan is derived from the tasks and kept in calendar.txt |
 | [0020](0020-dependencies-with-the-tags-of-topydo.md) | Dependencies between tasks use the tags of topydo |
+| [0021](0021-tag-for-the-fixed-time-of-a-task.md) | A tag states the fixed time of a task |
+| [0022](0022-tag-for-the-time-by-which-a-task-is-due.md) | A tag states the time by which a task is due |
+| [0023](0023-tag-for-the-travel-time-of-a-task.md) | A tag states the travel time of a task |
+| [0024](0024-names-for-priorities-kept-in-the-configuration-file.md) | Priorities keep their letters in the file and get names for display |
 
 ## Conventions
 

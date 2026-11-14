@@ -27,6 +27,19 @@ Covers:
 
 Needs: dsn
 
+### Dates in words when adding a task
+`req~quick-add-dates~1`
+
+A typed line may name its dates in words at the end of its text, such as `tomorrow`, `next week`, `by Wed` or `tomorrow 3pm`.
+The task gets the due date, the threshold date and the times that the words name.
+The application shows the resulting line before the task is added.
+
+Covers:
+
+* `feat~task-editing~1`
+
+Needs: dsn
+
 ### Complete, reopen and delete a task
 `req~complete-and-delete~1`
 
@@ -47,6 +60,21 @@ Below these fields, the dialog shows the line as it will be written to the todo.
 
 Covers:
 
+* `feat~task-editing~1`
+
+Needs: dsn
+
+### Names for priorities
+`req~priority-names~1`
+
+The user gives priorities names, such as the numbers 1, 2, 3, 5 and 8 for A to E.
+The application shows the names where it shows a priority, offers the named priorities for a task, and accepts a name where a line or a filter is typed.
+The settings offer scales to choose with one click: numbers and steps of the Fibonacci sequence.
+The file keeps the letters of the todo.txt format.
+
+Covers:
+
+* `feat~task-list~1`
 * `feat~task-editing~1`
 
 Needs: dsn
@@ -220,6 +248,23 @@ Covers:
 
 Needs: impl, utest
 
+### Dates in words in the quick add line
+`dsn~quick-add-dates~1`
+
+`TodoController.add` applies `Task.withDates` to the typed line, which `DatePhrase` implements.
+The phrases are those that SkedPal reads in the title of a task, in English and in any case of the letters; the README lists them.
+A phrase is read at the end of the text only, where projects, contexts, hashtags and tags may follow it; the same words elsewhere stay text.
+It is removed from the text and becomes the tags `t:`, `due:`, `at:` and `by:`.
+A tag that the line already has stays.
+A weekday or a day of a month names the first such day from today on, and a week runs from Monday to Sunday.
+The quick add field shows the line that `TodoController.datesPreview` returns below the typed one, as there is no other sign that words become a date.
+
+Covers:
+
+* `req~quick-add-dates~1`
+
+Needs: impl, utest
+
 ### Edit dialog
 `dsn~edit-dialog~1`
 
@@ -234,6 +279,23 @@ Covers:
 * `req~edit-dialog~1`
 * `req~complete-and-delete~1`
 * `adr~metadata-after-description~1`
+
+Needs: impl, utest
+
+### Names for priorities
+`dsn~priority-names~1`
+
+The key `priorities` of `koppter.yml` maps the letter of a priority to its name; the settings dialog edits it, one priority per line as `letter = name`.
+`PriorityNames` gives the name of a priority, which is its letter if it has none, and the priorities to offer: those with a name, or A to F without names.
+The label of a priority, the filter panel, the titles of the board columns by priority and the edit dialog show the name.
+`TodoController.add` replaces a name in parentheses at the start of a typed line by its letter.
+`TodoController.boardColumns` does the same for the priority terms of the filters, so that a filter names a priority by its name or by its letter, and the settings keep the filter as it was typed.
+Below the field for the names, the settings dialog has one button per scale, which fills the field.
+
+Covers:
+
+* `req~priority-names~1`
+* `adr~priority-names~1`
 
 Needs: impl, utest
 
@@ -376,7 +438,7 @@ Needs: impl
 ### Settings dialog
 `dsn~settings-dialog~1`
 
-`SettingsDialog` edits the location of the todo.txt file, the switch for writing dates, the number of top tasks, the board columns defined by filters and the colors.
+`SettingsDialog` edits the location of the todo.txt file, the switch for writing dates, the number of top tasks, the board columns defined by filters, the names of the priorities and the colors.
 A changed location makes the controller load the other file.
 
 Covers:

@@ -86,6 +86,18 @@ Covers:
 
 Needs: dsn
 
+### Order by hand
+`req~list-step~1`
+
+The user orders the tasks of the same priority and due date by hand: with a step up or down, or by dragging a task to its place.
+A task that crosses the border to another priority takes that priority.
+
+Covers:
+
+* `feat~task-list~1`
+
+Needs: dsn
+
 ### Recurrence tag
 `req~recurrence-tag~1`
 
@@ -205,6 +217,52 @@ Needs: impl, utest
 Covers:
 
 * `req~list-order~1`
+
+Needs: impl, utest
+
+### Step in the list
+`dsn~list-step~1`
+
+Each task of the list has a button for a step up and one for a step down, which `TodoController.step` passes to `TodoFile.step` with the neighbor in the shown list.
+The order of the list stays as `listOrder` defines it; a step changes what that order is computed from.
+If the neighbor has the same priority, due date and due time, the line of the task is moved directly before the line of the neighbor, or behind it on the way down, and is written as it was.
+If the neighbor has another priority, the task takes that priority and its line is moved so that it stays on its side of the neighbor: one step crosses the border, the next one passes the neighbor.
+If the due date or due time differs as well, only the priority changes, as the due date then orders the two tasks.
+A neighbor with the same priority and another due date or due time cannot be passed, and neither can a completed task; `Task.canStepOver` tells that, and the button is disabled.
+
+Covers:
+
+* `req~list-step~1`
+
+Needs: impl, utest
+
+### Drag in the list
+`dsn~list-drag~1`
+
+A task of the list is dragged with the mouse, or with the finger after a long press, as a card of the board is.
+While it is dragged, its description follows the pointer, and a line marks where it would be put: before the nearest task if the pointer is in the upper half of that task, behind it otherwise.
+Dropping it calls `TodoController.drop`, which applies `TodoFile.moveTo`.
+The task takes the priority of the task it is put next to.
+If both have the same due date and due time, its line is moved directly before or behind the line of that task; a line whose priority stays is written as it was.
+If they differ in that, only the priority changes, as the due date then orders the two tasks.
+There is no line, and no drop, at a task of the same priority and another due date or due time, or at a completed task.
+
+Covers:
+
+* `req~list-step~1`
+
+Needs: impl, utest
+
+### Scrolling while a task is dragged
+`dsn~drag-scroll~1`
+
+While a task is held within 56 dp of the upper or lower edge of the list, or beyond that edge, the list scrolls towards it, the faster the nearer the pointer is to the edge.
+The columns of the board scroll in the same way, and the board scrolls sideways while a card is held at its left or right edge.
+The dragged card is pinned in its lazy list, as the list would otherwise drop it, and its gesture with it, when it leaves the window.
+
+Covers:
+
+* `req~list-step~1`
 
 Needs: impl, utest
 

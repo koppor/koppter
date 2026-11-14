@@ -163,12 +163,13 @@ fun EditDialog(
                 )
 
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    val choices = (listOf<Char?>(null) + ('A'..'F')).let { if (priority in it) it else it + priority }
+                    val names = LocalPriorityNames.current
+                    val choices = (listOf<Char?>(null) + names.choices).let { if (priority in it) it else it + priority }
                     for (choice in choices) {
                         FilterChip(
                             selected = priority == choice,
                             onClick = { priority = choice },
-                            label = { Text(choice?.toString() ?: "No priority") },
+                            label = { Text(choice?.let(names::name) ?: "No priority") },
                             modifier = Modifier.testTag("edit-priority-${choice ?: "none"}"),
                         )
                     }

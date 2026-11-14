@@ -123,6 +123,7 @@ fun App(
             LocalFineColor provides fineColor(controller.settings.theme, dark),
             LocalPlanOf provides controller::planOf,
             LocalKeyboard provides keyboard,
+            LocalPriorityNames provides controller.priorityNames,
         ) {
             MainScreen(controller, defaultTodoFile, chooseFile, git)
         }
@@ -274,7 +275,7 @@ private fun MainScreen(
                         VerticalDivider()
                     }
                     Column(Modifier.weight(1f)) {
-                        QuickAdd(onAdd = controller::add, focus = quickAddFocus)
+                        QuickAdd(onAdd = controller::add, preview = controller::datesPreview, focus = quickAddFocus)
                         ViewOptions(controller, onPlan = { planning = controller.planSettings })
                         val emptyText = if (controller.file.entries.isEmpty()) "No tasks" else "No task matches the filter"
                         val open: (Entry) -> Unit = { editing = Editing(it) }
@@ -289,12 +290,12 @@ private fun MainScreen(
                         } else if (controller.board) {
                             Board(
                                 controller.groups, controller.today(), controller::toggle, onOpen = { editing = Editing(it) },
-                                canMove = { entry, from, to -> controller.moved(entry, from, to) != null },
+                                moved = controller::moved,
                                 onMove = controller::move,
                                 emptyText = emptyText,
                             )
                         } else {
-                            TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, emptyText)
+                            TaskList(controller.visible, controller.today(), controller::toggle, { editing = Editing(it) }, controller::step, controller::drop, emptyText)
                         }
                     }
                 }
@@ -345,10 +346,12 @@ private fun MainScreen(
             git = git,
             boardColumns = controller.boardColumnsText,
             shareActions = controller.shareActionsText,
-            onSave = { settings, boardColumns, shareActions ->
-                // The columns and share actions belong to the file that was open when the dialog was opened.
+            priorityNames = controller.priorityNamesText,
+            onSave = { settings, boardColumns, shareActions, priorityNames ->
+                // The columns, share actions and names belong to the file that was open when the dialog was opened.
                 boardColumns?.let(controller::updateBoardColumns)
                 shareActions?.let(controller::updateShareActions)
+                priorityNames?.let(controller::updatePriorityNames)
                 controller.updateSettings(settings)
                 showSettings = false
             },
@@ -427,7 +430,7 @@ private fun SyncIndicator(status: SyncStatus, onSync: () -> Unit) {
 /** A line that adds a task from text in todo.txt syntax, for input without opening the dialog. */
 // [impl->dsn~quick-add~1]
 @Composable
-private fun QuickAdd(onAdd: (String) -> Unit, focus: FocusRequester) {
+private fun QuickAdd(onAdd: (String) -> Unit, preview: (String) -> String?, focus: FocusRequester) {
     var text by remember { mutableStateOf("") }
     fun submit() {
         onAdd(text)
@@ -436,7 +439,10 @@ private fun QuickAdd(onAdd: (String) -> Unit, focus: FocusRequester) {
     OutlinedTextField(
         value = text,
         onValueChange = { text = it.replace("\n", "") },
-        placeholder = { Text("Add a task, such as: (A) Call Mom +Family @phone due:2026-12-24") },
+        placeholder = { Text("Add a task, such as: (A) Call Mom +Family @phone next week") },
+        // [impl->dsn~quick-add-dates~1]
+        // Shows the line before it is written, as words that were not meant as a date become one as well.
+        supportingText = preview(text)?.let { line -> { Text(line, Modifier.testTag("quick-add-preview")) } },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { submit() }),

@@ -2,14 +2,17 @@
 
 ![Logo of koppter: a K as the cabin of a helicopter](docs/logo.svg)
 
-A [todo.txt](https://github.com/todotxt/todo.txt) application for Android and for Windows and Linux desktops.
+koppter manages tasks in a plain text file with one task per line.
+It is an application for Android and for Windows and Linux desktops.
 
-Status: early development on the `experimental` branch.
-The Android application is built but has not been run on a device yet.
+```text
+(A) Call the dentist @phone +Health due:2026-11-20
+```
 
-## Screenshots
+This line is a task of priority A with the context *phone*, the project *Health* and a due date.
+The notation is the [todo.txt format](https://github.com/todotxt/todo.txt): the file is read and changed with any text editor, and other tools for the format work on the same file.
 
-The tasks in the screenshots are invented.
+## Overview
 
 The task list with the filter panel.
 Projects, contexts, tags and the priority are labels at the top right of each task.
@@ -45,7 +48,7 @@ A click on a context shows its tasks, the most urgent first; the bar of a task f
 
 ![Plan dialog with time maps and barriers](docs/screenshots/plan.png)
 
-The edit dialog: the description without metadata at the top, the metadata below, then the note, the resulting line of the todo.txt file, and the date the task was added according to the git history.
+The edit dialog: the description without metadata at the top, the metadata below, then the note, the resulting line of the `todo.txt` file, and the date the task was added according to the git history.
 The line can be edited as text as well: the fields follow what is typed there.
 
 ![Edit dialog of a task](docs/screenshots/edit.png)
@@ -67,13 +70,9 @@ The screenshots above show Nord in its light variant.
 
 ![Task list in the dark variant of Nord](docs/screenshots/nord-dark.png)
 
-![Task list in the light variant of Everforest](docs/screenshots/everforest-light.png)
-
-![Task list in the dark variant of Everforest](docs/screenshots/everforest-dark.png)
-
 ## Goals
 
-* The todo.txt file is the only data store, and it stays a file that other todo.txt tools can read and write.
+* The `todo.txt` file is the only data store, and it stays a file that other todo.txt tools can read and write.
 * One code base for phone and desktop: Kotlin Multiplatform with Compose Multiplatform ([decision 0001](docs/decisions/0001-kotlin-multiplatform-with-compose-multiplatform.md)).
 * Synchronization through git, with one commit per added and per completed task.
   The dates a task was added and completed are then read from the history instead of being written into the file.
@@ -88,7 +87,7 @@ The planned scope is tracked as requirements in [docs/requirements](docs/require
 
 ## Skills for agents
 
-[skills/koppter-tasks](skills/koppter-tasks/SKILL.md) is a skill for Claude and other agents that read skills: it tells how to write a task into the todo.txt file so that it fits what the application does with it, and how to choose between `rec:` and `ice_recur.txt` for a recurring task.
+[skills/koppter-tasks](skills/koppter-tasks/SKILL.md) is a skill for Claude and other agents that read skills: it tells how to write a task into the `todo.txt` file so that it fits what the application does with it, and how to choose between `rec:` and `ice_recur.txt` for a recurring task.
 To use it in Claude Code, link the directory into the skills of the user:
 
 ```sh
@@ -107,7 +106,7 @@ It also maps the terms of SkedPal to those of the application.
 | --- | --- |
 | `todo.txt` | The tasks |
 | `notes/<name>.md` | The note of the task with the tag `note:<name>.md`, as Markdown |
-| `koppter.yml` | Configuration of this application that belongs to the todo.txt file: the [board columns defined by filters](#board), the [share actions](#sharing-to-koppter-on-android), and the time maps and barriers for [planning](#planning) |
+| `koppter.yml` | Configuration of this application that belongs to the `todo.txt` file: the [board columns defined by filters](#board), the [share actions](#sharing-to-koppter-on-android), the [names of the priorities](#names-for-priorities), and the time maps and barriers for [planning](#planning) |
 | `ice_recur.txt` | Schedules of [recurring tasks](#recurring-tasks) in the format of the ice_recur add-on, such as `weekly ; day Monday - (B) Plan the week` |
 | `calendar.txt` | The [plan](#planning): when the open tasks are worked on, one line per day |
 | `calendar.ics` | The plan as tentative events, for import into a calendar program |
@@ -119,29 +118,30 @@ A file in OneDrive, or in another storage service, is used through the platform 
 ## Extensions of the todo.txt format
 
 The [todo.txt format](https://github.com/todotxt/todo.txt) defines the completion mark `x`, the priority `(A)`, dates, `+project`, `@context` and tags of the form `key:value`.
-The application understands the following extensions, which other todo.txt tools use as well.
+The application understands the following extensions.
+The column *Source* names the tool or document that defines each of them; those of this application are tags that other todo.txt tools keep as they are.
 
-| Notation | Meaning | How to use it |
-| --- | --- | --- |
-| `due:2026-12-24` | Due date | *Due date* in the edit dialog. The label is highlighted on the day and marked when the date has passed; the list orders tasks of equal priority by due date. |
-| `t:2026-12-01` | Threshold date: the task is not relevant before that day | *Threshold* in the edit dialog. The task is hidden until that day; *Show tasks before their threshold date* in the filter panel shows it. |
-| `rec:1w` | Recurrence: completing the task adds its next occurrence | See [recurring tasks](#recurring-tasks). |
-| `ice_recur.txt` | Schedules that add tasks on certain days | See [recurring tasks](#recurring-tasks). |
-| `note:k3f.md` | A note for the task, kept in the file `notes/k3f.md` | *Note* in the edit dialog; the application names the file. New notes are Markdown files, which the dialog edits as text; a note named otherwise, such as `note:k3f.txt`, keeps its file. As in the [note add-on](https://github.com/mgarrido/todo.txt-cli/tree/note/todo.actions.d), which reads these notes with `TODO_NOTE_EXT=.md` in its configuration. |
-| `#urgent` | Hashtag: a third kind of label next to `+project` and `@context`, without a fixed meaning | *Add hashtag* in the edit dialog, or typed into the task. A hashtag starts with a letter: `#123` and `C#` stay words of the description ([decision 0014](docs/decisions/0014-hashtags-as-a-third-kind-of-label.md)). |
-| `@research>reading` | A context below another context, over any number of levels | Typed as the context. The label shows `@reading`, and the path when the pointer rests on it; a click on it shows the tasks of the context. A filter for `@research` includes the contexts below it, and the filter panel shows the contexts as a tree ([decision 0017](docs/decisions/0017-levels-of-a-context-separated-by-a-greater-than-sign.md)). |
-| `dur:1h30m` | The time the task is expected to take, in hours and minutes | Field *Duration* in the edit dialog, or typed into the task. [Planning](#planning) gives the task that much time ([decision 0018](docs/decisions/0018-tag-for-the-duration-of-a-task.md)). |
-| `by:14:00` | The time of the due date by which the task has to be done | Field *Due time* in the edit dialog, or typed into the task next to `due:`. Among the tasks of a day, the earlier time comes first, and the icon of the [plan](#planning) is red if the task is planned to end later ([decision 0022](docs/decisions/0022-tag-for-the-time-by-which-a-task-is-due.md)). |
-| `at:12:00` | The time of the day at which the task takes place | Field *Fixed time* in the edit dialog, or typed into the task. [Planning](#fixed-times) gives the task that time and plans the others around it ([decision 0021](docs/decisions/0021-tag-for-the-fixed-time-of-a-task.md)). |
-| `tt:30m` | The time that the way to the task takes, and the way back as well | Field *Travel time* in the edit dialog, or typed into the task. [Planning](#travel-time) keeps that time free before and after the task ([decision 0023](docs/decisions/0023-tag-for-the-travel-time-of-a-task.md)). |
-| `id:1`, `p:1` | The task with `id:1` waits for the tasks with `p:1`, as topydo writes dependencies | Typed into the task. [Planning](#planning) gives the task its times after those it waits for ([decision 0020](docs/decisions/0020-dependencies-with-the-tags-of-topydo.md)). |
-| `cs:jabref/fix-npe` | The task of [ContextSwitcher](https://github.com/contextswitcher/contextswitcher) that holds the working context | Entered in the field *ContextSwitcher task* of the edit dialog or typed into the task, as the id or as the link that *Copy link* of ContextSwitcher gives, which becomes the tag. A click on the label switches to the task in ContextSwitcher, on a computer where it has registered its links ([decision 0016](docs/decisions/0016-tag-for-the-task-of-contextswitcher.md)). |
-| `pri:A` | The priority a completed task had | Written when a task with a priority is completed, as the format has no priority for completed tasks; reopening the task restores the priority. |
+| Notation | Meaning | Source | How to use it |
+| --- | --- | --- | --- |
+| `due:2026-12-24` | Due date | [todo.txt format](https://github.com/todotxt/todo.txt#additional-file-format-definitions), which names it as the example of a tag | *Due date* in the edit dialog. The label is highlighted on the day and marked when the date has passed; the list orders tasks of equal priority by due date. |
+| `t:2026-12-01` | Threshold date: the task is not relevant before that day | [Simpletask](https://github.com/mpcjanssen/simpletask-android/blob/master/app/src/main/assets/index.en.md#extensions) | *Threshold* in the edit dialog. The task is hidden until that day; *Show tasks before their threshold date* in the filter panel shows it. |
+| `rec:1w` | Recurrence: completing the task adds its next occurrence | [topydo](https://github.com/topydo/topydo/wiki/Recurrence), with the business days of [Simpletask](https://github.com/mpcjanssen/simpletask-android/blob/master/app/src/main/assets/index.en.md#extensions) | See [recurring tasks](#recurring-tasks). |
+| `ice_recur.txt` | Schedules that add tasks on certain days | [ice_recur](https://github.com/rlpowell/todo-text-stuff/blob/master/ice_recur), an [add-on](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#ice_recur-another-recurring-task-action-but-with-much-more-flexibility) of the todo.txt command line | See [recurring tasks](#recurring-tasks). |
+| `note:k3f.md` | A note for the task, kept in the file `notes/k3f.md` | [note](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#note--take-notes-related-to-tasks), an add-on of the todo.txt command line | *Note* in the edit dialog; the application names the file. New notes are Markdown files, which the dialog edits as text; a note named otherwise, such as `note:k3f.txt`, keeps its file. As in the [note add-on](https://github.com/mgarrido/todo.txt-cli/tree/note/todo.actions.d), which reads these notes with `TODO_NOTE_EXT=.md` in its configuration. |
+| `#urgent` | Hashtag: a third kind of label next to `+project` and `@context`, without a fixed meaning | This application | *Add hashtag* in the edit dialog, or typed into the task. A hashtag starts with a letter: `#123` and `C#` stay words of the description ([decision 0014](docs/decisions/0014-hashtags-as-a-third-kind-of-label.md)). |
+| `@research>reading` | A context below another context, over any number of levels | This application | Typed as the context. The label shows `@reading`, and the path when the pointer rests on it; a click on it shows the tasks of the context. A filter for `@research` includes the contexts below it, and the filter panel shows the contexts as a tree ([decision 0017](docs/decisions/0017-levels-of-a-context-separated-by-a-greater-than-sign.md)). |
+| `dur:1h30m` | The time the task is expected to take, in hours and minutes | This application | Field *Duration* in the edit dialog, or typed into the task. [Planning](#planning) gives the task that much time ([decision 0018](docs/decisions/0018-tag-for-the-duration-of-a-task.md)). |
+| `by:14:00` | The time of the due date by which the task has to be done | This application | Field *Due time* in the edit dialog, or typed into the task next to `due:`. Among the tasks of a day, the earlier time comes first, and the icon of the [plan](#planning) is red if the task is planned to end later ([decision 0022](docs/decisions/0022-tag-for-the-time-by-which-a-task-is-due.md)). |
+| `at:12:00` | The time of the day at which the task takes place | This application | Field *Fixed time* in the edit dialog, or typed into the task. [Planning](#fixed-times) gives the task that time and plans the others around it ([decision 0021](docs/decisions/0021-tag-for-the-fixed-time-of-a-task.md)). |
+| `tt:30m` | The time that the way to the task takes, and the way back as well | This application | Field *Travel time* in the edit dialog, or typed into the task. [Planning](#travel-time) keeps that time free before and after the task ([decision 0023](docs/decisions/0023-tag-for-the-travel-time-of-a-task.md)). |
+| `id:1`, `p:1` | The task with `id:1` waits for the tasks with `p:1`, as topydo writes dependencies | [topydo](https://github.com/topydo/topydo/wiki/Dependencies) | Typed into the task. [Planning](#planning) gives the task its times after those it waits for ([decision 0020](docs/decisions/0020-dependencies-with-the-tags-of-topydo.md)). |
+| `cs:jabref/fix-npe` | The task of [ContextSwitcher](https://github.com/contextswitcher/contextswitcher) that holds the working context | This application | Entered in the field *ContextSwitcher task* of the edit dialog or typed into the task, as the id or as the link that *Copy link* of ContextSwitcher gives, which becomes the tag. A click on the label switches to the task in ContextSwitcher, on a computer where it has registered its links ([decision 0016](docs/decisions/0016-tag-for-the-task-of-contextswitcher.md)). |
+| `pri:A` | The priority a completed task had | [todo.txt format](https://github.com/todotxt/todo.txt#complete-tasks-2-format-rules) | Written when a task with a priority is completed, as the format has no priority for completed tasks; reopening the task restores the priority. |
 
-The *Top* switch above the list restricts it to the first tasks, whose number is a setting.
-There is no notation for a most important task: priority `(A)` together with a due date serves that purpose ([decision 0009](docs/decisions/0009-no-notation-for-most-important-tasks.md)).
+The *Top* switch above the list restricts it to the first tasks, whose number is a setting, as the add-on [top](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#top-see-the-top-tasks) of the todo.txt command line does.
+There is no notation for a most important task as the add-ons [mit](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#mit-most-important-task) and [mitf](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#mitf-most-important-task-in-the-future) have it: priority `(A)` together with a due date serves that purpose ([decision 0009](docs/decisions/0009-no-notation-for-most-important-tasks.md)).
 
-Notes, `ice_recur.txt` and the board columns by filter need a todo.txt file in a folder or a git repository.
+Notes, `ice_recur.txt`, the board columns by filter and the names of the priorities need a `todo.txt` file in a folder or a git repository.
 They are not available for a file chosen through the document picker of Android, as the application then has access to that one file only.
 
 ### Recurring tasks
@@ -186,9 +186,9 @@ Use it for a task that has to appear on certain days whether or not the previous
 The format is that of the [ice_recur](https://github.com/rlpowell/todo-text-stuff/blob/master/ice_recur) add-on.
 
 1. Open the editor with the calendar button in the top bar.
-   It edits the file `ice_recur.txt` next to the todo.txt file, which any text editor can edit as well; the file name is fixed, as in the add-on.
+   It edits the file `ice_recur.txt` next to the `todo.txt` file, which any text editor can edit as well; the file name is fixed, as in the add-on.
 2. Write one entry per line: `[@start] [@@end] timing - task`.
-   The part after ` - ` is the task as it is added to the todo.txt file.
+   The part after ` - ` is the task as it is added to the `todo.txt` file.
 3. The application adds the tasks of the day when it is open, once per day.
    The days since it was last open are caught up.
    A task of an entry that is added or changed in the editor and occurs today is added at once.
@@ -230,7 +230,82 @@ The application differs from the add-on in these points:
   In a git repository, a task that any device added since then counts as existing, also when it is completed already.
   Without git, a second device may add a task again that was added and completed on the first.
 
-## Overview
+## Dates in words
+
+A line typed above the list may name its dates in words instead of tags.
+`Write the report next week` is written as `Write the report t:2026-11-16 due:2026-11-22`.
+The phrases are those that [SkedPal](https://docs.skedpal.com/planning/setting-a-plan-for-a-task) reads in the title of a task; the examples are typed on Friday, 13 November 2026.
+
+| Typed at the end of the text | Written |
+| --- | --- |
+| `today`, `tomorrow` | `due:2026-11-13`, `due:2026-11-14` |
+| `this week`, `next week` | `due:2026-11-15`, `t:2026-11-16 due:2026-11-22` |
+| `this month`, `next month` | `due:2026-11-30`, `t:2026-12-01 due:2026-12-31` |
+| `weekend` | `t:2026-11-14 due:2026-11-15` |
+| `Wed`, `on Wed`, `on Sep 15` | `t:` and `due:` on that day |
+| `by Wed`, `due by Sep 15`, `Sep 15` | `due:` on that day |
+| `by Mon 14:00` | `due:2026-11-16 by:14:00` |
+| `tomorrow 3pm`, `15 Jul 14:00`, `on Wed at 9:30` | `due:` on that day and `at:15:00`, `at:14:00`, `at:9:30` |
+| `at 3pm` | `at:15:00` |
+| `in 4 days`, `start in two weeks`, `begin in a month` | `t:` that much later |
+| `from Jan 18`, `start on Jan 18`, `delay until Jan 18`, `no earlier than Jan 18` | `t:2027-01-18` |
+| `from tomorrow to Wed`, `from Dec 15 to Dec 17` | `t:` on the first and `due:` on the second day |
+| `the week of Dec 9` | `t:2026-12-07 due:2026-12-13` |
+
+* A day is `today`, `tomorrow`, a weekday, a day of a month such as `Sep 15`, `15 Sep` or `September 15th`, or a date such as `2026-12-24`.
+* A weekday or a day of a month is the first such day from today on; a week runs from Monday to Sunday.
+* The phrase stands at the end of the text; projects, contexts, hashtags and tags may follow it: `Buy milk tomorrow @shop`.
+* While typing, the field shows the line that will be written.
+  If words are not meant as a date, end the line with a full stop: `Buy tickets for the weekend.` stays as it is.
+* A `due:`, `t:`, `at:` or `by:` tag that is typed as well stays.
+* The phrases are English, and they are read in the line above the list only, not in the edit dialog.
+* Recurrence is not typed in words: use `rec:` or `ice_recur.txt`.
+
+## Order of the list
+
+The list shows the open tasks first, ordered by priority, then by due date and due time, then by the position of their lines in the file.
+A task is moved by dragging it with the mouse, or with the finger after a long press, or one step at a time with the two arrows at its right.
+A line shows where a dragged task would be put.
+
+* Next to a task of the same priority and due date, the line of the task is moved there in the file.
+  This orders the tasks that are equally important and due on the same day, such as those of a weekend.
+* Next to a task of another priority, the task takes that priority: `(B)` becomes `(A)`.
+  With an arrow, the first step at such a border changes the priority, and the next one passes the task above.
+* Within a priority, the due date keeps its order: a task cannot pass one that is due on another day.
+  Its arrow is disabled, and dragging shows no line there.
+* If the task and the one it is put next to are due on different days, it takes the priority and the due date decides its place.
+
+On the [board](#board), a card is dragged to a place in its column in the same way.
+Dragged to another column, it changes what the column stands for and keeps its priority otherwise, so that it gets its place only among the cards of that priority.
+The list and the columns of the board scroll while a task is held at their upper or lower edge, and the board scrolls sideways while a card is held at its left or right edge.
+
+## Names for priorities
+
+The todo.txt format has the priorities `(A)` to `(Z)`, of which A is the highest.
+For another scale, such as numbers, *Names of the priorities* in the settings takes one priority per line as `letter = name`:
+
+```text
+A = 1
+B = 2
+C = 3
+D = 5
+E = 8
+```
+
+The buttons below the field fill in a scale: the letters, the numbers 1 to 5, or five or eight steps of the Fibonacci sequence.
+
+* The labels of the tasks, the filter panel, the board by priority and the edit dialog then show 1, 2, 3, 5 and 8.
+* The edit dialog offers the priorities that have a name, here five; without names, it offers A to F.
+* A line typed above the list may start with a name: `(5) Call the dentist` is written as `(D) Call the dentist`.
+* The file keeps the letters, so that other todo.txt tools read the priorities and order by them ([decision 0024](docs/decisions/0024-names-for-priorities-kept-in-the-configuration-file.md)).
+* The order is that of the letters: the name of A is the highest priority, so `A = 8` to `E = 1` makes 8 the highest.
+
+The names are kept in `koppter.yml` and are therefore the same on every device that synchronizes the file.
+A filter of a board column names a priority by its name or by its letter: with the names above, `(>3)` and `(>C)` both select the priorities 1 and 2.
+The comparison reads *a higher priority than*, not *a greater number than*.
+The line of the edit dialog and `ice_recur.txt` use the letters.
+
+## Overview of the contexts
 
 The switch *Overview* above the tasks shows one tile per context of the outermost level instead of the tasks.
 A tile counts the open tasks of the context and of the contexts below it, and its dot tells the state of the most urgent one: overdue, due today, or neither.
@@ -254,8 +329,8 @@ The arrow keys up and down mark another task, to leave one where it is.
 
 ## Planning
 
-*Plan* above the tasks gives each open task times in which it is to be worked on and writes them to `calendar.txt` next to the todo.txt file.
-The todo.txt file leads: the plan is computed from it, and planning does not change it.
+*Plan* above the tasks gives each open task times in which it is to be worked on and writes them to `calendar.txt` next to the `todo.txt` file.
+The `todo.txt` file leads: the plan is computed from it, and planning does not change it.
 
 * A task with a higher priority is planned first, and every task gets the earliest free times, so that tasks without dates are planned soon as well.
 * A task takes its duration (`dur:`), half an hour without one, and is not planned before its threshold date (`t:`).
@@ -300,7 +375,7 @@ The plan is also written to `calendar.ics`, with tentative events, for import in
 ### Fixed times
 
 A task with the tag `at:` is not moved by planning: it takes the time it states, for its duration, and the other tasks are planned around it.
-Use it for what has its time, such as lunch, a training or an appointment, so that the todo.txt file is the one place where it is written.
+Use it for what has its time, such as lunch, a training or an appointment, so that the `todo.txt` file is the one place where it is written.
 
 | Line | Where | Planned |
 | --- | --- | --- |
@@ -414,8 +489,8 @@ inbox = @inbox
 * `{}` stands for the shared text; without it, the shared text stands in front.
 * `due:` and `t:` may be relative to the day of sharing: `2w`, `3d`, `tomorrow`.
 * From Android 10 on, each action is a target of its own in the share sheet, named as the action; the entry *koppter* applies the first action.
-* The actions are kept in `koppter.yml` next to the todo.txt file, so that they can be edited on the desktop.
-  They need a todo.txt file in the storage of the application or in a git repository, not one of a document provider.
+* The actions are kept in `koppter.yml` next to the `todo.txt` file, so that they can be edited on the desktop.
+  They need a `todo.txt` file in the storage of the application or in a git repository, not one of a document provider.
 * Words of the shared text that start with `+`, `@` or `#` become projects, contexts and hashtags of the task.
 
 ## Board
@@ -424,7 +499,7 @@ The board shows one column per priority, project, context, hashtag or due date r
 Dragging a task to another column changes that attribute of the task.
 
 Columns can also be defined by filters, one per line as `title = filter`.
-They are entered in the settings and kept in `koppter.yml` next to the todo.txt file, so that they are synchronized with the tasks ([decision 0012](docs/decisions/0012-board-columns-by-filter-in-a-file.md)):
+They are entered in the settings and kept in `koppter.yml` next to the `todo.txt` file, so that they are synchronized with the tasks ([decision 0012](docs/decisions/0012-board-columns-by-filter-in-a-file.md)):
 
 ```text
 Now = due:<=today -@waiting
@@ -436,7 +511,7 @@ Important = (>C)
 | Term | Matches a task |
 | --- | --- |
 | `+project`, `@context`, `#hashtag` | with this project, context or hashtag |
-| `(A)`, `(>B)`, `(<=C)` | with this priority, a higher one, this or a lower one |
+| `(A)`, `(>B)`, `(<=C)` | with this priority, a higher one, this or a lower one; a priority is named by its letter or by its [name](#names-for-priorities) |
 | `due:today`, `due:<1w`, `t:>=2026-12-01`, `status:doing` | whose tag has this value or compares so to it; dates are ISO dates, `today`, `tomorrow`, `yesterday` or an interval from today |
 | `-term` | that does not match the term |
 | any other word | whose line contains it |
@@ -489,12 +564,17 @@ The workflows build the release variant, signed with a key that is a secret of t
 | --- | --- |
 | [CHANGELOG.md](CHANGELOG.md) | User-visible changes, [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, [CalVer](https://calver.org/) releases |
 | [docs/organizing.md](docs/organizing.md) | A way to organize many tasks with contexts, projects, dates and the plan |
+| [docs/related-work.md](docs/related-work.md) | Comparison with other applications for tasks in plain text files |
 | [docs/requirements](docs/requirements/README.md) | Features, requirements and design, traced to code |
 | [docs/decisions](docs/decisions/README.md) | Architectural decisions as [MADR](https://adr.github.io/madr/) |
 | [CLAUDE.md](CLAUDE.md) | Conventions for development sessions with Claude Code |
 
 ## Related work
 
+These projects served as models; [docs/related-work.md](docs/related-work.md) compares koppter with further applications.
+
+* [todo.txt-cli](https://github.com/todotxt/todo.txt-cli) — `todo.sh`, the command line of the format.
+  Its [add-on directory](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory) is the source of `note`, `top` and `ice_recur` and lists more that this application does not cover, such as [gimme](https://github.com/todotxt/todo.txt-cli/wiki/Todo.sh-Add-on-Directory#gimme-select-a-task-at-random-based-on-criteria), which selects a task at random.
 * [Sleek](https://github.com/ransome1/sleek) — desktop todo.txt manager; model for the label style and the edit dialog.
 * [mindstream](https://github.com/xuhcc/mindstream) — model for the label placement in the list.
 * [Web Todo.txt](https://github.com/EpocDotFr/webtodotxt) — model for the filter panel.

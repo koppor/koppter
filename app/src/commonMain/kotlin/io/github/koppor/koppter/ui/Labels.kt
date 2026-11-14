@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.koppor.koppter.plan.PlanState
 import io.github.koppor.koppter.todotxt.LEVEL_SEPARATOR
+import io.github.koppor.koppter.todotxt.PriorityNames
 import io.github.koppor.koppter.todotxt.Task
 import io.github.koppor.koppter.todotxt.lastLevel
 import kotlinx.datetime.LocalDate
@@ -40,6 +41,9 @@ import kotlinx.datetime.LocalDate
 val LocalPlanOf = staticCompositionLocalOf<(Task) -> Pair<PlanState, String>?> { { null } }
 
 /** What a click on the context label of a task does with the context. */
+/** The names under which the priorities are shown. */
+val LocalPriorityNames = staticCompositionLocalOf { PriorityNames() }
+
 val LocalShowContext = staticCompositionLocalOf<(String) -> Unit> { {} }
 
 /**
@@ -163,7 +167,7 @@ fun HashtagLabel(hashtag: String, modifier: Modifier = Modifier, suffix: String 
 @Composable
 fun PriorityLabel(priority: Char, modifier: Modifier = Modifier, suffix: String = "") {
     val colors = MaterialTheme.colorScheme
-    val text = "$priority$suffix"
+    val text = LocalPriorityNames.current.name(priority) + suffix
     when (priority) {
         'A' -> Label(text, colors.error, colors.onError, modifier)
         'B' -> Label(text, colors.tertiary, colors.onTertiary, modifier)

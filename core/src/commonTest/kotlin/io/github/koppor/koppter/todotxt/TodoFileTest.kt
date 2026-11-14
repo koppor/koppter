@@ -2,6 +2,7 @@ package io.github.koppor.koppter.todotxt
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 // [utest->dsn~todo-file-lines~1]
@@ -39,5 +40,39 @@ class TodoFileTest {
     @Test
     fun aFileWithoutFinalLineSeparatorGetsOne() {
         assertEquals("a\nb\n", TodoFile.parse("a\nb").serialize())
+    }
+
+    // [utest->dsn~list-step~1]
+    @Test
+    fun aStepChangesPlacesWithinAPriorityAndTakesThePriorityAtItsBorder() {
+        val file = TodoFile.parse("(A) Report\n\n(B) Shelf  @home\n(B) Photos\nLetter\n(B) Taxes due:2026-11-15\nx Done\n")
+        fun TodoFile.stepped(index: Int, neighbor: Int, up: Boolean) = step(index, neighbor, up)?.serialize()
+
+        // Same priority and due date: the lines change places, as they are, and other lines stay where they are.
+        assertEquals("(A) Report\n\n(B) Photos\n(B) Shelf  @home\nLetter\n(B) Taxes due:2026-11-15\nx Done\n", file.stepped(3, 2, up = true))
+        assertEquals("(A) Report\n\n(B) Photos\n(B) Shelf  @home\nLetter\n(B) Taxes due:2026-11-15\nx Done\n", file.stepped(2, 3, up = false))
+        // Another priority: the task takes it and becomes the last of that priority, or the first on the way down.
+        assertEquals("(A) Report\n(A) Shelf @home\n\n(B) Photos\nLetter\n(B) Taxes due:2026-11-15\nx Done\n", file.stepped(2, 0, up = true))
+        assertEquals("(A) Report\n\n(B) Shelf  @home\n(B) Photos\n(B) Letter\n(B) Taxes due:2026-11-15\nx Done\n", file.stepped(4, 3, up = true))
+        assertEquals("(A) Report\n\n(B) Shelf  @home\nPhotos\nLetter\n(B) Taxes due:2026-11-15\nx Done\n", file.stepped(3, 4, up = false))
+        // Another due date: at a border, only the priority changes; within a priority, the due date decides and there is no step.
+        assertEquals("(B) Report\n\n(B) Shelf  @home\n(B) Photos\nLetter\n(B) Taxes due:2026-11-15\nx Done\n", file.stepped(0, 5, up = false))
+        assertNull(file.stepped(2, 5, up = true))
+        assertNull(file.stepped(4, 6, up = false))
+    }
+
+    // [utest->dsn~list-drag~1]
+    @Test
+    fun aTaskIsPutNextToAnotherOneAndTakesItsPriority() {
+        val file = TodoFile.parse("(B) Shelf\n(B) Photos\n(B) Taxes\n(A) Report\nLetter due:2026-11-15\n")
+        fun moved(index: Int, target: Int, before: Boolean) = file.moveTo(index, target, before)?.serialize()
+
+        assertEquals("(B) Taxes\n(B) Shelf\n(B) Photos\n(A) Report\nLetter due:2026-11-15\n", moved(2, 0, before = true))
+        assertEquals("(B) Photos\n(B) Taxes\n(B) Shelf\n(A) Report\nLetter due:2026-11-15\n", moved(0, 2, before = false))
+        assertEquals("(B) Shelf\n(B) Taxes\n(A) Photos\n(A) Report\nLetter due:2026-11-15\n", moved(1, 3, before = true))
+        // With another due date, the priority is all that changes.
+        assertEquals("(B) Shelf\n(B) Photos\n(B) Taxes\n(A) Report\n(B) Letter due:2026-11-15\n", moved(4, 0, before = true))
+        assertNull(moved(1, 1, before = true))
+        assertEquals(file, file.moveTo(1, 0, before = false))
     }
 }
