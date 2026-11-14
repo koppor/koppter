@@ -51,7 +51,7 @@ kotlin {
 // The version of a package is the day of the release as YY.M.D:
 // the formats of Windows and macOS take three numbers, of which the first is above 0 and below 256.
 val releaseDay = providers.environmentVariable("KOPPTER_VERSION").orNull?.let { Regex("""\d\d(\d\d)-(\d\d)-(\d\d)""").matchEntire(it) }
-val desktopVersion = releaseDay?.destructured?.let { (year, month, day) -> "$year.${month.toInt()}.${day.toInt()}" } ?: "1.0.0"
+val desktopVersion = releaseDay?.destructured?.let { (year, month, day) -> "$year.${month.toInt()}.${day.toInt()}" }
 
 compose.desktop {
     application {
@@ -59,7 +59,8 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Msi, TargetFormat.Dmg)
             packageName = "koppter"
-            packageVersion = desktopVersion
+            // A build that is not a release is below every release.
+            packageVersion = desktopVersion ?: "0.1.0"
             description = "Tasks in a todo.txt file"
             // What `suggestRuntimeModules` finds for JGit, its SSH client and JNA, plus naming for Kerberos and the bridge for screen readers.
             // All modules cannot be included: that list contains jlink itself, which a JDK without packaged modules cannot link.
@@ -75,6 +76,8 @@ compose.desktop {
                 perUserInstall = true
             }
             macOS {
+                // macOS takes no version that starts with 0.
+                packageVersion = desktopVersion ?: "1.0.0"
                 iconFile = project.file("packaging/koppter.icns")
                 bundleID = "io.github.koppor.koppter"
             }
